@@ -2,6 +2,7 @@
 namespace WpDatabaseHelper;
 
 class MetaField {
+	private $test;
     private $version;
 	private static $instance = null;
 	public static function get_instance() {
