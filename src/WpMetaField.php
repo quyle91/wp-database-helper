@@ -1,7 +1,7 @@
 <?php
 namespace WpDatabaseHelper;
 
-class MetaField {
+class WpMetaField {
     private $version;
 	private static $instance = null;
 	public static function get_instance() {
