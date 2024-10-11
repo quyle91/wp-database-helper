@@ -370,20 +370,21 @@ class WpMetaField {
 	}
 
 	function form_field_media( $name, $setup, $value ) {
+		wp_enqueue_media();
 		ob_start();
 		$id        = wp_rand();
 		$image_url = $value ? wp_get_attachment_url( $value ) : '';
 		?>
 		<div class="form_field_media">
-			<img id='image-preview<?php echo $id; ?>' src='<?php echo esc_url( $image_url ); ?>'
+			<div>
+				<img id='image-preview<?php echo $id; ?>' src='<?php echo esc_url( $image_url ); ?>'
 				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
+			</div>
 			<input type='hidden' name='<?php echo esc_attr( $name ); ?>' id='<?php echo esc_attr( $name ); ?>'
 				value='<?php echo esc_attr( $value ); ?>' class='<?= esc_attr( self::$name ) ?>-field regular-text' />
-			<button type='button' class='button hepperMeta-media-upload<?= $id ?>'><?= __( 'Upload' ); ?>
+			<button type='button' class='button hepperMeta-media-upload<?= $id ?>'><?= __( 'Add' ); ?>
 			</button>
-			<button type='button' class='button hepperMeta-media-remove<?= $id ?>'><?= __( 'Remove' ); ?>
-			</button>
-
+			<button type='button' class='button hepperMeta-media-remove<?= $id ?>'><?= __( 'Delete' ); ?></button>
 			<script type='text/javascript'>
 				jQuery(document).ready(function ($) {
 					$('.hepperMeta-media-upload<?php echo $id; ?>').on('click', function (e) {
@@ -439,12 +440,6 @@ class WpMetaField {
 
 	function get_admin_column_user( $user_id ) {
 		return "<a target=blank href='" . get_edit_user_link( $user_id ) . "'>" . ( get_user_by( 'id', $user_id )->display_name ) . "</a>";
-	}
-
-	function form_field_organization_manage( $name, $setup, $value ) {
-		ob_start();
-		echo '<mark>Update later!!!</mark>';
-		return ob_get_clean();
 	}
 
 	function get_options( $setup ) {
