@@ -27,8 +27,11 @@ class WpDatabase {
 	private $fields_sql;
 	private $fields_array = [];
 
-	function __construct( $args = [] ) {
+	function __construct() {
 		$this->version = $this->getVersion();
+	}
+	
+	function init_table( $args = [] ) {
 		$this->update_fields( $args );
 		$this->maybe_create_table();
 		$this->create_view_pages();

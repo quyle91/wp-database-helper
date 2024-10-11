@@ -1,5 +1,5 @@
 {
-    "name": "quyle/wp-database-helper",
+    "name": "quyle91/wp-database-helper",
     "type": "library",
     "autoload": {
         "psr-4": {
