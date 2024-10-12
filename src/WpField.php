@@ -1,0 +1,356 @@
+<?php
+namespace WpDatabaseHelper;
+
+class WpField {
+	public $name = 'WpDatabaseHelper_field';
+	private $version;
+	public $id;
+	public $args = [ 
+		// adminz
+		'object'      => '',
+		'name'        => '',
+
+		// 
+		'field'       => 'input',
+		'attribute'   => [ 
+			'name'  => '',
+			'id'    => '',
+			'class' => [],
+			// 'type' => 'text', 
+			// 'placeholder' => '...',
+			// 'value'       => '',
+			// 'required'    => '',
+			// 'is_checked'  => false,
+		],
+		'value'       => '',
+		'suggest'     => '',
+		'before'      => '<div>',
+		'after'       => '</div>',
+		'note'        => '',
+		'label'       => '',
+		'options'     => [
+			// 1 => 1,
+			// 2 => 2,
+			// 3 => 3,
+		],
+		'term_select' => [
+			// 'taxonomy'       => 'age-categories',
+			// 'option_value'   => 'name',
+			// 'option_display' => 'name',
+		],
+		'post_select' => [
+			// 'post_type'      => 'club',
+			// 'option_value'   => 'ID',
+			// 'option_display' => 'post_title',
+		],
+		'selected'    => '',
+	];
+
+	function __construct() {
+		$this->version = $this->getVersion();
+	}
+
+	private function getVersion() {
+		$composerFile = __DIR__ . '/../composer.json';
+		if ( file_exists( $composerFile ) ) {
+			$composerData = json_decode( file_get_contents( $composerFile ), true );
+			return $composerData['version'] ?? '0.0.0';
+		}
+		return '0.0.0';
+	}
+
+	function setup_args( $args ) {
+		$keep_args               = wp_parse_args( $args['attribute'] ?? [], $this->args['attribute'] ); // xxx
+		$this->args              = wp_parse_args( $args, $this->args );
+		$this->args['attribute'] = $keep_args; // xxx
+		$this->init_options();
+
+	}
+
+	function init_options() {
+		// id
+		$this->id                      = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name."_" . wp_rand();
+		$this->args['attribute']['id'] = $this->id;
+
+		// options
+		$options = [];
+		if ( !empty( $this->args['options'] ) ) {
+			$options = [];
+			$options = $this->args['options'];
+		}
+
+		if ( !empty( $this->args['term_select'] ) ) {
+			$options = [];
+			$terms   = get_terms( [ 
+				'taxonomy'   => $this->args['term_select']['taxonomy'],
+				'hide_empty' => 'false',
+			] );
+			foreach ( $terms as $key => $term ) {
+				$_key             = $term->{$this->args['term_select']['option_value']};
+				$_value           = $term->{$this->args['term_select']['option_display']};
+				$options[ $_key ] = $_value;
+			}
+		}
+
+		if ( !empty( $this->args['post_select'] ) ) {
+			$options = [];
+			$args    = [ 
+				'post_type'      => [ $this->args['post_select']['post_type'] ],
+				'post_status'    => [ 'publish' ],
+				'posts_per_page' => -1,
+				'orderby'        => 'name',
+				'order'          => 'asc',
+			];
+
+			$__the_query = new \WP_Query( $args );
+			if ( $__the_query->have_posts() ) {
+				while ( $__the_query->have_posts() ) :
+					$__the_query->the_post();
+					global $post;
+					$_key             = $post->{$this->args['post_select']['option_value']};
+					$_value           = $post->{$this->args['post_select']['option_display']};
+					$options[ $_key ] = $_value;
+				endwhile;
+				wp_reset_postdata();
+			}
+		}
+
+		$this->args['options'] = $options;
+	}
+
+	function enqueue(){
+		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+
+		$enqueue_assets = function () use ($plugin_url) {
+			wp_enqueue_style(
+				'wpdatabasehelper-field-css',
+				$plugin_url . "/css/field.css",
+				[],
+				$this->version,
+				'all'
+			);
+
+			wp_enqueue_script(
+				'wpdatabasehelper-field-js',
+				$plugin_url . "/js/field.js",
+				[],
+				$this->version,
+				true
+			);
+		};
+
+		if ( did_action( 'admin_enqueue_scripts' ) ) {
+			$enqueue_assets();
+		} else {
+			add_action( 'admin_enqueue_scripts', $enqueue_assets );
+		}
+	}
+
+	function init_field() {
+		$this->enqueue();
+		ob_start();
+
+		// call a method
+		echo wp_kses_post( $this->args['before'] );
+		$field = $this->args['field'];
+
+		// field inside
+		echo ( $this->args['label'] ?? "" ) ? "<label>" : "";
+		$type = $this->args['attribute']['type'] ?? '';
+		echo '<div class="'.$this->name.'_wrap type-' . $type . '">';
+		if ( method_exists( $this, $field ) ) {
+			echo $this->{$field}();
+		} else {
+			echo "method is not exists";
+		}
+		echo $this->get_field_name();
+		echo '</div>';
+		echo ( $this->args['label'] ?? "" ) ? "<small>{$this->args['label']}</small></label>" : "";
+
+
+		// small
+
+		// note
+		echo $this->get_note();
+
+		// copy
+		echo $this->get_suggest();
+		echo wp_kses_post( $this->args['after'] );
+		return ob_get_clean();
+	}
+
+	function get_attribute() {
+		ob_start();
+
+		// for merge classes
+		$attribute = $this->args['attribute'];
+		if ( !isset( $attribute['class'] ) or empty( $attribute['class'] ) ) {
+			$attribute['class'] = [ $this->name, 'regular-text' ];
+		}
+
+		foreach ( $attribute as $key => $value ) {
+			$value = implode( " ", (array) $value );
+			echo esc_attr( $key ) . '="' . esc_attr( $value ) . '" ';
+		}
+
+		return ob_get_clean();
+	}
+
+	function select() {
+		ob_start();
+		?>
+		<select <?= $this->get_attribute(); ?>>
+			<?php
+			foreach ( $this->args['options'] as $key => $value ) {
+				$selected = in_array( $key, (array) $this->args['selected'] ) ? 'selected' : "";
+				?>
+				<option <?= esc_attr( $selected ) ?> value="<?= esc_attr( $key ); ?>">
+					<?= esc_attr( $value ); ?>
+				</option>
+				<?php
+			}
+			?>
+		</select>
+		<?php
+		return ob_get_clean();
+	}
+
+	function textarea() {
+		ob_start();
+		?>
+		<textarea <?= $this->get_attribute(); ?>><?= esc_attr( $this->args['value'] ) ?></textarea>
+		<?php
+		return ob_get_clean();
+	}
+
+	function input() {
+		$type = $this->args['attribute']['type'] ?? "text";
+		if ( method_exists( $this, "input_" . $type ) ) {
+			return $this->{"input_" . $type}();
+		}
+		return "method is not exists";
+	}
+
+	function input_text() {
+		ob_start();
+		?>
+		<input <?php echo $this->get_attribute(); ?>>
+		<?php
+		return ob_get_clean();
+	}
+
+	function input_submit() {
+		return $this->input_text();
+	}
+
+	function input_number() {
+		return $this->input_text();
+	}
+
+	function input_hidden() {
+		return $this->input_text();
+	}
+
+	function input_date() {
+		return $this->input_text();
+	}
+
+	function input_time() {
+		return $this->input_text();
+	}
+
+	function input_button() {
+		return $this->input_text();
+	}
+
+	function input_password() {
+		return $this->input_text();
+	}
+
+	function input_file() {
+		return $this->input_text();
+	}
+
+	function input_checkbox() {
+		// set checked 
+		if ( isset( $this->args['attribute']['checked'] ) and !$this->args['attribute']['checked'] ) {
+			unset( $this->args['attribute']['checked'] );
+		}
+		if ( !isset( $this->args['attribute']['class'] ) or empty( $this->args['attribute']['class'] ) ) {
+			$this->args['attribute']['class'] = [ $this->name ];
+		}
+		?>
+		<input <?= $this->get_attribute(); ?>>
+		<?php
+	}
+
+	function get_suggest() {
+		if ( !$this->args['suggest'] ) {
+			return;
+		}
+		$this->args['suggest'] = (array) $this->args['suggest'];
+		ob_start();
+		foreach ( (array) $this->args['suggest'] as $key => $suggest ) {
+			?>
+			<small>
+				<strong>*<?= _ex( 'Suggested', 'custom headers' ) ?>: </strong>
+				<span class="<?= esc_attr( $this->name ) ?>_click_to_copy" data-text="<?= esc_attr( $suggest ); ?>">
+					<?= esc_attr( $suggest ); ?>
+				</span>
+			</small>
+			<?php
+		}
+		return ob_get_clean();
+	}
+
+	function get_field_name() {
+		$field = $this->args['field'] ?? '';
+		$name  = $this->args['attribute']['name'] ?? '';
+		$type  = $this->args['attribute']['type'] ?? '';
+
+		$show = false;
+		// input
+		if ( $field == 'input' and in_array( $type, [ 'text', 'password' ] ) ) {
+			$show = true;
+		}
+
+		// textarea
+		if ( $field == 'textarea' ) {
+			$show = true;
+		}
+
+		// select
+		if ( $field == 'select' ) {
+			$show = true;
+		}
+
+		if ( !$show ) {
+			return;
+		}
+
+		ob_start();
+		?>
+		<span class="<?= esc_attr($this->name) ?>_click_to_copy <?= esc_attr($this->name) ?>_name" data-text="<?= esc_attr( $name ) ?>">
+			<?= __( 'Copy' ) ?>
+		</span>
+		<?php
+		return ob_get_clean();
+	}
+
+	function get_note() {
+		if ( !$this->args['note'] ) {
+			return;
+		}
+		$this->args['note'] = (array) $this->args['note'];
+		ob_start();
+		foreach ( (array) $this->args['note'] as $key => $note ) {
+			?>
+			<small class="<?= esc_attr( $this->name ) ?>_note">
+				<strong>*<?= __( 'Note' ) ?> 			<?= ( $key ) ? $key : ""; ?>:</strong>
+				<?= wp_kses_post( $note ) ?>.
+			</small>
+			<?php
+		}
+		return ob_get_clean();
+	}
+}

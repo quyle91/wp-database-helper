@@ -1,0 +1,43 @@
+.WpDatabaseHelper_repeater {
+  position: relative;
+  background-color: #ededed;
+}
+.WpDatabaseHelper_repeater_is_empty {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.WpDatabaseHelper_repeater_control {
+  margin-bottom: 5px;
+}
+.WpDatabaseHelper_repeater .WpDatabaseHelper_field {
+  background-color: white;
+  width: unset;
+}
+.WpDatabaseHelper_repeater label {
+  display: inline-flex !important;
+  gap: 5px;
+  margin: 0 !important;
+  flex-direction: column;
+  align-items: flex-end;
+  position: relative;
+}
+.WpDatabaseHelper_repeater > fieldset {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+.WpDatabaseHelper_repeater > fieldset > label + fieldset {
+  padding-left: 22px;
+  position: relative;
+}
+.WpDatabaseHelper_repeater > fieldset > label + fieldset:before {
+  content: "\f344";
+  content: "\f11c";
+  color: #2271b1;
+  font-family: dashicons;
+  position: absolute;
+  top: 10px;
+  left: 2px;
+}/*# sourceMappingURL=repeater.css.map */
