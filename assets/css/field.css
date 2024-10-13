@@ -1,11 +1,3 @@
-body .WpDatabaseHelper_field {
-  background-color: #ededed;
-  border: 2px solid #2271b1;
-  max-width: 100%;
-}
-body .WpDatabaseHelper_field:not([type=checkbox], [type=button]) {
-  padding-bottom: 5px;
-}
 body .WpDatabaseHelper_field_wrap {
   position: relative;
   display: inline-block;
@@ -15,7 +7,15 @@ body .WpDatabaseHelper_field_wrap {
 body .WpDatabaseHelper_field_wrap.type-file {
   display: block;
 }
-body .WpDatabaseHelper_field_name {
+body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field {
+  background-color: #ededed;
+  border: 2px solid #2271b1;
+  max-width: 100%;
+}
+body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox], [type=button]) {
+  padding-bottom: 5px;
+}
+body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_name {
   position: absolute;
   bottom: -8px;
   right: 5px;
@@ -30,14 +30,14 @@ body .WpDatabaseHelper_field_name {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-body .WpDatabaseHelper_field_click_to_copy:not(:empty) {
+body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy:not(:empty) {
   cursor: pointer;
   margin: 0 5px 5px 0;
   border-radius: 4px;
   padding: 0 5px;
   outline: 1px dashed gray;
 }
-body .WpDatabaseHelper_field_click_to_copy:not(:empty):hover {
+body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy:not(:empty):hover {
   background-color: #2271b1;
   color: white;
 }/*# sourceMappingURL=field.css.map */

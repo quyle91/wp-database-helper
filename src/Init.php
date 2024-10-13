@@ -6,8 +6,8 @@ class Init{
         
     }
 
-	static function WpMetaField() {
-		return \WpDatabaseHelper\WpMetaField::get_instance();
+	static function WpMeta() {
+		return \WpDatabaseHelper\WpMeta::get_instance();
 	}
 
     static function WpDatabase(){

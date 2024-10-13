@@ -59,9 +59,9 @@ jQuery(document).ready(function ($) {
             var button = $(this);
             var input = button.closest(".form_field_media").find('input');
             var frame = wp.media({
-                title: 'Upload',
+                title: wpdatabasehelper_field_js.text.upload,
                 button: {
-                    text: 'Use this media'
+                    text: wpdatabasehelper_field_js.text.use_this_media
                 },
                 multiple: false
             });

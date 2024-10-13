@@ -24,10 +24,11 @@ class WpField {
 		],
 		'value'       => '',
 		'suggest'     => '',
-		'before'      => '<div>',
+		'before'      => '<div class=___default_wrap>', // default is div to break line
 		'after'       => '</div>',
 		'note'        => '',
 		'label'       => '',
+		'label_position' => 'before',
 		'options'     => [
 			// 1 => 1,
 			// 2 => 2,
@@ -61,8 +62,11 @@ class WpField {
 
 	function enqueue() {
 		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
-
 		$enqueue_assets = function () use ($plugin_url) {
+			// Check if the script is already enqueued to avoid adding it multiple times
+			if ( wp_script_is( 'wpdatabasehelper-field-js', 'enqueued' ) ) {
+				return;
+			}
 			wp_enqueue_style(
 				'wpdatabasehelper-field-css',
 				$plugin_url . "/css/field.css",
@@ -77,6 +81,23 @@ class WpField {
 				[],
 				$this->version,
 				true
+			);
+
+			// Add inline script only once
+			wp_add_inline_script(
+				'wpdatabasehelper-field-js',
+				'const wpdatabasehelper_field_js = ' . json_encode(
+					array(
+						'ajax_url'     => admin_url( 'admin-ajax.php' ),
+						'nonce'        => wp_create_nonce( 'wpdatabasehelper_field_js' ),
+						'script_debug' => ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ),
+						'text'         => [ 
+							'upload'         => __( 'Upload' ),
+							'use_this_media' => __( 'Choose image' ),
+						],
+					)
+				),
+				'before'
 			);
 		};
 
@@ -143,6 +164,11 @@ class WpField {
 
 			$this->args['options'] = $options;
 		}
+
+		// only for checkbox
+		if(($this->args['attribute']['type'] ?? '') == 'checkbox'){
+			$this->args['label_position'] = 'after';
+		}
 	}
 
 	function init_field() {
@@ -152,10 +178,9 @@ class WpField {
 		ob_start();
 		?>
 		<?php echo wp_kses_post( $this->args['before'] ); ?>
-		<?php 
-			echo ( $this->args['label'] ?? "" ) ? "<label>" : "";
-		?>
+		
 		<div class="<?= $this->name.'_wrap type-'.$type ?>">
+			<?php if ( $this->args['label_position'] == 'before' ) echo $this->get_label(); ?>
 			<?php
 				if ( method_exists( $this, $field ) ) {
 					echo $this->{$field}();
@@ -164,8 +189,8 @@ class WpField {
 				}
 				echo $this->get_field_name();
 			?>
+			<?php if ( $this->args['label_position'] == 'after' ) echo $this->get_label(); ?>
 		</div>
-		<?php echo ( $this->args['label'] ?? "" ) ? "<small>{$this->args['label']}</small></label>" : ""; ?>
 		<?php echo $this->get_note(); ?>
 		<?php echo $this->get_suggest(); ?>
 		<?php echo wp_kses_post( $this->args['after'] ); ?>
@@ -288,11 +313,11 @@ class WpField {
 		$image_url = $value ? wp_get_attachment_url( $value ) : '';
 		?>
 		<div class="form_field_media">
-			<div>
+			<div class="preview">
 				<img class='image-preview' src='<?php echo esc_url( $image_url ); ?>'
 				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
 			</div>
-			<?php $this->args['attribute']['type'] = 'hidden'; ?>
+			<?php //$this->args['attribute']['type'] = 'hidden'; ?>
 			<input <?php echo $this->get_attribute(); ?> />
 			<button type='button' class='button hepperMeta-media-upload'><?= __( 'Add' ); ?>
 			</button>
@@ -369,6 +394,17 @@ class WpField {
 			</small>
 			<?php
 		}
+		return ob_get_clean();
+	}
+
+	function get_label(){
+		ob_start();
+		if(!$this->args['label']) return;
+		?>
+		<label for="<?= $this->id; ?>">
+			<?php echo $this->args['label'] ?? "" ?>
+		</label>
+		<?php
 		return ob_get_clean();
 	}
 }

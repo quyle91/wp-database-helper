@@ -66,7 +66,7 @@
                     const listItem = button.closest(".adminz_repeater_list_items");
                     this.repeater_updateNames(listItem);
 
-                    const _element = button.closest('fieldset, label');
+                    const _element = button.closest('fieldset, .repeater_field');
                     _element.remove();
                 });
             });
@@ -75,7 +75,7 @@
         repeater_attachMoveUpEvent(element, buttons) {
             buttons.forEach(button => {
                 button.addEventListener("click", () => {
-                    const _element = button.closest('fieldset, label');
+                    const _element = button.closest('fieldset, .repeater_field');
                     const previousElement = _element.previousElementSibling;
 
                     if (previousElement) {
@@ -96,7 +96,7 @@
                     const children = parentNode.children;
                     Array.from(children).forEach((child, index) => {
                         const currentPrefix = parentNode.getAttribute('prefix');
-                        if (child.tagName === 'FIELDSET' || child.tagName === 'LABEL') {
+                        if (child.tagName === 'FIELDSET' || child.classList.contains('repeater_field')) {
                             const newPrefix = `${currentPrefix}[${index}]`;
                             this.repeater_searchAndReplace(child, newPrefix);
                         }

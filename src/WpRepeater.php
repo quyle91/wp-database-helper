@@ -62,10 +62,14 @@ class WpRepeater {
 
 	function enqueue() {
 		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
-
 		$enqueue_assets = function () use ($plugin_url) {
+			// Return early if the script is already enqueued
+			if ( wp_script_is( 'wpdatabasehelper-repeater-js', 'enqueued' ) ) {
+				return;
+			}
+
 			wp_enqueue_style(
-				'wpdatabasehelper-wprepeater-css',
+				'wpdatabasehelper-repeater-css',
 				$plugin_url . "/css/repeater.css",
 				[],
 				$this->version,
@@ -73,7 +77,7 @@ class WpRepeater {
 			);
 
 			wp_enqueue_script(
-				'wpdatabasehelper-wprepeater-js',
+				'wpdatabasehelper-repeater-js',
 				$plugin_url . "/js/repeater.js",
 				[],
 				$this->version,
@@ -127,12 +131,12 @@ class WpRepeater {
 			} else {
 				// echo $key;
 				?>
-				<label suffix="<?= esc_attr( $key ); ?>">
+				<div suffix="<?= esc_attr( $key ); ?>" class="repeater_field">
 					<?php
 					echo $this->repeater_init_field( $prefix . "[$key]", $value );
 					echo $this->repeater_button_controls( $level, $key );
 					?>
-				</label>
+				</div>
 				<?php
 			}
 		}

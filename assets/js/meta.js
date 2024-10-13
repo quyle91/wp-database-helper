@@ -15,8 +15,9 @@ jQuery(document).ready(function ($) {
                 let _field_searchs = $(_inline0).find("." + _field_name);
                 if (_field_searchs.length) {
                     _field_search = $(_field_searchs[0]);
-                    let _field_search_value = _field_search.text();
-                    console.log($(item), _field_search_value); 
+                    let _field_search_value = _field_search.text().trim();
+                    // console.log(_field_search); 
+                    // console.log($(item), _field_search_value); 
 
                     if ($(item).is(':checkbox')) {
                         $(item).prop('checked', _field_search_value === $(item).val());

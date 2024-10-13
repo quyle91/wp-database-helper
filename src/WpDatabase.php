@@ -33,8 +33,12 @@ class WpDatabase {
 
 	function enqueue(){
 		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
-
 		$enqueue_assets = function () use ($plugin_url) {
+			// Check if the script is already enqueued to avoid adding it multiple times
+			if ( wp_script_is( 'wpdatabasehelper-database-js', 'enqueued' ) ) {
+				return;
+			}
+
 			wp_enqueue_style(
 				'wpdatabasehelper-database-css',
 				$plugin_url . "/css/database.css",
@@ -52,16 +56,16 @@ class WpDatabase {
 			);
 
 			wp_add_inline_script( 
-                'wpdatabasehelper-database-js', 
-                'const wpdatabasehelper_database = ' . json_encode( 
-                    array(
+				'wpdatabasehelper-database-js', 
+				'const wpdatabasehelper_database = ' . json_encode( 
+					array(
 						'ajax_url'           => admin_url( 'admin-ajax.php' ),
 						'nonce'              => wp_create_nonce( $this->table_name ),
 						'update_action_name' => $this->table_name . "_update_data"
-                    )
-                ), 
-                'before'
-            );
+					)
+				), 
+				'before'
+			);
 		};
 
 		if ( did_action( 'admin_enqueue_scripts' ) ) {

@@ -1,20 +1,23 @@
-.WpDatabaseHelper_repeater {
+body .WpDatabaseHelper_repeater {
   position: relative;
   background-color: #ededed;
 }
-.WpDatabaseHelper_repeater_is_empty {
+body .WpDatabaseHelper_repeater_is_empty {
   position: absolute;
   right: 0;
   top: 0;
 }
-.WpDatabaseHelper_repeater_control {
+body .WpDatabaseHelper_repeater_control {
   margin-bottom: 5px;
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
 }
-.WpDatabaseHelper_repeater .WpDatabaseHelper_field {
-  background-color: white;
+body .WpDatabaseHelper_repeater .WpDatabaseHelper_field {
+  background-color: white !important;
   width: unset;
 }
-.WpDatabaseHelper_repeater label {
+body .WpDatabaseHelper_repeater .repeater_field {
   display: inline-flex !important;
   gap: 5px;
   margin: 0 !important;
@@ -22,17 +25,18 @@
   align-items: flex-end;
   position: relative;
 }
-.WpDatabaseHelper_repeater > fieldset {
+body .WpDatabaseHelper_repeater > fieldset {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   align-items: flex-start;
   margin-bottom: 5px;
 }
-.WpDatabaseHelper_repeater > fieldset > label + fieldset {
+body .WpDatabaseHelper_repeater > fieldset > .repeater_field + fieldset {
   padding-left: 22px;
   position: relative;
 }
-.WpDatabaseHelper_repeater > fieldset > label + fieldset:before {
+body .WpDatabaseHelper_repeater > fieldset > .repeater_field + fieldset:before {
   content: "\f344";
   content: "\f11c";
   color: #2271b1;

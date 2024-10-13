@@ -1,7 +1,7 @@
 <?php
 namespace WpDatabaseHelper;
 
-class WpMetaField {
+class WpMeta {
     private $version;
 	private static $instance = null;
 	public static function get_instance() {
@@ -28,8 +28,12 @@ class WpMetaField {
 
 	function enqueue() {
 		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
-
 		$enqueue_assets = function () use ($plugin_url) {
+			// Return early if the script is already enqueued
+			if ( wp_script_is( 'wpdatabasehelper-meta-js', 'enqueued' ) ) {
+				return;
+			}
+
 			wp_enqueue_style(
 				'wpdatabasehelper-meta-css',
 				$plugin_url . "/css/meta.css",
@@ -60,12 +64,12 @@ class WpMetaField {
 			'admin_column'     => true,
 			'field_classes'    => [], // ['full_width']
 			'quick_edit'       => true,
-			'meta_box'         => 'input', // select, input, media
+			'field'         => 'input', // select, input, media
 			'options'          => [], // [key=>value, key2=>value2]
 			'callback'         => false, // can be function(){return 'x';}
 			'post_type_select' => false, // post, page
 			'user_select'      => false, // true
-			'attributes'       => [],
+			'attribute'       => [],
 		];
 		return wp_parse_args( $setup, $default );
 	}
@@ -118,7 +122,7 @@ class WpMetaField {
 							echo $this->get_admin_column_post( $value );
 						} elseif ( $metafields[ $metafield ]['user_select'] ?? "" ) {
 							echo $this->get_admin_column_user( $value );
-						} elseif ( ( $metafields[ $metafield ]['meta_box'] ?? "" ) == 'media' ) {
+						} elseif ( ( $metafields[ $metafield ]['field'] ?? "" ) == 'media' ) {
 							echo wp_get_attachment_image( $value, 'thumbnail', false, [ 'style' => 'width: 50px; height: auto;' ] );
 						} else {
 							echo esc_attr( $value );
@@ -132,6 +136,11 @@ class WpMetaField {
 	}
 
 	function setup_quick_edit_post( $post_type, $metafields ) {
+		/* Bởi vì quick edit được load bằng js, nên wordpress ko cung cấp param $post_id, 
+		vì vậy trong quick_edit_custom_box truyền value = ''
+		value được lấy từ js trong add_inline_data
+		field media cũng ko cần update lại nếu ko thực sự quan trọng */
+
 		add_action( 'quick_edit_custom_box', function ($column_name, $_post_type) use ($post_type, $metafields) {
 			foreach ( $metafields as $metafield => $setup ) {
 				$setup = $this->parse_args_metafield( $setup, $metafield );
@@ -141,10 +150,10 @@ class WpMetaField {
 						<div class="inline-edit-col <?= esc_attr( self::$name ) ?>-meta-box-container">
 							<label>
 								<span class="title">
-									<?php echo $this->field_title( $setup, $metafield ) ?>
+									<?= esc_attr( $setup['label'] ) ?>
 								</span>
 								<span class="input-text-wrap">
-									<?php echo $this->form_field( $setup, $metafield, '' ); // blank field ?>
+									<?php echo $this->form_field( $setup, $metafield, '' ); ?>
 								</span>
 							</label>
 						</div>
@@ -155,10 +164,12 @@ class WpMetaField {
 		}, 10, 2 );
 
 		add_action( 'add_inline_data', function ($post) use ($post_type, $metafields) {
+			$this->enqueue(); // necessary for debug
 			foreach ( $metafields as $metafield => $setup ) {
 				$setup = $this->parse_args_metafield( $setup, $metafield );
 				if ( $setup['quick_edit'] ) {
 					?>
+					<?php // Keep it as 1 line ?>
 					<div class="<?= esc_attr( $metafield ) ?>"><?= esc_attr( get_post_meta( $post->ID, $metafield, true ) ) ?></div>
 					<?php
 				}
@@ -189,7 +200,7 @@ class WpMetaField {
 					$_value = $_POST[ $metafield ] ?? '';
 
 					$new_value = sanitize_text_field( $_value );
-					if ( $setup['meta_box'] == 'textarea' ) {
+					if ( $setup['field'] == 'textarea' ) {
 						$new_value = sanitize_textarea_field( $_value );
 					}
 					update_post_meta( $post_id, $metafield, $new_value );
@@ -222,11 +233,6 @@ class WpMetaField {
 								}
 								?>
 							<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
-								<div class="title">
-									<label for="<?= esc_attr( $metafield ) ?>">
-										<?php echo $this->field_title( $setup, $metafield ) ?>
-									</label>
-								</div>
 								<?php
 									$value = get_post_meta( $post->ID, $metafield, true );
 									if ( $setup['callback'] ) {
@@ -283,7 +289,7 @@ class WpMetaField {
 				$_value = $_POST[ $metafield ] ?? '';
 
 				$new_value = sanitize_text_field( $_value );
-				if ( $setup['meta_box'] == 'textarea' ) {
+				if ( $setup['field'] == 'textarea' ) {
 					$new_value = sanitize_textarea_field( $_value );
 				}
 				error_log( $new_value );
@@ -293,33 +299,22 @@ class WpMetaField {
 		} );
 	}
 
-	function field_title( $setup, $metafield ) {
-		ob_start();
-		?>
-		<?= esc_html( $setup['label'] ?? str_replace( "_", " ", $metafield ) ) ?>
-		<?php
-		return ob_get_clean();
-	}
-
 	function form_field( $setup, $metafield, $value ) {
 		$this->enqueue();
 		$a = \WpDatabaseHelper\Init::WpField();
+		// echo "<pre>"; print_r($setup); echo "</pre>";
 
 		// integration
-		$args = [ 
-			'field'     => $setup['meta_box'] ?? '',
-			'attribute' => [ 
-				'type'  => 'text',
-				'name'  => $metafield,
-				'value' => $value,
-			],
-		];
+		$args = $setup;
+		$args['attribute']['name'] = $metafield;
+		$args['attribute']['type'] = 'text';
+		$args['attribute']['value'] = $value;
 
 		// textarea
 		if($args['field'] == 'textarea'){
 			$args['value'] = $value;
 		}
-
+		// echo "<pre>"; print_r($args); echo "</pre>";
 		$a->setup_args( $args );
 		return $a->init_field();
 	}
