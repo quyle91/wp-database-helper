@@ -11,8 +11,7 @@ class WpMetaField {
 		return self::$instance;
 	}
 
-	private static $get_assets = null;
-	private static $name = 'ads';
+	private static $name = 'WpDatabaseHelper_meta';
 
 	function __construct() {
 		$this->version = $this->getVersion();
@@ -25,6 +24,34 @@ class WpMetaField {
 			return $composerData['version'] ?? '0.0.0';
 		}
 		return '0.0.0';
+	}
+
+	function enqueue() {
+		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+
+		$enqueue_assets = function () use ($plugin_url) {
+			wp_enqueue_style(
+				'wpdatabasehelper-meta-css',
+				$plugin_url . "/css/meta.css",
+				[],
+				$this->version,
+				'all'
+			);
+
+			wp_enqueue_script(
+				'wpdatabasehelper-meta-js',
+				$plugin_url . "/js/meta.js",
+				[],
+				$this->version,
+				true
+			);
+		};
+
+		if ( did_action( 'admin_enqueue_scripts' ) ) {
+			$enqueue_assets();
+		} else {
+			add_action( 'admin_enqueue_scripts', $enqueue_assets );
+		}
 	}
 
 	function parse_args_metafield( $setup, $metafield ) {
@@ -126,10 +153,6 @@ class WpMetaField {
 				}
 			}
 		}, 10, 2 );
-
-		add_action( 'admin_footer', function () {
-			echo self::get_assets();
-		} );
 
 		add_action( 'add_inline_data', function ($post) use ($post_type, $metafields) {
 			foreach ( $metafields as $metafield => $setup ) {
@@ -268,10 +291,6 @@ class WpMetaField {
 			}
 
 		} );
-
-		add_action( 'admin_footer', function () {
-			echo self::get_assets();
-		} );
 	}
 
 	function field_title( $setup, $metafield ) {
@@ -282,156 +301,27 @@ class WpMetaField {
 		return ob_get_clean();
 	}
 
-	function field_description( $setup, $metafield ) {
-		ob_start();
-		?>
-		<code class="copy"> <?= esc_attr( $metafield ) ?> </code>
-		<?php
-		return ob_get_clean();
-	}
-
 	function form_field( $setup, $metafield, $value ) {
-		$field_type    = $setup['meta_box'];
-		$function_name = "form_field_$field_type";
-		if ( method_exists( $this, $function_name ) ) {
+		$this->enqueue();
+		$a = \WpDatabaseHelper\Init::WpField();
 
-			// debug
-			echo call_user_func( [ $this, $function_name ], $metafield, $setup, $value );
-		} else {
-			echo 'function not exist';
-		}
-		echo $this->field_description( $setup, $metafield );
-	}
-
-	function form_field_custom( $name, $setup, $value ) {
-		return $value;
-	}
-
-	function form_field_attributes( $name, $setup, $value ) {
-		$attributes = wp_parse_args(
-			$setup['attributes'],
-			[ 
+		// integration
+		$args = [ 
+			'field'     => $setup['meta_box'] ?? '',
+			'attribute' => [ 
 				'type'  => 'text',
-				'name'  => $name,
-				'id'    => $name . '_id',
-				'class' => self::$name . '-field regular-text',
+				'name'  => $metafield,
 				'value' => $value,
-			]
-		);
+			],
+		];
 
 		// textarea
-		if ( $setup['meta_box'] == 'textarea' ) {
-			$attributes['rows'] = 4;
+		if($args['field'] == 'textarea'){
+			$args['value'] = $value;
 		}
 
-		// checkbox
-		if ( $setup['meta_box'] == 'input' and $attributes['type'] == 'checkbox' ) {
-
-			//default value
-			if ( !$attributes['value'] ) {
-				$attributes['value'] = 'on';
-			}
-
-			$checked = false;
-			if ( $attributes['value'] == $value ) {
-				$checked = true;
-			}
-
-			if ( $checked ) {
-				$attributes['checked'] = 1;
-			}
-		}
-
-
-		// echo "<pre>"; print_r($attributes); echo "</pre>";
-
-		$html = [];
-		foreach ( (array) $attributes as $key => $value ) {
-			$html[] = "$key=\"$value\"";
-		}
-
-		return implode( " ", $html );
-	}
-
-	function form_field_textarea( $name, $setup, $value ) {
-		ob_start();
-		?>
-		<textarea <?= $this->form_field_attributes( $name, $setup, $value ) ?>><?= esc_textarea( $value ) ?></textarea>
-		<?php
-		return ob_get_clean();
-	}
-
-	function form_field_input( $name, $setup, $value ) {
-		ob_start();
-		?>
-		<input <?= $this->form_field_attributes( $name, $setup, $value ) ?> />
-		<?php
-		return ob_get_clean();
-	}
-
-	function form_field_media( $name, $setup, $value ) {
-		wp_enqueue_media();
-		ob_start();
-		$id        = wp_rand();
-		$image_url = $value ? wp_get_attachment_url( $value ) : '';
-		?>
-		<div class="form_field_media">
-			<div>
-				<img id='image-preview<?php echo $id; ?>' src='<?php echo esc_url( $image_url ); ?>'
-				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
-			</div>
-			<input type='hidden' name='<?php echo esc_attr( $name ); ?>' id='<?php echo esc_attr( $name ); ?>'
-				value='<?php echo esc_attr( $value ); ?>' class='<?= esc_attr( self::$name ) ?>-field regular-text' />
-			<button type='button' class='button hepperMeta-media-upload<?= $id ?>'><?= __( 'Add' ); ?>
-			</button>
-			<button type='button' class='button hepperMeta-media-remove<?= $id ?>'><?= __( 'Delete' ); ?></button>
-			<script type='text/javascript'>
-				jQuery(document).ready(function ($) {
-					$('.hepperMeta-media-upload<?php echo $id; ?>').on('click', function (e) {
-						e.preventDefault();
-						var button = $(this);
-						var input = button.closest(".form_field_media").find('input');
-						var preview = $('#image-preview<?php echo $id; ?>');
-						var frame = wp.media({
-							title: '<?= __( 'Uploads' ) ?> ',
-							button: {
-								text: '<?= __( 'Use this media' ) ?>'
-							},
-							multiple: false
-						});
-						frame.on('select', function () {
-							var attachment = frame.state().get('selection').first().toJSON();
-							input.val(attachment.id);
-							preview.attr('src', attachment.url).show();
-						});
-						frame.open();
-					});
-					$('.hepperMeta-media-remove<?php echo $id; ?>').on('click', function (e) {
-						e.preventDefault();
-						var button = $(this);
-						var input = button.closest(".form_field_media").find('input');
-						var preview = $('#image-preview<?php echo $id; ?>');
-						input.val('');
-						preview.attr('src', '').hide();
-					});
-				});
-			</script>
-		</div>
-		<?php
-		return ob_get_clean();
-	}
-
-	function form_field_select( $name, $setup, $value ) {
-		ob_start();
-		?>
-		<select <?= $this->form_field_attributes( $name, $setup, $value ) ?>>
-			<?php
-			$options = $this->get_options( $setup );
-			echo $this->get_options_tag( $options, $name, $value );
-			?>
-		</select>
-		<?php
-		return ob_get_clean();
+		$a->setup_args( $args );
+		return $a->init_field();
 	}
 
 	function get_admin_column_post( $post_id ) {
@@ -503,126 +393,5 @@ class WpMetaField {
 			$staff_options[ $user->ID ] = $user->display_name;
 		}
 		return $staff_options;
-	}
-
-	static function get_assets() {
-
-		// make sure 1 time loaded
-		if ( self::$get_assets ) {
-			return;
-		}
-
-		ob_start();
-		?>
-		<script type="text/javascript">
-			jQuery(document).ready(function ($) {
-
-				// quick edit
-				$('body').on('focus', '.ptitle', function (e) {
-					const _ptitle = e.currentTarget;
-					const _tr = $(_ptitle.closest(".inline-edit-row"));
-					const _tr_id = _tr.attr('id');
-					const _inline_id = _tr_id.replace("edit-", "inline_");
-					const _inline = $("#" + _inline_id);
-					if (_inline.length) {
-						const _inline0 = _inline[0];
-						// console.log(_inline0);
-						_tr.find('.<?= esc_attr( self::$name ) ?>-field').each(function (index, item) {
-							let _field_name = $(item).attr('name');
-							let _field_searchs = $(_inline0).find("." + _field_name);
-							if (_field_searchs.length) {
-								_field_search = $(_field_searchs[0]);
-								let _field_search_value = _field_search.text();
-								// console.log($(item), _field_search_value); 
-
-								if ($(item).is(':checkbox')) {
-									$(item).prop('checked', _field_search_value === $(item).val());
-								} else if ($(item).is(':radio')) {
-									$(item).prop('checked', $(item).val() === _field_search_value);
-								} else {
-									$(item).val(_field_search_value);
-								}
-
-								// fix for input checked
-
-								$(item).trigger('change');
-							}
-						});
-					}
-				});
-
-				// click to copy
-				$('body').on('click', '.<?= self::$name ?>-meta-box-container .copy', function (e) {
-					e.preventDefault();
-					var textToCopy = $(this).text().trim();
-					var tempInput = document.createElement('input');
-					document.body.appendChild(tempInput);
-					tempInput.value = textToCopy;
-					tempInput.focus();
-					tempInput.setSelectionRange(0, tempInput.value.length);
-					document.execCommand('copy');
-					document.body.removeChild(tempInput);
-					alert('Copied: ' + textToCopy);
-				});
-			});
-		</script>
-		<style type="text/css">
-			.<?= self::$name ?>-field {
-				width: 100%;
-				max-width: unset !important;
-				border-color: #2271b1 !important;
-				border-width: 2px !important;
-				box-sizing: border-box;
-				/* background-color: #efefef !important; */
-			}
-
-			.<?= self::$name ?>-meta-box-container .grid {
-				display: grid;
-				grid-template-columns: 1fr 1fr;
-				gap: 10px;
-				margin-bottom: 10px;
-			}
-
-			/** bù phần còn thiếu của td */
-			.<?= self::$name ?>-meta-box-container .item {
-				box-sizing: border-box;
-			}
-
-			.<?= self::$name ?>-meta-box-container .item.full_width {
-				grid-column: 1 / -1;
-			}
-
-			.<?= self::$name ?>-meta-box-container .title {
-				margin-bottom: 5px;
-			}
-
-			.<?= self::$name ?>-meta-box-container .copy {
-				cursor: pointer;
-				opacity: 0.5;
-				border-radius: 3px;
-
-			}
-
-			.<?= self::$name ?>-meta-box-container .copy:hover {
-				opacity: 1;
-				background-color: lightgray;
-				color: black;
-			}
-
-			.<?= self::$name ?>-meta-box-container .footer {
-				opacity: 0.5;
-				text-align: right;
-			}
-
-			/* debug js quick edit */
-			/* .column-title .hidden{
-										display: block !important;
-										border: 1px solid dashed;
-										background: lightgray;
-									} */
-		</style>
-		<?php
-		self::$get_assets = true;
-		return ob_get_clean();
 	}
 }

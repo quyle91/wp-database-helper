@@ -35,8 +35,8 @@
                         addNewButton.parentNode.insertBefore(clone, addNewButton);
 
                         // focus after clone
-                        clone.querySelector('.adminz_field');
-                        const input = clone.querySelector('.adminz_field');
+                        clone.querySelector('.WpDatabaseHelper_field');
+                        const input = clone.querySelector('.WpDatabaseHelper_field');
                         input.focus();
 
                         if (input.tagName === 'INPUT') {
@@ -90,17 +90,19 @@
         },
 
         repeater_updateNames(parentNode) {
-            // settimeout: fix child removed before call childrens
-            setTimeout(() => {
-                const children = parentNode.children;
-                Array.from(children).forEach((child, index) => {
-                    const currentPrefix = parentNode.getAttribute('prefix');
-                    if (child.tagName === 'FIELDSET' || child.tagName === 'LABEL') {
-                        const newPrefix = `${currentPrefix}[${index}]`;
-                        this.repeater_searchAndReplace(child, newPrefix);
-                    }
-                });
-            }, 100);
+            if(parentNode){
+                // settimeout: fix child removed before call childrens
+                setTimeout(() => {
+                    const children = parentNode.children;
+                    Array.from(children).forEach((child, index) => {
+                        const currentPrefix = parentNode.getAttribute('prefix');
+                        if (child.tagName === 'FIELDSET' || child.tagName === 'LABEL') {
+                            const newPrefix = `${currentPrefix}[${index}]`;
+                            this.repeater_searchAndReplace(child, newPrefix);
+                        }
+                    });
+                }, 100);
+            }
         },
 
         repeater_searchAndReplace(child, newPrefix) {
@@ -116,7 +118,7 @@
 
             // fields
             // console.log(oldPrefix, newPrefix); 
-            child.querySelectorAll('.adminz_field').forEach((adminzField) => {
+            child.querySelectorAll('.WpDatabaseHelper_field').forEach((adminzField) => {
                 let oldName = adminzField.getAttribute('name');
                 let newName = oldName.replace(oldPrefix, newPrefix);
                 adminzField.setAttribute('name', newName);

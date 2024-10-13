@@ -59,66 +59,7 @@ class WpField {
 		return '0.0.0';
 	}
 
-	function setup_args( $args ) {
-		$keep_args               = wp_parse_args( $args['attribute'] ?? [], $this->args['attribute'] ); // xxx
-		$this->args              = wp_parse_args( $args, $this->args );
-		$this->args['attribute'] = $keep_args; // xxx
-		$this->init_options();
-
-	}
-
-	function init_options() {
-		// id
-		$this->id                      = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name."_" . wp_rand();
-		$this->args['attribute']['id'] = $this->id;
-
-		// options
-		$options = [];
-		if ( !empty( $this->args['options'] ) ) {
-			$options = [];
-			$options = $this->args['options'];
-		}
-
-		if ( !empty( $this->args['term_select'] ) ) {
-			$options = [];
-			$terms   = get_terms( [ 
-				'taxonomy'   => $this->args['term_select']['taxonomy'],
-				'hide_empty' => 'false',
-			] );
-			foreach ( $terms as $key => $term ) {
-				$_key             = $term->{$this->args['term_select']['option_value']};
-				$_value           = $term->{$this->args['term_select']['option_display']};
-				$options[ $_key ] = $_value;
-			}
-		}
-
-		if ( !empty( $this->args['post_select'] ) ) {
-			$options = [];
-			$args    = [ 
-				'post_type'      => [ $this->args['post_select']['post_type'] ],
-				'post_status'    => [ 'publish' ],
-				'posts_per_page' => -1,
-				'orderby'        => 'name',
-				'order'          => 'asc',
-			];
-
-			$__the_query = new \WP_Query( $args );
-			if ( $__the_query->have_posts() ) {
-				while ( $__the_query->have_posts() ) :
-					$__the_query->the_post();
-					global $post;
-					$_key             = $post->{$this->args['post_select']['option_value']};
-					$_value           = $post->{$this->args['post_select']['option_display']};
-					$options[ $_key ] = $_value;
-				endwhile;
-				wp_reset_postdata();
-			}
-		}
-
-		$this->args['options'] = $options;
-	}
-
-	function enqueue(){
+	function enqueue() {
 		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
 
 		$enqueue_assets = function () use ($plugin_url) {
@@ -146,36 +87,89 @@ class WpField {
 		}
 	}
 
+	function setup_args( $args ) {
+		$keep_args               = wp_parse_args( $args['attribute'] ?? [], $this->args['attribute'] );
+		$this->args              = wp_parse_args( $args, $this->args );
+		$this->args['attribute'] = $keep_args;
+
+		// only for select dropdown
+		if($this->args['field']){
+			// id
+			$this->id                      = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name . "_" . wp_rand();
+			$this->args['attribute']['id'] = $this->id;
+
+			// options
+			$options = [];
+			if ( !empty( $this->args['options'] ) ) {
+				$options = [];
+				$options = $this->args['options'];
+			}
+
+			if ( !empty( $this->args['term_select'] ) ) {
+				$options = [];
+				$terms   = get_terms( [ 
+					'taxonomy'   => $this->args['term_select']['taxonomy'],
+					'hide_empty' => 'false',
+				] );
+				foreach ( $terms as $key => $term ) {
+					$_key             = $term->{$this->args['term_select']['option_value']};
+					$_value           = $term->{$this->args['term_select']['option_display']};
+					$options[ $_key ] = $_value;
+				}
+			}
+
+			if ( !empty( $this->args['post_select'] ) ) {
+				$options = [];
+				$args    = [ 
+					'post_type'      => [ $this->args['post_select']['post_type'] ],
+					'post_status'    => [ 'publish' ],
+					'posts_per_page' => -1,
+					'orderby'        => 'name',
+					'order'          => 'asc',
+				];
+
+				$__the_query = new \WP_Query( $args );
+				if ( $__the_query->have_posts() ) {
+					while ( $__the_query->have_posts() ) :
+						$__the_query->the_post();
+						global $post;
+						$_key             = $post->{$this->args['post_select']['option_value']};
+						$_value           = $post->{$this->args['post_select']['option_display']};
+						$options[ $_key ] = $_value;
+					endwhile;
+					wp_reset_postdata();
+				}
+			}
+
+			$this->args['options'] = $options;
+		}
+	}
+
 	function init_field() {
 		$this->enqueue();
-		ob_start();
-
-		// call a method
-		echo wp_kses_post( $this->args['before'] );
 		$field = $this->args['field'];
-
-		// field inside
-		echo ( $this->args['label'] ?? "" ) ? "<label>" : "";
-		$type = $this->args['attribute']['type'] ?? '';
-		echo '<div class="'.$this->name.'_wrap type-' . $type . '">';
-		if ( method_exists( $this, $field ) ) {
-			echo $this->{$field}();
-		} else {
-			echo "method is not exists";
-		}
-		echo $this->get_field_name();
-		echo '</div>';
-		echo ( $this->args['label'] ?? "" ) ? "<small>{$this->args['label']}</small></label>" : "";
-
-
-		// small
-
-		// note
-		echo $this->get_note();
-
-		// copy
-		echo $this->get_suggest();
-		echo wp_kses_post( $this->args['after'] );
+		$type  = $this->args['attribute']['type'] ?? '';
+		ob_start();
+		?>
+		<?php echo wp_kses_post( $this->args['before'] ); ?>
+		<?php 
+			echo ( $this->args['label'] ?? "" ) ? "<label>" : "";
+		?>
+		<div class="<?= $this->name.'_wrap type-'.$type ?>">
+			<?php
+				if ( method_exists( $this, $field ) ) {
+					echo $this->{$field}();
+				} else {
+					echo "method is not exists: $field";
+				}
+				echo $this->get_field_name();
+			?>
+		</div>
+		<?php echo ( $this->args['label'] ?? "" ) ? "<small>{$this->args['label']}</small></label>" : ""; ?>
+		<?php echo $this->get_note(); ?>
+		<?php echo $this->get_suggest(); ?>
+		<?php echo wp_kses_post( $this->args['after'] ); ?>
+		<?php
 		return ob_get_clean();
 	}
 
@@ -187,6 +181,9 @@ class WpField {
 		if ( !isset( $attribute['class'] ) or empty( $attribute['class'] ) ) {
 			$attribute['class'] = [ $this->name, 'regular-text' ];
 		}
+
+		// media
+		// if ($attribute[''])
 
 		foreach ( $attribute as $key => $value ) {
 			$value = implode( " ", (array) $value );
@@ -228,7 +225,7 @@ class WpField {
 		if ( method_exists( $this, "input_" . $type ) ) {
 			return $this->{"input_" . $type}();
 		}
-		return "method is not exists";
+		return "input is not exists";
 	}
 
 	function input_text() {
@@ -282,6 +279,27 @@ class WpField {
 		?>
 		<input <?= $this->get_attribute(); ?>>
 		<?php
+	}
+
+	function media() {
+		$value = $this->args['attribute']['value'] ?? '';
+		wp_enqueue_media();
+		ob_start();
+		$image_url = $value ? wp_get_attachment_url( $value ) : '';
+		?>
+		<div class="form_field_media">
+			<div>
+				<img class='image-preview' src='<?php echo esc_url( $image_url ); ?>'
+				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
+			</div>
+			<?php $this->args['attribute']['type'] = 'hidden'; ?>
+			<input <?php echo $this->get_attribute(); ?> />
+			<button type='button' class='button hepperMeta-media-upload'><?= __( 'Add' ); ?>
+			</button>
+			<button type='button' class='button hepperMeta-media-remove'><?= __( 'Delete' ); ?></button>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	function get_suggest() {

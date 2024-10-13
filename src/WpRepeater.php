@@ -183,7 +183,7 @@ class WpRepeater {
 		// override name
 		$field_config['attribute']['name'] = $field_name;
 
-		$a = new \WpDatabaseHelper\WpField;
+		$a = \WpDatabaseHelper\Init::WpField();
 		$a->setup_args( $field_config );
 		return $a->init_field();
 	}

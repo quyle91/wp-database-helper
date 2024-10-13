@@ -30,6 +30,46 @@ class WpDatabase {
 	function __construct() {
 		$this->version = $this->getVersion();
 	}
+
+	function enqueue(){
+		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+
+		$enqueue_assets = function () use ($plugin_url) {
+			wp_enqueue_style(
+				'wpdatabasehelper-database-css',
+				$plugin_url . "/css/database.css",
+				[],
+				$this->version,
+				'all'
+			);
+
+			wp_enqueue_script(
+				'wpdatabasehelper-database-js',
+				$plugin_url . "/js/database.js",
+				[],
+				$this->version,
+				true
+			);
+
+			wp_add_inline_script( 
+                'wpdatabasehelper-database-js', 
+                'const wpdatabasehelper_database = ' . json_encode( 
+                    array(
+						'ajax_url'           => admin_url( 'admin-ajax.php' ),
+						'nonce'              => wp_create_nonce( $this->table_name ),
+						'update_action_name' => $this->table_name . "_update_data"
+                    )
+                ), 
+                'before'
+            );
+		};
+
+		if ( did_action( 'admin_enqueue_scripts' ) ) {
+			$enqueue_assets();
+		} else {
+			add_action( 'admin_enqueue_scripts', $enqueue_assets );
+		}
+	}
 	
 	function init_table( $args = [] ) {
 		$this->update_fields( $args );
@@ -419,14 +459,14 @@ class WpDatabase {
 			wp_die( 'Can not manage this page' );
 		}
 		?>
-		<div class="wrap <?= esc_attr( $this->wrap_id ) ?>">
+		<div class="wpdatabasehelper_wrap wrap <?= esc_attr( $this->wrap_id ) ?>">
 			<h2>
 				<?php echo esc_attr( $this->menu_title ); ?>
 				<small><?php echo esc_attr( $this->table_name ); ?></small>
 			</h2>
 
 			<!-- assets -->
-			<?php echo $this->get_assets(); ?>
+			<?php echo $this->enqueue(); ?>
 
 			<!-- html -->
 			<div class="wrap_inner">
@@ -634,227 +674,6 @@ class WpDatabase {
 				<button class="button">Submit</button>
 			</form>
 		</div>
-		<?php
-		return ob_get_clean();
-	}
-
-	function get_assets() {
-		ob_start();
-		?>
-		<style type="text/css">
-			.<?= esc_attr( $this->wrap_id ) ?> h2 small {
-				background-color: #ededed;
-				font-size: 11px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .filters,
-			.<?= esc_attr( $this->wrap_id ) ?> .box_add_record,
-			.<?= esc_attr( $this->wrap_id ) ?> .records,
-			.<?= esc_attr( $this->wrap_id ) ?> .bulk,
-			.<?= esc_attr( $this->wrap_id ) ?> .sql,
-			.<?= esc_attr( $this->wrap_id ) ?> .pagination,
-			.<?= esc_attr( $this->wrap_id ) ?> .note {
-				background-color: white;
-				margin-bottom: 20px;
-				padding: 10px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .hidden {
-				display: none !important;
-				visibility: hidden !important;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .filters {
-				display: flex;
-				gap: 10px;
-				justify-content: space-between;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> th small {
-				display: block;
-				font-weight: normal;
-				font-size: 0.8;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .bulk,
-			.pagination {
-				width: 50%;
-				display: inline-block;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .pagination {
-				text-align: right;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .pagination .page-numbers {
-				margin-right: 1px;
-				box-shadow: unset !important;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .pagination .page-numbers.current .button {
-				background-color: #2271b1;
-				color: white;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records {
-				overflow: auto;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table {
-				border-collapse: collapse;
-				width: 100%;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr {}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr th {
-				border: 1px solid lightgray;
-				padding: 5px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr td {
-				border: 1px solid lightgray;
-				padding: 5px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr td span {
-				border: 2px solid transparent;
-				width: 100%;
-				display: block;
-				box-sizing: border-box;
-				border-radius: 3px;
-				word-break: break-all;
-				max-height: 100px;
-				overflow: hidden;
-				min-width: 170px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr td span:hover {
-				border-color: #2271b1;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .records table tr td textarea {
-				width: 100%;
-				min-height: 46px;
-				border: 2px solid #2271b1;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .bot {
-				display: flex;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .status200 {
-				padding: 3px;
-				border-radius: 3px;
-				background-color: #ededed;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .status500 {
-				padding: 3px;
-				border-radius: 3px;
-				background-color: red;
-				color: white;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .note {
-				display: flex;
-				gap: 10px;
-				justify-content: space-between;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .box_add_record .form_wrap {
-				display: flex;
-				flex-wrap: wrap;
-				flex-direction: row;
-				gap: 10px;
-				margin-bottom: 10px;
-			}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .box_add_record .form_wrap .item {}
-
-			.<?= esc_attr( $this->wrap_id ) ?> .box_add_record .form_wrap .item textarea {
-				width: 100%;
-			}
-		</style>
-		<script type="text/javascript">
-			document.addEventListener('DOMContentLoaded', function () {
-				document.querySelectorAll('.<?= esc_attr( $this->wrap_id ) ?>').forEach(wrap => {
-					const check_all = wrap.querySelector(".check_all");
-					if (check_all) {
-						const all_other_checks = document.querySelectorAll('[name="ids[]"]');
-						check_all.addEventListener('change', function () {
-							const isChecked = check_all.checked;
-							all_other_checks.forEach(function (checkbox) {
-								checkbox.checked = isChecked;
-							});
-						});
-					}
-
-					const spans = wrap.querySelectorAll(".span").forEach((span) => {
-						span.addEventListener("click", function () {
-							span.classList.add("hidden");
-							const textarea = span.closest("td").querySelector(".textarea");
-							textarea.classList.remove('hidden');
-							textarea.focus();
-						});
-					});
-
-					wrap.querySelectorAll(".textarea").forEach((textarea) => {
-						// click event
-						textarea.addEventListener('change', function () {
-							const table_name = textarea.closest('table').getAttribute('data-table-name');
-							const field_name = textarea.getAttribute('name');
-							const field_id = textarea.closest('tr').querySelector('[name="id"]').value;
-							const field_value = textarea.value;
-
-							// Fetch 
-							(async () => {
-								try {
-									const url = '<?= admin_url( 'admin-ajax.php' ) ?>';
-									const formData = new FormData();
-									formData.append('action', "<?= $this->table_name ?>_update_data");
-									formData.append('table_name', table_name);
-									formData.append('field_id', field_id);
-									formData.append('field_name', field_name);
-									formData.append('field_value', field_value);
-									formData.append('nonce', '<?= wp_create_nonce( $this->table_name ) ?>');
-									// console.log('Before Fetch:', formData.get('data');
-
-									const response = await fetch(url, {
-										method: 'POST',
-										body: formData,
-									});
-
-									if (!response.ok) {
-										throw new Error('Network response was not ok');
-									}
-
-									const data = await response.json(); // reponse.text()
-									console.log(data);
-									if (data.success) {
-										textarea.classList.add('hidden');
-										textarea.closest('td').querySelector('span').classList.remove('hidden');
-										textarea.closest('td').querySelector('span').textContent = data.data;
-									} else {
-									}
-								} catch (error) {
-									console.error('Fetch error:', error);
-								}
-							})();
-						});
-						// blur event
-						textarea.addEventListener('blur', function () {
-							textarea.classList.add('hidden');
-							textarea.closest('td').querySelector('span').classList.remove('hidden');
-						});
-					});
-
-					wrap.querySelector('.box_add_record_button').addEventListener('click', function () {
-						wrap.querySelector('.box_add_record').classList.toggle('hidden');
-					});
-				});
-			});
-		</script>
 		<?php
 		return ob_get_clean();
 	}

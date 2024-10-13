@@ -1,0 +1,97 @@
+.wpdatabasehelper_wrap h2 small {
+  background-color: #ededed;
+  font-size: 11px;
+}
+.wpdatabasehelper_wrap .filters,
+.wpdatabasehelper_wrap .box_add_record,
+.wpdatabasehelper_wrap .records,
+.wpdatabasehelper_wrap .bulk,
+.wpdatabasehelper_wrap .sql,
+.wpdatabasehelper_wrap .pagination,
+.wpdatabasehelper_wrap .note {
+  background-color: white;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+.wpdatabasehelper_wrap .hidden {
+  display: none !important;
+  visibility: hidden !important;
+}
+.wpdatabasehelper_wrap .filters {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+.wpdatabasehelper_wrap th small {
+  display: block;
+  font-weight: normal;
+  font-size: 0.8;
+}
+.wpdatabasehelper_wrap .bulk,
+.wpdatabasehelper_wrap .pagination {
+  width: 50%;
+  display: inline-block;
+}
+.wpdatabasehelper_wrap .pagination {
+  text-align: right;
+}
+.wpdatabasehelper_wrap .pagination .page-numbers {
+  margin-right: 1px;
+  box-shadow: unset !important;
+}
+.wpdatabasehelper_wrap .pagination .page-numbers.current .button {
+  background-color: #2271b1;
+  color: white;
+}
+.wpdatabasehelper_wrap .records {
+  overflow: auto;
+}
+.wpdatabasehelper_wrap .records table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.wpdatabasehelper_wrap .records table tr th {
+  border: 1px solid lightgray;
+  padding: 5px;
+}
+.wpdatabasehelper_wrap .records table tr td {
+  border: 1px solid lightgray;
+  padding: 5px;
+}
+.wpdatabasehelper_wrap .records table tr td span {
+  border: 2px solid transparent;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  border-radius: 3px;
+  word-break: break-all;
+  max-height: 100px;
+  overflow: hidden;
+  min-width: 170px;
+}
+.wpdatabasehelper_wrap .records table tr td span:hover {
+  border-color: #2271b1;
+}
+.wpdatabasehelper_wrap .records table tr td textarea {
+  width: 100%;
+  min-height: 46px;
+  border: 2px solid #2271b1;
+}
+.wpdatabasehelper_wrap .bot {
+  display: flex;
+}
+.wpdatabasehelper_wrap .note {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+.wpdatabasehelper_wrap .box_add_record .form_wrap {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.wpdatabasehelper_wrap .box_add_record .form_wrap .item textarea {
+  width: 100%;
+}/*# sourceMappingURL=database.css.map */

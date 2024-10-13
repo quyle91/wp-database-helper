@@ -1,0 +1,116 @@
+.wpdatabasehelper_wrap{
+    h2 small {
+        background-color: #ededed;
+        font-size: 11px;
+    }
+
+    .filters,
+    .box_add_record,
+    .records,
+    .bulk,
+    .sql,
+    .pagination,
+    .note {
+        background-color: white;
+        margin-bottom: 20px;
+        padding: 10px;
+    }
+
+    .hidden {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    .filters {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+    }
+
+    th small {
+        display: block;
+        font-weight: normal;
+        font-size: 0.8;
+    }
+
+    .bulk,
+    .pagination {
+        width: 50%;
+        display: inline-block;
+    }
+
+    .pagination {
+        text-align: right;
+        .page-numbers {
+            margin-right: 1px;
+            box-shadow: unset !important;
+        }
+        .page-numbers.current .button {
+            background-color: #2271b1;
+            color: white;
+        }
+    }
+
+
+    .records {
+        overflow: auto;
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            tr{
+                th {
+                    border: 1px solid lightgray;
+                    padding: 5px;
+                }
+                td {
+                    border: 1px solid lightgray;
+                    padding: 5px;
+                    span {
+                        border: 2px solid transparent;
+                        width: 100%;
+                        display: block;
+                        box-sizing: border-box;
+                        border-radius: 3px;
+                        word-break: break-all;
+                        max-height: 100px;
+                        overflow: hidden;
+                        min-width: 170px;
+                        &:hover {
+                            border-color: #2271b1;
+                        }
+                    }
+                    textarea {
+                        width: 100%;
+                        min-height: 46px;
+                        border: 2px solid #2271b1;
+                    }
+                }
+            }
+        }
+    }
+
+    .bot {
+        display: flex;
+    }
+
+    .note {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+    }
+
+    .box_add_record {
+        .form_wrap {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
+            gap: 10px;
+            margin-bottom: 10px;
+            .item{
+                textarea{
+                    width: 100%;
+                }
+            }
+        }
+    }
+}
