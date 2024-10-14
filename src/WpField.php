@@ -26,6 +26,7 @@ class WpField {
 		'suggest'     => '',
 		'before'      => '<div class=___default_wrap>', // default is div to break line
 		'after'       => '</div>',
+		'wrap_class'  => [],
 		'note'        => '',
 		'label'       => '',
 		'label_position' => 'before',
@@ -45,6 +46,7 @@ class WpField {
 			// 'option_display' => 'post_title',
 		],
 		'selected'    => '',
+		'show_copy_key' => false
 	];
 
 	function __construct() {
@@ -178,8 +180,19 @@ class WpField {
 		ob_start();
 		?>
 		<?php echo wp_kses_post( $this->args['before'] ); ?>
-		
-		<div class="<?= $this->name.'_wrap type-'.$type ?>">
+		<?php
+			$wrap_class = implode(' ', 
+				array_merge(
+					(array)$this->args['wrap_class'], 
+					[ 
+						$this->name . '_wrap',
+						'type-' . $type
+					]
+				)
+			);
+			
+		?>
+		<div class="<?= esc_attr($wrap_class); ?>">
 			<?php if ( $this->args['label_position'] == 'before' ) echo $this->get_label(); ?>
 			<?php
 				if ( method_exists( $this, $field ) ) {
@@ -187,7 +200,7 @@ class WpField {
 				} else {
 					echo "method is not exists: $field";
 				}
-				echo $this->get_field_name();
+				echo $this->get_copy();
 			?>
 			<?php if ( $this->args['label_position'] == 'after' ) echo $this->get_label(); ?>
 		</div>
@@ -313,11 +326,11 @@ class WpField {
 		$image_url = $value ? wp_get_attachment_url( $value ) : '';
 		?>
 		<div class="form_field_media">
-			<div class="preview">
+			<div class="xpreview">
 				<img class='image-preview' src='<?php echo esc_url( $image_url ); ?>'
 				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
 			</div>
-			<?php //$this->args['attribute']['type'] = 'hidden'; ?>
+			<?php $this->args['attribute']['type'] = 'hidden'; ?>
 			<input <?php echo $this->get_attribute(); ?> />
 			<button type='button' class='button hepperMeta-media-upload'><?= __( 'Add' ); ?>
 			</button>
@@ -346,7 +359,7 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_field_name() {
+	function get_copy() {
 		$field = $this->args['field'] ?? '';
 		$name  = $this->args['attribute']['name'] ?? '';
 		$type  = $this->args['attribute']['type'] ?? '';
@@ -372,10 +385,20 @@ class WpField {
 		}
 
 		ob_start();
+		$classes = implode(" ", [ 
+			$this->name . "_click_to_copy",
+			$this->name . "_name",
+			$this->args['show_copy_key'] ? 'show_copy_key' : ''
+		]);
+		$text = $this->args['show_copy_key'] ? $name : __( 'Copy' );
+
 		?>
-		<span class="<?= esc_attr($this->name) ?>_click_to_copy <?= esc_attr($this->name) ?>_name" data-text="<?= esc_attr( $name ) ?>">
-			<?= __( 'Copy' ) ?>
-		</span>
+		<code
+			class="<?= esc_attr( $classes ) ?>" 
+			data-text="<?= esc_attr( $name ) ?>"
+			>
+			<?= esc_attr( $text ) ?>
+		</code>
 		<?php
 		return ob_get_clean();
 	}

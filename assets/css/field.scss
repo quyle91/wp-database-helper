@@ -9,6 +9,10 @@ body{
             display: block;
         }
 
+        &.full_width{
+            width: 100%;
+        }
+
         .WpDatabaseHelper_field {
             background-color: #ededed;
             border: 2px solid #2271b1;
@@ -18,34 +22,35 @@ body{
                 padding-bottom: 5px;
             }
 
-            &_name {
+            &_click_to_copy{
+                border: none;
+                outline: none;
+                opacity: 1;
+                cursor: pointer;
+                margin: 0 5px 5px 0;
+                padding: 0 5px;
+                background-color: white;
+                font-size: 0.75em;
+
+                &:hover{
+                    background-color: #2271b1;
+                    color: white;
+                }
+
                 position: absolute;
                 bottom: -8px;
                 right: 5px;
-                outline: unset !important;
-                background: white;
-                color: gray;
-                font-size: 0.75em;
                 white-space: nowrap;
                 max-width: 150px;
                 display: -webkit-box;
                 -webkit-line-clamp: 1;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
-            }
-            
-            &_click_to_copy:not(:empty) {
-                cursor: pointer;
-            
-                &:hover {
-                    background-color: #2271b1;
-                    color: white;
+
+                &.show_copy_key{
+                    position: static;
+                    display: inline;
                 }
-            
-                margin: 0 5px 5px 0;
-                border-radius: 4px;
-                padding: 0 5px;
-                outline: 1px dashed gray;
             }
         }
     }

@@ -153,7 +153,13 @@ class WpMeta {
 									<?= esc_attr( $setup['label'] ) ?>
 								</span>
 								<span class="input-text-wrap">
-									<?php echo $this->form_field( $setup, $metafield, '' ); ?>
+									<?php 
+									if($setup['label'] ?? ''){
+										$setup['label'] = '';
+									}
+									$setup['wrap_class'] = 'full_width';
+									echo $this->form_field( $setup, $metafield, '' ); 
+									?>
 								</span>
 							</label>
 						</div>
@@ -219,44 +225,34 @@ class WpMeta {
 				function ($post) use ($metafields) {
 					wp_nonce_field( 'save_information_metabox', 'information_metabox_nonce' );
 					?>
-				<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
-					<div class="grid">
-						<?php
-							$count = 0;
-							foreach ( $metafields as $metafield => $setup ) {
-								$setup = $this->parse_args_metafield( $setup, $metafield );
-								if ( $count % 2 == 0 ) {
-									if ( $count > 0 ) {
-										echo '</tr>';
-									}
-									echo '<tr>';
+					<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
+						<div class="grid">
+							<?php
+								$count = 0;
+								foreach ( $metafields as $metafield => $setup ) {
+									$setup = $this->parse_args_metafield( $setup, $metafield );
+									?>
+									<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
+										<?php
+											$value = get_post_meta( $post->ID, $metafield, true );
+											if ( $setup['callback'] ) {
+												$value = call_user_func( $setup['callback'], $metafield, $post->ID );
+											}
+											echo $this->form_field( $setup, $metafield, $value );
+											?>
+									</div>
+									<?php
+									$count++;
 								}
 								?>
-							<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
-								<?php
-									$value = get_post_meta( $post->ID, $metafield, true );
-									if ( $setup['callback'] ) {
-										$value = call_user_func( $setup['callback'], $metafield, $post->ID );
-									}
-									echo $this->form_field( $setup, $metafield, $value );
-									?>
-							</div>
-							<?php
-								$count++;
-							}
-
-							if ( $count % 2 != 0 ) {
-								echo '<td class="item"></td></tr>'; // Close the row if there are an odd number of fields
-							}
-							?>
+						</div>
+						<div class="footer">
+							<small>
+								Version: <?= esc_attr( $this->version ) ?>
+							</small>
+						</div>
 					</div>
-					<div class="footer">
-						<small>
-							Version: <?= esc_attr( $this->version ) ?>
-						</small>
-					</div>
-				</div>
-				<?php
+					<?php
 				},
 				$post_type // The post type to which this meta box should be added
 			);
@@ -315,6 +311,9 @@ class WpMeta {
 			$args['value'] = $value;
 		}
 		// echo "<pre>"; print_r($args); echo "</pre>";
+
+		// copy text
+		$args['show_copy_key'] = true;
 		$a->setup_args( $args );
 		return $a->init_field();
 	}
