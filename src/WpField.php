@@ -220,8 +220,10 @@ class WpField {
 			$attribute['class'] = [ $this->name, 'regular-text' ];
 		}
 
-		// media
-		// if ($attribute[''])
+		// textarea
+		if($this->args['field'] == 'textarea'){
+			$attribute['rows'] = 5;
+		}
 
 		foreach ( $attribute as $key => $value ) {
 			$value = implode( " ", (array) $value );
