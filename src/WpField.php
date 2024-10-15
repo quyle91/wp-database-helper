@@ -145,7 +145,7 @@ class WpField {
 				$options = [];
 				$args    = [ 
 					'post_type'      => [ $this->args['post_select']['post_type'] ],
-					'post_status'    => [ 'publish' ],
+					'post_status'    => 'any',
 					'posts_per_page' => -1,
 					'orderby'        => 'name',
 					'order'          => 'asc',
