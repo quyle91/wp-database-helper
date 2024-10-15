@@ -40,8 +40,4 @@ body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy {
 body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy:hover {
   background-color: #2271b1;
   color: white;
-}
-body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy.show_copy_key {
-  position: static;
-  display: inline;
 }/*# sourceMappingURL=field.css.map */
