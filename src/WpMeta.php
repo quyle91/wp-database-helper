@@ -2,7 +2,7 @@
 namespace WpDatabaseHelper;
 
 class WpMeta {
-    private $version;
+	private $version;
 	private static $instance = null;
 	public static function get_instance() {
 		if ( is_null( self::$instance ) ) {
@@ -27,7 +27,7 @@ class WpMeta {
 	}
 
 	function enqueue() {
-		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
 		$enqueue_assets = function () use ($plugin_url) {
 			// Return early if the script is already enqueued
 			if ( wp_script_is( 'wpdatabasehelper-meta-js', 'enqueued' ) ) {
@@ -64,12 +64,12 @@ class WpMeta {
 			'admin_column'     => true,
 			'field_classes'    => [], // ['full_width']
 			'quick_edit'       => true,
-			'field'         => 'input', // select, input, media
+			'field'            => 'input', // select, input, media
 			'options'          => [], // [key=>value, key2=>value2]
 			'callback'         => false, // can be function(){return 'x';}
 			'post_type_select' => false, // post, page
 			'user_select'      => false, // true
-			'attribute'       => [],
+			'attribute'        => [],
 		];
 		return wp_parse_args( $setup, $default );
 	}
@@ -118,10 +118,8 @@ class WpMeta {
 				} else {
 					$value = get_post_meta( $post_id, $metafield, true );
 					if ( $value !== '' ) {
-						if ( $metafields[ $metafield ]['post_type_select'] ?? "" ) {
+						if ( $metafields[ $metafield ]['post_select'] ?? "" ) {
 							echo $this->get_admin_column_post( $value );
-						} elseif ( $metafields[ $metafield ]['user_select'] ?? "" ) {
-							echo $this->get_admin_column_user( $value );
 						} elseif ( ( $metafields[ $metafield ]['field'] ?? "" ) == 'media' ) {
 							echo wp_get_attachment_image( $value, 'thumbnail', false, [ 'style' => 'width: 50px; height: auto;' ] );
 						} else {
@@ -137,9 +135,9 @@ class WpMeta {
 
 	function setup_quick_edit_post( $post_type, $metafields ) {
 		/* Bởi vì quick edit được load bằng js, nên wordpress ko cung cấp param $post_id, 
-		vì vậy trong quick_edit_custom_box truyền value = ''
-		value được lấy từ js trong add_inline_data
-		field media cũng ko cần update lại nếu ko thực sự quan trọng */
+			  vì vậy trong quick_edit_custom_box truyền value = ''
+			  value được lấy từ js trong add_inline_data
+			  field media cũng ko cần update lại nếu ko thực sự quan trọng */
 
 		add_action( 'quick_edit_custom_box', function ($column_name, $_post_type) use ($post_type, $metafields) {
 			foreach ( $metafields as $metafield => $setup ) {
@@ -153,12 +151,12 @@ class WpMeta {
 									<?= esc_attr( $setup['label'] ) ?>
 								</span>
 								<span class="input-text-wrap">
-									<?php 
-									if($setup['label'] ?? ''){
+									<?php
+									if ( $setup['label'] ?? '' ) {
 										$setup['label'] = '';
 									}
 									$setup['wrap_class'] = 'full_width';
-									echo $this->form_field( $setup, $metafield, '' ); 
+									echo $this->form_field( $setup, $metafield, '' );
 									?>
 								</span>
 							</label>
@@ -225,34 +223,34 @@ class WpMeta {
 				function ($post) use ($metafields) {
 					wp_nonce_field( 'save_information_metabox', 'information_metabox_nonce' );
 					?>
-					<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
-						<div class="grid">
-							<?php
-								$count = 0;
-								foreach ( $metafields as $metafield => $setup ) {
-									$setup = $this->parse_args_metafield( $setup, $metafield );
-									?>
-									<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
-										<?php
-											$value = get_post_meta( $post->ID, $metafield, true );
-											if ( $setup['callback'] ) {
-												$value = call_user_func( $setup['callback'], $metafield, $post->ID );
-											}
-											echo $this->form_field( $setup, $metafield, $value );
-											?>
-									</div>
-									<?php
-									$count++;
-								}
+				<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
+					<div class="grid">
+						<?php
+							$count = 0;
+							foreach ( $metafields as $metafield => $setup ) {
+								$setup = $this->parse_args_metafield( $setup, $metafield );
 								?>
-						</div>
-						<div class="footer">
-							<small>
-								Version: <?= esc_attr( $this->version ) ?>
-							</small>
-						</div>
+							<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
+								<?php
+									$value = get_post_meta( $post->ID, $metafield, true );
+									if ( $setup['callback'] ) {
+										$value = call_user_func( $setup['callback'], $metafield, $post->ID );
+									}
+									echo $this->form_field( $setup, $metafield, $value );
+									?>
+							</div>
+							<?php
+								$count++;
+							}
+							?>
 					</div>
-					<?php
+					<div class="footer">
+						<small>
+							Version: <?= esc_attr( $this->version ) ?>
+						</small>
+					</div>
+				</div>
+				<?php
 				},
 				$post_type // The post type to which this meta box should be added
 			);
@@ -301,13 +299,13 @@ class WpMeta {
 		// echo "<pre>"; print_r($setup); echo "</pre>";
 
 		// integration
-		$args = $setup;
-		$args['attribute']['name'] = $metafield;
-		$args['attribute']['type'] = 'text';
+		$args                       = $setup;
+		$args['attribute']['name']  = $metafield;
+		$args['attribute']['type']  = 'text';
 		$args['attribute']['value'] = $value;
 
 		// textarea
-		if($args['field'] == 'textarea'){
+		if ( $args['field'] == 'textarea' ) {
 			$args['value'] = $value;
 		}
 		// echo "<pre>"; print_r($args); echo "</pre>";
@@ -320,10 +318,6 @@ class WpMeta {
 
 	function get_admin_column_post( $post_id ) {
 		return "<a target=blank href='" . get_edit_post_link( $post_id ) . "'>" . get_the_title( $post_id ) . "</a>";
-	}
-
-	function get_admin_column_user( $user_id ) {
-		return "<a target=blank href='" . get_edit_user_link( $user_id ) . "'>" . ( get_user_by( 'id', $user_id )->display_name ) . "</a>";
 	}
 
 	function get_options( $setup ) {
