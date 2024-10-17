@@ -42,8 +42,8 @@ class WpDatabase {
 		return '0.0.0';
 	}
 
-	function enqueue(){
-		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+	function enqueue() {
+		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
 		$enqueue_assets = function () use ($plugin_url) {
 			// Check if the script is already enqueued to avoid adding it multiple times
 			if ( wp_script_is( 'wpdatabasehelper-database-js', 'enqueued' ) ) {
@@ -66,15 +66,15 @@ class WpDatabase {
 				true
 			);
 
-			wp_add_inline_script( 
-				'wpdatabasehelper-database-js', 
-				'const wpdatabasehelper_database = ' . json_encode( 
+			wp_add_inline_script(
+				'wpdatabasehelper-database-js',
+				'const wpdatabasehelper_database = ' . json_encode(
 					array(
 						'ajax_url'           => admin_url( 'admin-ajax.php' ),
 						'nonce'              => wp_create_nonce( $this->table_name ),
 						'update_action_name' => $this->table_name . "_update_data"
 					)
-				), 
+				),
 				'before'
 			);
 		};
@@ -85,25 +85,25 @@ class WpDatabase {
 			add_action( 'admin_enqueue_scripts', $enqueue_assets );
 		}
 	}
-	
+
 	function init_table( $args = [] ) {
-		$this->init_table_data($args);
+		$this->init_table_data( $args );
 		$this->create_table_sql();
 		$this->create_table_view();
+		$this->create_ajax();
 
-		if($this->is_current_table_page()){
+		if ( $this->is_current_table_page() ) {
 			$this->merge_query_args();
-			$this->create_ajax();
 			$this->process_actions();
 		}
 	}
 
-	function init_table_data($args = []){
+	function init_table_data( $args = [] ) {
 		global $wpdb;
 		foreach ( (array) $args as $key => $value ) {
 			$this->$key = $value;
 		}
-		$this->table_name = $wpdb->prefix . $this->table_name;
+		$this->table_name   = $wpdb->prefix . $this->table_name;
 		$this->fields_sql   = implode( " ", (array) $this->fields );
 		$this->fields_array = $this->get_fields_array();
 		$this->menu_slug    = 'menu_' . $this->table_name;
@@ -440,7 +440,7 @@ class WpDatabase {
 
 	}
 
-	function merge_query_args($args = []){
+	function merge_query_args( $args = [] ) {
 		$defaults = [ 
 			'where'          => [],
 			'order'          => esc_attr( $_GET['order'] ?? 'DESC' ),
@@ -450,10 +450,10 @@ class WpDatabase {
 		];
 
 		// add fields on params
-		foreach ((array) $this->fields_array as $key => $value) {
+		foreach ( (array) $this->fields_array as $key => $value ) {
 			$name = $value['name'] ?? '';
-			if($name and isset($_GET[$name]) and $_GET[ $name ]){
-				$defaults['where'][$name] = $_GET[$name];
+			if ( $name and isset( $_GET[ $name ] ) and $_GET[ $name ] ) {
+				$defaults['where'][ $name ] = $_GET[ $name ];
 			}
 		}
 
@@ -487,8 +487,8 @@ class WpDatabase {
 			<div class="wrap_inner">
 
 				<?php
-					$args    = $this->query_args;
-					$records = $this->read( $args );
+				$args    = $this->query_args;
+				$records = $this->read( $args );
 				?>
 
 				<!-- navigation -->
@@ -502,7 +502,7 @@ class WpDatabase {
 
 				<form action="" method="post">
 					<input type="hidden" name="<?= $this->table_name ?>">
-					<?php					
+					<?php
 					echo $this->get_records( $records );
 
 					echo '<div class="bot">';
@@ -629,7 +629,7 @@ class WpDatabase {
 		return '';
 	}
 
-	function get_filters(){
+	function get_filters() {
 		ob_start();
 		$action = admin_url( "options-general.php" );
 		?>
@@ -640,23 +640,21 @@ class WpDatabase {
 				<input type="hidden" name="filters_<?= $this->table_name ?>">
 
 				<div class="form_wrap">
-					<?php 
-						foreach ((array)$this->fields_array as $key => $value) {
-							?>
-							<div class="per_page item">
-								<?php $id = wp_rand(); ?>
-								<div>
-									<label> 
+					<?php
+					foreach ( (array) $this->fields_array as $key => $value ) {
+						?>
+						<div class="per_page item">
+							<?php $id = wp_rand(); ?>
+							<div>
+								<label>
 									<?= esc_attr( $value['name'] ) ?>
-									</label>
-								</div>
-								<textarea 
-									id="<?= esc_attr( $id ) ?>" 								
-									name="<?= esc_attr( $value['name'] ) ?>"
-									><?= $_GET[ $value['name'] ] ?? "" ?></textarea>
+								</label>
 							</div>
-							<?php
-						}
+							<textarea id="<?= esc_attr( $id ) ?>"
+								name="<?= esc_attr( $value['name'] ) ?>"><?= $_GET[ $value['name'] ] ?? "" ?></textarea>
+						</div>
+						<?php
+					}
 					?>
 					<div class="per_page item">
 						<?php $id = wp_rand(); ?>
@@ -681,8 +679,8 @@ class WpDatabase {
 		?>
 		<div class="navigation">
 			<code>
-				<?php echo $this->sql; ?>
-			</code>
+						<?php echo $this->sql; ?>
+					</code>
 			<div class="actions">
 				<button class="button box_show_filter">Filter</button>
 				<button class="button button-primary box_add_record_button">Add record</button>
@@ -764,8 +762,8 @@ class WpDatabase {
 		return ob_get_clean();
 	}
 
-	function is_current_table_page(){
-		return(($_GET['page'] ?? '') == $this->menu_slug);
+	function is_current_table_page() {
+		return ( ( $_GET['page'] ?? '' ) == $this->menu_slug );
 	}
 }
 
