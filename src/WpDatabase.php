@@ -26,9 +26,20 @@ class WpDatabase {
 	];
 	private $fields_sql;
 	private $fields_array = [];
+	private $query_args = [];
+	private $sql;
 
 	function __construct() {
 		$this->version = $this->getVersion();
+	}
+
+	private function getVersion() {
+		$composerFile = __DIR__ . '/../composer.json';
+		if ( file_exists( $composerFile ) ) {
+			$composerData = json_decode( file_get_contents( $composerFile ), true );
+			return $composerData['version'] ?? '0.0.0';
+		}
+		return '0.0.0';
 	}
 
 	function enqueue(){
@@ -76,35 +87,38 @@ class WpDatabase {
 	}
 	
 	function init_table( $args = [] ) {
-		$this->update_fields( $args );
-		$this->maybe_create_table();
-		$this->create_view_pages();
-		$this->create_ajax();
-		$this->process_actions();
-	}
-    
-	private function getVersion() {
-		$composerFile = __DIR__ . '/../composer.json';
-		if ( file_exists( $composerFile ) ) {
-			$composerData = json_decode( file_get_contents( $composerFile ), true );
-			return $composerData['version'] ?? '0.0.0';
+		$this->init_table_data($args);
+		$this->create_table_sql();
+		$this->create_table_view();
+
+		if($this->is_current_table_page()){
+			$this->merge_query_args();
+			$this->create_ajax();
+			$this->process_actions();
 		}
-		return '0.0.0';
 	}
 
-	function update_fields( $args ) {
-
-		// applies args from param
+	function init_table_data($args = []){
+		global $wpdb;
 		foreach ( (array) $args as $key => $value ) {
 			$this->$key = $value;
 		}
-
-		global $wpdb;
-		$this->table_name   = $wpdb->prefix . $this->table_name;
+		$this->table_name = $wpdb->prefix . $this->table_name;
 		$this->fields_sql   = implode( " ", (array) $this->fields );
 		$this->fields_array = $this->get_fields_array();
 		$this->menu_slug    = 'menu_' . $this->table_name;
 		$this->wrap_id      = $this->table_name . rand();
+	}
+
+	function create_table_sql() {
+		global $wpdb;
+		$table_name = $this->table_name;
+		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
+			$charset_collate = $wpdb->get_charset_collate();
+			$sql             = "CREATE TABLE {$table_name} ({$this->fields_sql}) {$charset_collate};";
+			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+			dbDelta( $sql );
+		}
 	}
 
 	function get_fields_array() {
@@ -144,7 +158,7 @@ class WpDatabase {
 						$wpdb->query( $sql );
 					}
 
-					$this->maybe_create_table();
+					$this->create_table_sql();
 					wp_redirect( $this->get_page_url() ); // reset link
 				}
 			}
@@ -167,17 +181,6 @@ class WpDatabase {
 		} );
 	}
 
-	function maybe_create_table() {
-		global $wpdb;
-		$table_name = $this->table_name;
-		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
-			$charset_collate = $wpdb->get_charset_collate();
-			$sql             = "CREATE TABLE {$table_name} ({$this->fields_sql}) {$charset_collate};";
-			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
-			dbDelta( $sql );
-		}
-	}
-
 	// CRUD
 	function create( $data ) {
 		return $this->insert( $data );
@@ -191,7 +194,7 @@ class WpDatabase {
 		global $wpdb;
 
 		// get parse args from input
-		$args = $this->merge_get_args( $args );
+		$args = $this->merge_query_args( $args );
 
 		$sql = "SELECT * FROM $this->table_name WHERE 1=1";
 
@@ -253,12 +256,11 @@ class WpDatabase {
 			$offset = ( $args['paged'] - 1 ) * $args['posts_per_page'];
 			$sql .= $wpdb->prepare( " LIMIT %d OFFSET %d", $args['posts_per_page'], $offset );
 		}
+		$this->sql = $sql;
 
 		// for debug
 		if ( $show_sql ) {
-			echo "<div class=sql>";
-			echo '<code>' . ( $sql ) . '</code>';
-			echo "</div>";
+			echo "<div class=sql><code>$this->sql</code></div>";
 		}
 
 		return $wpdb->get_results( $sql, ARRAY_A );
@@ -387,7 +389,7 @@ class WpDatabase {
 		return $count;
 	}
 
-	function create_view_pages() {
+	function create_table_view() {
 		add_action( 'admin_menu', function () {
 			add_submenu_page(
 				"options-general.php",
@@ -438,7 +440,7 @@ class WpDatabase {
 
 	}
 
-	function merge_get_args( $args = [] ) {
+	function merge_query_args($args = []){
 		$defaults = [ 
 			'where'          => [],
 			'order'          => esc_attr( $_GET['order'] ?? 'DESC' ),
@@ -446,6 +448,14 @@ class WpDatabase {
 			'posts_per_page' => (int) ( $_GET['posts_per_page'] ?? 100 ),
 			'paged'          => (int) ( $_GET['paged'] ?? 1 ),
 		];
+
+		// add fields on params
+		foreach ((array) $this->fields_array as $key => $value) {
+			$name = $value['name'] ?? '';
+			if($name and isset($_GET[$name]) and $_GET[ $name ]){
+				$defaults['where'][$name] = $_GET[$name];
+			}
+		}
 
 		if ( !$defaults['posts_per_page'] ) {
 			$defaults['posts_per_page'] = 100;
@@ -455,7 +465,8 @@ class WpDatabase {
 			$defaults['paged'] = 1;
 		}
 
-		return wp_parse_args( $args, $defaults );
+		$this->query_args = wp_parse_args( $args, $defaults );
+		return $this->query_args;
 	}
 
 	function html() {
@@ -474,15 +485,24 @@ class WpDatabase {
 
 			<!-- html -->
 			<div class="wrap_inner">
-				<!-- filters -->
-				<?php echo $this->get_filters(); ?>
+
+				<?php
+					$args    = $this->query_args;
+					$records = $this->read( $args );
+				?>
+
+				<!-- navigation -->
+				<?php echo $this->get_navigation(); ?>
+
 				<!-- add -->
 				<?php echo $this->get_box_add_record(); ?>
+
+				<!-- filter -->
+				<?php echo $this->get_filters(); ?>
+
 				<form action="" method="post">
 					<input type="hidden" name="<?= $this->table_name ?>">
-					<?php
-					$args    = $this->merge_get_args();
-					$records = $this->read( $args, true );
+					<?php					
 					echo $this->get_records( $records );
 
 					echo '<div class="bot">';
@@ -563,7 +583,7 @@ class WpDatabase {
 	}
 
 	function get_pagination() {
-		$args       = $this->merge_get_args();
+		$args       = $this->query_args;
 		$table_name = $this->menu_slug;
 		$count_all  = $this->get_log_count();
 		?>
@@ -577,7 +597,7 @@ class WpDatabase {
 	}
 
 	function get_pagination_links( $count_all, $page, $args ) {
-		$args           = $this->merge_get_args();
+		$args           = $this->query_args;
 		$posts_per_page = $args['posts_per_page'];
 		$paged          = $args['paged'];
 		$total_pages    = ceil( $count_all / $posts_per_page );
@@ -609,23 +629,63 @@ class WpDatabase {
 		return '';
 	}
 
-	function get_filters() {
+	function get_filters(){
 		ob_start();
 		$action = admin_url( "options-general.php" );
 		?>
-		<div class="filters">
+		<div class="filters hidden">
+			<h4>Filters</h4>
 			<form action="<?= esc_url( $action ) ?>" method="get">
 				<input type="hidden" name="page" value="<?= esc_attr( $this->menu_slug ) ?>">
 				<input type="hidden" name="filters_<?= $this->table_name ?>">
-				<span>
-					Per page:
-				</span>
-				<input type="text" name="posts_per_page" placeholder="100" value="<?= $_GET['posts_per_page'] ?? "100" ?>">
 
+				<div class="form_wrap">
+					<?php 
+						foreach ((array)$this->fields_array as $key => $value) {
+							?>
+							<div class="per_page item">
+								<?php $id = wp_rand(); ?>
+								<div>
+									<label> 
+									<?= esc_attr( $value['name'] ) ?>
+									</label>
+								</div>
+								<textarea 
+									id="<?= esc_attr( $id ) ?>" 								
+									name="<?= esc_attr( $value['name'] ) ?>"
+									><?= $_GET[ $value['name'] ] ?? "" ?></textarea>
+							</div>
+							<?php
+						}
+					?>
+					<div class="per_page item">
+						<?php $id = wp_rand(); ?>
+						<div>
+							<label>
+								<?= esc_attr( 'posts per page' ) ?>
+							</label>
+						</div>
+						<textarea id="<?= esc_attr( $id ) ?>"
+							name="<?= esc_attr( 'posts_per_page' ) ?>"><?= $_GET['posts_per_page'] ?? "100" ?></textarea>
+					</div>
+				</div>
 				<button class="button">Submit</button>
 			</form>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	function get_navigation() {
+		ob_start();
+		?>
+		<div class="navigation">
+			<code>
+				<?php echo $this->sql; ?>
+			</code>
 			<div class="actions">
-				<button class="button box_add_record_button">Add</button>
+				<button class="button box_show_filter">Filter</button>
+				<button class="button button-primary box_add_record_button">Add record</button>
 			</div>
 		</div>
 		<?php
@@ -702,6 +762,10 @@ class WpDatabase {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	function is_current_table_page(){
+		return(($_GET['page'] ?? '') == $this->menu_slug);
 	}
 }
 

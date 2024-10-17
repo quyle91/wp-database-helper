@@ -8,6 +8,7 @@ body .wpdatabasehelper_wrap .records,
 body .wpdatabasehelper_wrap .bulk,
 body .wpdatabasehelper_wrap .sql,
 body .wpdatabasehelper_wrap .pagination,
+body .wpdatabasehelper_wrap .navigation,
 body .wpdatabasehelper_wrap .note {
   background-color: white;
   margin-bottom: 20px;
@@ -16,11 +17,6 @@ body .wpdatabasehelper_wrap .note {
 body .wpdatabasehelper_wrap .hidden {
   display: none !important;
   visibility: hidden !important;
-}
-body .wpdatabasehelper_wrap .filters {
-  display: flex;
-  gap: 10px;
-  justify-content: space-between;
 }
 body .wpdatabasehelper_wrap th small {
   display: block;
@@ -85,13 +81,20 @@ body .wpdatabasehelper_wrap .note {
   gap: 10px;
   justify-content: space-between;
 }
-body .wpdatabasehelper_wrap .box_add_record .form_wrap {
+body .wpdatabasehelper_wrap .form_wrap {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
   gap: 10px;
   margin-bottom: 10px;
 }
-body .wpdatabasehelper_wrap .box_add_record .form_wrap .item textarea {
+body .wpdatabasehelper_wrap .form_wrap .item textarea {
   width: 100%;
+}
+body .wpdatabasehelper_wrap .navigation {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: flex-start;
 }/*# sourceMappingURL=database.css.map */

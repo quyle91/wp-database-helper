@@ -73,5 +73,9 @@ document.addEventListener('DOMContentLoaded', function () {
         wrap.querySelector('.box_add_record_button').addEventListener('click', function () {
             wrap.querySelector('.box_add_record').classList.toggle('hidden');
         });
+
+        wrap.querySelector('.box_show_filter').addEventListener('click', function () {
+            wrap.querySelector('.filters').classList.toggle('hidden');
+        });
     });
 });

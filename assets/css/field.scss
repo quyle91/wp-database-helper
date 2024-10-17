@@ -27,10 +27,12 @@ body{
                 outline: none;
                 opacity: 1;
                 cursor: pointer;
-                margin: 0 5px 5px 0;
-                padding: 0 5px;
+                margin: 0;
+                padding: 5px;
                 background-color: white;
-                font-size: 0.75em;
+                font-size: 0.85em;
+                line-height: 1em;
+                border-radius: 3px;
 
                 &:hover{
                     background-color: #2271b1;
