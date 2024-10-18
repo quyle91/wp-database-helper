@@ -168,7 +168,11 @@ class WpField {
 			$this->args['options'] = $options;
 
 			// selected
-			$this->args['selected'] = $this->args['attribute']['value'] ?? '';
+			if(!$this->args['selected']){
+				if($this->args['attribute']['value'] ?? ''){
+					$this->args['selected'] = $this->args['attribute']['value'];
+				}
+			}
 		}
 
 		// only for checkbox
