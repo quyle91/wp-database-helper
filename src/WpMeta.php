@@ -284,9 +284,10 @@ class WpMeta {
 
 				$new_value = sanitize_text_field( $_value );
 				if ( $setup['field'] == 'textarea' ) {
-					$new_value = sanitize_textarea_field( $_value );
+					// becareful with santize before can be change value strings
+					$new_value = wp_unslash( $_value );
 				}
-				error_log( $new_value );
+				error_log( "$metafield : $new_value" );
 				update_post_meta( $post_id, $metafield, $new_value );
 			}
 
@@ -308,7 +309,6 @@ class WpMeta {
 		if ( $args['field'] == 'textarea' ) {
 			$args['value'] = $value;
 		}
-		// echo "<pre>"; print_r($args); echo "</pre>";
 
 		// copy text
 		$args['show_copy_key'] = true;

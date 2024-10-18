@@ -117,8 +117,9 @@ class WpField {
 
 		// only for select dropdown
 		if($this->args['field']){
+
 			// id
-			$this->id                      = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name . "_" . wp_rand();
+			$this->id = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name . "_" . wp_rand();
 			$this->args['attribute']['id'] = $this->id;
 
 			// options
@@ -165,6 +166,9 @@ class WpField {
 			}
 
 			$this->args['options'] = $options;
+
+			// selected
+			$this->args['selected'] = $this->args['attribute']['value'] ?? '';
 		}
 
 		// only for checkbox
