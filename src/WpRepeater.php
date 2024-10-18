@@ -61,7 +61,7 @@ class WpRepeater {
 	}
 
 	function enqueue() {
-		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
 		$enqueue_assets = function () use ($plugin_url) {
 			// Return early if the script is already enqueued
 			if ( wp_script_is( 'wpdatabasehelper-repeater-js', 'enqueued' ) ) {
@@ -96,10 +96,11 @@ class WpRepeater {
 		$this->enqueue();
 		ob_start();
 		?>
-		<div class="<?= esc_attr($this->name) ?> <?= esc_attr( $this->name ) ?>_list_items" prefix="<?= esc_attr( $this->prefix ) ?>">
+		<div class="<?= esc_attr( $this->name ) ?> <?= esc_attr( $this->name ) ?>_list_items"
+			prefix="<?= esc_attr( $this->prefix ) ?>">
 			<?php
 			if ( $this->repeater_is_empty( $this->current ) ) {
-				echo '<code class="'.$this->name.'_is_empty">' . __( 'Empty' ) . '</code>';
+				echo '<code class="' . $this->name . '_is_empty">' . __( 'Empty' ) . '</code>';
 			}
 
 			echo $this->repeater(
@@ -118,9 +119,15 @@ class WpRepeater {
 	function repeater( $current, $prefix, $field_config, $level, $parent_key ) {
 		ob_start();
 		foreach ( $current as $key => $value ) {
+
+			// check level 0 and init key -> wrong format
+			if ( $level == 0 and !is_int( $key ) ) {
+				continue;
+			}
+
 			if ( is_array( $value ) ) {
 				?>
-				<fieldset class="<?php if ( is_int( $parent_key ) ) echo $this->name.'_list_items'; ?>"
+				<fieldset class="<?php if ( is_int( $parent_key ) ) echo $this->name . '_list_items'; ?>"
 					prefix="<?= esc_attr( $prefix . "[$key]" ); ?>">
 					<?php
 					echo $this->repeater( $value, $prefix . "[$key]", $field_config, $level + 1, $key );
@@ -225,7 +232,7 @@ class WpRepeater {
 
 		ob_start();
 
-		echo '<div class="'.$this->name.'_control">';
+		echo '<div class="' . $this->name . '_control">';
 		echo $this->repeater_button_move( $level, $key );
 		echo $this->repeater_button_delete( $level, $key );
 		echo '</div>';
