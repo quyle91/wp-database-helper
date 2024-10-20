@@ -1,44 +1,46 @@
 body{
-    .WpDatabaseHelper_field_wrap{
-        position: relative;
-        display: inline-block;
-        margin-bottom: 5px;
-        vertical-align: top;
+    .WpDatabaseHelper_field{
+        background-color: #ededed;
+        border: 2px solid #2271b1;
+        max-width: 100%;
     
-        &.type-file {
-            display: block;
+        &:not([type="checkbox"], [type="button"]) {
+            padding-bottom: 5px;
+        }
+    
+        &_click_to_copy {
+            border: 1px dashed gray;
+            outline: none;
+            opacity: 1;
+            cursor: pointer;
+            margin: 0;
+            padding: 0px 5px;
+            line-height: 1.6;
+            background-color: white;
+            font-size: 0.85em;
+            border-radius: 3px;
+            &:hover {
+                background-color: #2271b1;
+                color: white;
+            }
         }
 
-        &.full_width{
-            width: 100%;
-        }
-
-        .WpDatabaseHelper_field {
-            background-color: #ededed;
-            border: 2px solid #2271b1;
-            max-width: 100%;
-
-            &:not([type="checkbox"], [type="button"]) {
-                padding-bottom: 5px;
+        &_wrap {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 5px;
+            vertical-align: top;
+    
+            &.type-file {
+                display: block;
+            }
+    
+            &.full_width {
+                width: 100%;
             }
 
-            &_click_to_copy{
-                border: none;
-                outline: none;
-                opacity: 1;
-                cursor: pointer;
-                margin: 0;
-                padding: 5px;
-                background-color: white;
-                font-size: 0.85em;
-                line-height: 1em;
-                border-radius: 3px;
-
-                &:hover{
-                    background-color: #2271b1;
-                    color: white;
-                }
-
+            .WpDatabaseHelper_field_click_to_copy{
+                border-color: transparent;
                 position: absolute;
                 bottom: -8px;
                 right: 5px;
@@ -48,12 +50,10 @@ body{
                 -webkit-line-clamp: 1;
                 -webkit-box-orient: vertical;
                 overflow: hidden;
-
-                &.show_copy_key{
-                    // position: static;
-                    // display: inline;
-                }
             }
+        }
+        &_suggest{
+
         }
     }
 }

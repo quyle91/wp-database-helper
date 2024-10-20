@@ -350,25 +350,6 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_suggest() {
-		if ( !$this->args['suggest'] ) {
-			return;
-		}
-		$this->args['suggest'] = (array) $this->args['suggest'];
-		ob_start();
-		foreach ( (array) $this->args['suggest'] as $key => $suggest ) {
-			?>
-			<small>
-				<strong>*<?= _ex( 'Suggested', 'custom headers' ) ?>: </strong>
-				<span class="<?= esc_attr( $this->name ) ?>_click_to_copy" data-text="<?= esc_attr( $suggest ); ?>">
-					<?= esc_attr( $suggest ); ?>
-				</span>
-			</small>
-			<?php
-		}
-		return ob_get_clean();
-	}
-
 	function get_copy() {
 		$field = $this->args['field'] ?? '';
 		$name  = $this->args['attribute']['name'] ?? '';
@@ -403,13 +384,32 @@ class WpField {
 		$text = $this->args['show_copy_key'] ? $name : __( 'Copy' );
 
 		?>
-		<code
+		<span
 			class="<?= esc_attr( $classes ) ?>" 
 			data-text="<?= esc_attr( $name ) ?>"
 			>
 			<?= esc_attr( $text ) ?>
-		</code>
+		</span>
 		<?php
+		return ob_get_clean();
+	}
+
+	function get_suggest() {
+		if ( !$this->args['suggest'] ) {
+			return;
+		}
+		$this->args['suggest'] = (array) $this->args['suggest'];
+		ob_start();
+		foreach ( (array) $this->args['suggest'] as $key => $suggest ) {
+			?>
+			<small class="<?= esc_attr( $this->name ) ?>_suggest">
+				<strong>*<?= _ex( 'Suggested', 'custom headers' ) ?>: </strong>
+				<span class="<?= esc_attr( $this->name ) ?>_click_to_copy" data-text="<?= esc_attr( $suggest ); ?>">
+					<?= esc_attr( $suggest ); ?>
+				</span>
+			</small>
+			<?php
+		}
 		return ob_get_clean();
 	}
 
