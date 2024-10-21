@@ -198,15 +198,61 @@ class WpDatabase {
 		return $this->read( $args, $show_sql );
 	}
 
+	// parse with get params
+	function set_query_args( $args = [] ) {
+
+		// default from get params
+		$defaults = [ 
+			'where'          => [],
+			'order'          => esc_attr( $_GET['order'] ?? 'DESC' ),
+			'order_by'       => esc_attr( $_GET['order_by'] ?? 'id' ),
+			'posts_per_page' => (int) ( $_GET['posts_per_page'] ?? 100 ),
+			'paged'          => (int) ( $_GET['paged'] ?? 1 ),
+		];
+
+		// add fields on params
+		foreach ( (array) $this->fields_array as $key => $value ) {
+			$name = $value['name'] ?? '';
+			if ( $name and isset( $_GET[ $name ] ) and $_GET[ $name ] ) {
+				$defaults['where'][ $name ] = $_GET[ $name ];
+			}
+		}
+
+		if ( !$defaults['posts_per_page'] ) {
+			$defaults['posts_per_page'] = 100;
+		}
+
+		if ( !$defaults['paged'] ) {
+			$defaults['paged'] = 1;
+		}
+
+		// parse with $args
+		$this->query_args = wp_parse_args( $args, $defaults );
+		// error_log(json_encode($this->query_args));
+		return $this->query_args;
+	}
+
 	function set_sql( $args){
 		global $wpdb;
 
 		// get parse args from input
 		$args = $this->set_query_args( $args );
+		// error_log(json_encode($args));
 
 		$sql = "SELECT * FROM $this->table_name WHERE 1=1";
+		
+		// fields in $args
+		foreach ( (array) $this->fields_array as $key => $value ) {
+			if(isset($args[$value['name']]) and $args[$value['name']]){
+				if(array_key_exists($value['name'], $args)){
+					$_name = $value['name'];
+					$_value = $args[$value['name']];
+					$sql .= " AND ($_name = '$_value')";
+				}
+			}
+		}
 
-		// where sql
+		// fields in $args['where]
 		if ( !empty( $args['where'] ) ) {
 
 			// OLD - simple
@@ -265,6 +311,7 @@ class WpDatabase {
 			$sql .= $wpdb->prepare( " LIMIT %d OFFSET %d", $args['posts_per_page'], $offset );
 		}
 
+		// error_log(json_encode($sql));
 		return $sql;
 	}
 
@@ -467,35 +514,6 @@ class WpDatabase {
 			wp_die();
 		} );
 
-	}
-
-	function set_query_args( $args = [] ) {
-		$defaults = [ 
-			'where'          => [],
-			'order'          => esc_attr( $_GET['order'] ?? 'DESC' ),
-			'order_by'       => esc_attr( $_GET['order_by'] ?? 'id' ),
-			'posts_per_page' => (int) ( $_GET['posts_per_page'] ?? 100 ),
-			'paged'          => (int) ( $_GET['paged'] ?? 1 ),
-		];
-
-		// add fields on params
-		foreach ( (array) $this->fields_array as $key => $value ) {
-			$name = $value['name'] ?? '';
-			if ( $name and isset( $_GET[ $name ] ) and $_GET[ $name ] ) {
-				$defaults['where'][ $name ] = $_GET[ $name ];
-			}
-		}
-
-		if ( !$defaults['posts_per_page'] ) {
-			$defaults['posts_per_page'] = 100;
-		}
-
-		if ( !$defaults['paged'] ) {
-			$defaults['paged'] = 1;
-		}
-
-		$this->query_args = wp_parse_args( $args, $defaults );
-		return $this->query_args;
 	}
 
 	function html() {
