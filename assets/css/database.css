@@ -2,14 +2,7 @@ body .wpdatabasehelper_wrap h2 small {
   background-color: #ededed;
   font-size: 11px;
 }
-body .wpdatabasehelper_wrap .filters,
-body .wpdatabasehelper_wrap .box_add_record,
-body .wpdatabasehelper_wrap .records,
-body .wpdatabasehelper_wrap .bulk,
-body .wpdatabasehelper_wrap .sql,
-body .wpdatabasehelper_wrap .pagination,
-body .wpdatabasehelper_wrap .navigation,
-body .wpdatabasehelper_wrap .note {
+body .wpdatabasehelper_wrap .section {
   background-color: white;
   margin-bottom: 20px;
   padding: 10px;

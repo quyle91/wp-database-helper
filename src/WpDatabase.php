@@ -28,6 +28,8 @@ class WpDatabase {
 	private $fields_array = [];
 	private $query_args = [];
 	private $sql;
+	public $records = [];
+	public $records_count;
 
 	function __construct() {
 		$this->version = $this->getVersion();
@@ -93,8 +95,9 @@ class WpDatabase {
 		$this->create_ajax();
 
 		if ( $this->is_current_table_page() ) {
-			$this->merge_query_args();
-			$this->process_actions();
+			$this->process_table_actions();
+			$this->set_query_args();
+			$this->set_records();
 		}
 	}
 
@@ -143,7 +146,7 @@ class WpDatabase {
 		return $return;
 	}
 
-	function process_actions() {
+	function process_table_actions() {
 		add_action( 'admin_init', function () {
 
 			// reset table
@@ -181,6 +184,11 @@ class WpDatabase {
 		} );
 	}
 
+	function set_records(){
+		$this->records = $this->read( $this->query_args );
+		$this->records_count = $this->read_count( $this->query_args );
+	}
+
 	// CRUD
 	function create( $data ) {
 		return $this->insert( $data );
@@ -190,11 +198,11 @@ class WpDatabase {
 		return $this->read( $args, $show_sql );
 	}
 
-	function read( $args, $show_sql = false ) {
+	function set_sql( $args){
 		global $wpdb;
 
 		// get parse args from input
-		$args = $this->merge_query_args( $args );
+		$args = $this->set_query_args( $args );
 
 		$sql = "SELECT * FROM $this->table_name WHERE 1=1";
 
@@ -256,14 +264,41 @@ class WpDatabase {
 			$offset = ( $args['paged'] - 1 ) * $args['posts_per_page'];
 			$sql .= $wpdb->prepare( " LIMIT %d OFFSET %d", $args['posts_per_page'], $offset );
 		}
-		$this->sql = $sql;
+
+		return $sql;
+	}
+
+	function read_count($args) {
+
+		// Kiểm tra và lấy SQL
+		if ( !$this->sql ) {
+			$this->sql = $this->set_sql( $args );
+		}
+
+		// count(*)
+		$sql_count = preg_replace( '/^SELECT .*? FROM/', 'SELECT COUNT(*) FROM', $this->sql );
+
+		// order by , limit, offset
+		$sql_count = preg_replace( '/ORDER BY .*/', '', $sql_count );
+		$sql_count = preg_replace( '/LIMIT .*/', '', $sql_count );
+		$sql_count = preg_replace( '/OFFSET .*/', '', $sql_count );
+
+		global $wpdb;
+		return $wpdb->get_var( $sql_count );
+	}
+
+	function read( $args, $show_sql = false ) {
+
+		// get sql
+		$this->sql = $this->set_sql($args);
 
 		// for debug
 		if ( $show_sql ) {
 			echo "<div class=sql><code>$this->sql</code></div>";
 		}
 
-		return $wpdb->get_results( $sql, ARRAY_A );
+		global $wpdb;
+		return $wpdb->get_results( $this->sql, ARRAY_A );
 	}
 
 	function update( $data, $modified_date_column = false ) {
@@ -383,12 +418,6 @@ class WpDatabase {
 		return $result;
 	}
 
-	function get_log_count() {
-		global $wpdb;
-		$count = $wpdb->get_var( "SELECT count(id) FROM $this->table_name" );
-		return $count;
-	}
-
 	function create_table_view() {
 		add_action( 'admin_menu', function () {
 			add_submenu_page(
@@ -440,7 +469,7 @@ class WpDatabase {
 
 	}
 
-	function merge_query_args( $args = [] ) {
+	function set_query_args( $args = [] ) {
 		$defaults = [ 
 			'where'          => [],
 			'order'          => esc_attr( $_GET['order'] ?? 'DESC' ),
@@ -473,6 +502,7 @@ class WpDatabase {
 		if ( !current_user_can( 'manage_options' ) ) {
 			wp_die( 'Can not manage this page' );
 		}
+
 		?>
 		<div class="wpdatabasehelper_wrap wrap <?= esc_attr( $this->wrap_id ) ?>">
 			<h2>
@@ -486,11 +516,6 @@ class WpDatabase {
 			<!-- html -->
 			<div class="wrap_inner">
 
-				<?php
-				$args    = $this->query_args;
-				$records = $this->read( $args );
-				?>
-
 				<!-- navigation -->
 				<?php echo $this->get_navigation(); ?>
 
@@ -498,12 +523,15 @@ class WpDatabase {
 				<?php echo $this->get_box_add_record(); ?>
 
 				<!-- filter -->
-				<?php echo $this->get_filters(); ?>
+				<?php echo $this->get_search_form(); ?>
+
+				<!-- search results -->
+				<?php echo $this->get_search_count(); ?>
 
 				<form action="" method="post">
 					<input type="hidden" name="<?= $this->table_name ?>">
 					<?php
-					echo $this->get_records( $records );
+					echo $this->get_table_items();
 
 					echo '<div class="bot">';
 					echo $this->get_bulk_edit();
@@ -518,10 +546,10 @@ class WpDatabase {
 		<?php
 	}
 
-	function get_records( $records ) {
+	function get_table_items() {
 		ob_start();
 		?>
-		<div class="records">
+		<div class="section records">
 			<table data-table-name="<?= $this->table_name ?>">
 				<tr>
 					<th></th>
@@ -539,7 +567,7 @@ class WpDatabase {
 					?>
 				</tr>
 				<?php
-				foreach ( (array) $records as $key => $record ) {
+				foreach ( (array) $this->records as $key => $record ) {
 					?>
 					<tr>
 						<td> <input type="checkbox" name="ids[]" value="<?= $record['id'] ?>"> </td>
@@ -567,7 +595,7 @@ class WpDatabase {
 	function get_bulk_edit() {
 		ob_start();
 		?>
-		<div class="bulk">
+		<div class="section bulk">
 			<label for="ac">
 				<input id="ac" type="checkbox" class="check_all">
 				Check All
@@ -585,12 +613,12 @@ class WpDatabase {
 	function get_pagination() {
 		$args       = $this->query_args;
 		$table_name = $this->menu_slug;
-		$count_all  = $this->get_log_count();
+		$count      = $this->records_count;
 		?>
-		<div class="pagination">
+		<div class="section pagination">
 			<?php
-			echo $this->get_pagination_links( $count_all, $table_name, $args );
-			echo "<span class='button'> $count_all items </span>";
+			echo $this->get_pagination_links( $count, $table_name, $args );
+			echo "<span class='button'> $count record(s) </span>";
 			?>
 		</div>
 		<?php
@@ -629,15 +657,15 @@ class WpDatabase {
 		return '';
 	}
 
-	function get_filters() {
+	function get_search_form() {
 		ob_start();
 		$action = admin_url( "options-general.php" );
 		?>
-		<div class="filters hidden">
+		<div class="section filters hidden">
 			<h4>Filters</h4>
 			<form action="<?= esc_url( $action ) ?>" method="get">
 				<input type="hidden" name="page" value="<?= esc_attr( $this->menu_slug ) ?>">
-				<input type="hidden" name="filters_<?= $this->table_name ?>">
+				<input type="hidden" name="search_<?= $this->table_name ?>">
 
 				<div class="form_wrap">
 					<?php
@@ -674,16 +702,29 @@ class WpDatabase {
 		return ob_get_clean();
 	}
 
+	function get_search_count(){
+		if(!isset($_GET['search_'.$this->table_name])){
+			return;
+		}
+		ob_start();
+		?>
+		<div class="section search_count">
+			<?php echo sprintf( __( "Found %d record(s)" ),  $this->records_count ) ?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
 	function get_navigation() {
 		ob_start();
 		?>
-		<div class="navigation">
+		<div class="section navigation">
 			<code>
-						<?php echo $this->sql; ?>
-					</code>
+				<?php echo $this->sql; ?>
+			</code>
 			<div class="actions">
-				<button class="button box_show_filter">Filter</button>
-				<button class="button button-primary box_add_record_button">Add record</button>
+				<button class="button box_show_filter"><?= __('Search') ?></button>
+				<button class="button button-primary box_add_record_button"><?= __('Add') ?></button>
 			</div>
 		</div>
 		<?php
@@ -709,7 +750,7 @@ class WpDatabase {
 	function get_box_add_record() {
 		$action = $this->get_page_url();
 		?>
-		<div class="box_add_record hidden">
+		<div class="section box_add_record hidden">
 			<h4>Add new </h4>
 			<form action="<?= esc_url( $action ) ?>" method="post">
 				<input type="hidden" name="page" value="<?= esc_attr( $this->menu_slug ) ?>">
@@ -743,7 +784,7 @@ class WpDatabase {
 	function get_note() {
 		ob_start();
 		?>
-		<div class="note">
+		<div class="section note">
 			<small>
 				<?php
 				$reset_link = $this->get_page_url(
