@@ -37,7 +37,7 @@ class WpField {
 		],
 		'term_select' => [
 			// 'taxonomy'       => 'age-categories',
-			// 'option_value'   => 'name',
+			// 'option_value'   => 'term_id',
 			// 'option_display' => 'name',
 		],
 		'post_select' => [
@@ -136,8 +136,12 @@ class WpField {
 					'hide_empty' => 'false',
 				] );
 				foreach ( $terms as $key => $term ) {
-					$_key             = $term->{$this->args['term_select']['option_value']};
-					$_value           = $term->{$this->args['term_select']['option_display']};
+
+					$_key_ = $this->args['term_select']['option_value'] ?? 'term_id';
+					$_value_ = $this->args['term_select']['option_value'] ?? 'name';
+
+					$_key             = $term->{$_key_};
+					$_value           = $term->{$_value_};
 					$options[ $_key ] = $_value;
 				}
 			}
@@ -157,8 +161,12 @@ class WpField {
 					while ( $__the_query->have_posts() ) :
 						$__the_query->the_post();
 						global $post;
-						$_key             = $post->{$this->args['post_select']['option_value']};
-						$_value           = $post->{$this->args['post_select']['option_display']};
+
+						$_key_            = $this->args['term_select']['option_value'] ?? 'ID';
+						$_value_          = $this->args['term_select']['option_value'] ?? 'post_title';
+
+						$_key             = $post->{$_key_};
+						$_value           = $post->{$_value_};
 						$options[ $_key ] = $_value;
 					endwhile;
 					wp_reset_postdata();
