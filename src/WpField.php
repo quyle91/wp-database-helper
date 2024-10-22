@@ -359,7 +359,15 @@ class WpField {
 	}
 
 	function get_copy() {
+
+		// checkbox
+		if ( ( $this->args['attribute']['type'] ?? '' ) == 'checkbox' ) {
+			return;
+		}
+
 		$name = $this->args['attribute']['name'] ?? '';
+
+
 		ob_start();
 		$classes = implode( " ", [ 
 			$this->name . "_click_to_copy",
