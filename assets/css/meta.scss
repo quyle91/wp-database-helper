@@ -27,12 +27,8 @@ body{
             .WpDatabaseHelper_field_wrap {
                 width: 100%;
 
-                .WpDatabaseHelper_field {
+                .WpDatabaseHelper_field:not([type=checkbox]) {
                     width: 100%;
-                    &[type=checkbox]{
-                        width: 19px;
-                        height: 19px;
-                    }
                 }
             }
         }

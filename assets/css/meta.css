@@ -22,12 +22,8 @@ body .WpDatabaseHelper_meta-meta-box-container .item.full_width {
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap {
   width: 100%;
 }
-body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field {
+body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox]) {
   width: 100%;
-}
-body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=checkbox] {
-  width: 19px;
-  height: 19px;
 }
 body .WpDatabaseHelper_meta-meta-box-container .title {
   margin-bottom: 5px;

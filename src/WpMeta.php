@@ -279,7 +279,7 @@ class WpMeta {
 			if ( !current_user_can( 'edit_post', $post_id ) ) {
 				return;
 			}
-
+			// echo "<pre>"; print_r($_POST); echo "</pre>"; die;
 			foreach ( $metafields as $metafield => $setup ) {
 				$setup  = $this->parse_args_metafield( $setup, $metafield );
 				$_value = $_POST[ $metafield ] ?? '';
@@ -296,28 +296,31 @@ class WpMeta {
 		} );
 	}
 
-	function init_field( $setup, $metafield, $value ) {
+	function init_field( $setup, $metafield, $meta_value ) {
 		$this->enqueue();
-		$a = \WpDatabaseHelper\Init::WpField();
-
 		// integration
-		$args                       = $setup;
-		$args['attribute']['name']  = $metafield;
-		$args['attribute']['type']  = $setup['attribute']['type'] ?? 'text';
-		
+		$args = $setup;
+		$args['show_copy_key'] = true;
+		$args['attribute']['type'] = $setup['attribute']['type'] ?? 'text';
+		$args['attribute']['name'] = $metafield;
+		$args['attribute']['value'] = $meta_value; // be careful for input checkbox
 
 		// textarea
 		if ( $args['field'] == 'textarea' ) {
-			$args['value'] = $value;
+			$args['value'] = $meta_value;
 		}
 
-		// checkbox
-		if ( $args['field'] == 'input' and $args['attribute']['type'] == 'checkbox' ) {
-			$args['attribute']['checked'] = ($value == $args['attribute']['value']) ? 'checked' : '';
+		// checkbox - radio
+		if ( in_array( $args['attribute']['type'] ?? '',['checkbox', 'radio']) ) {
+			//restore value of dom to attritube['value'] 
+			$args['attribute']['value'] = $setup['attribute']['value'];
+			if( $args['attribute']['value'] == $meta_value){
+				$args['attribute']['checked'] = 'checked';
+			}
 		}
 
-		// copy text
-		$args['show_copy_key'] = true;
+		// init field
+		$a = \WpDatabaseHelper\Init::WpField();
 		$a->setup_args( $args );
 		return $a->init_field();
 	}
