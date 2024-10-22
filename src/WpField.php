@@ -185,7 +185,13 @@ class WpField {
 
 		// only for checkbox
 		if ( ( $this->args['attribute']['type'] ?? '' ) == 'checkbox' ) {
+			// set label position
 			$this->args['label_position'] = 'after';
+
+			// set value
+			if($this->args['attribute']['value'] ?? ''){
+				$this->args['attribute']['value'] = "on";
+			}
 		}
 	}
 
@@ -325,6 +331,7 @@ class WpField {
 	}
 
 	function input_checkbox() {
+		
 		// set checked 
 		if ( isset( $this->args['attribute']['checked'] ) and !$this->args['attribute']['checked'] ) {
 			unset( $this->args['attribute']['checked'] );
@@ -366,7 +373,6 @@ class WpField {
 		}
 
 		$name = $this->args['attribute']['name'] ?? '';
-
 
 		ob_start();
 		$classes = implode( " ", [ 

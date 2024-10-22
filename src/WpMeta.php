@@ -289,7 +289,7 @@ class WpMeta {
 					// becareful with santize before can be change value strings
 					$new_value = wp_unslash( $_value );
 				}
-				// error_log( "$metafield : $new_value" );
+				error_log( "$metafield: $new_value" );
 				update_post_meta( $post_id, $metafield, $new_value );
 			}
 
@@ -304,11 +304,16 @@ class WpMeta {
 		$args                       = $setup;
 		$args['attribute']['name']  = $metafield;
 		$args['attribute']['type']  = $setup['attribute']['type'] ?? 'text';
-		$args['attribute']['value'] = $value;
+		
 
 		// textarea
 		if ( $args['field'] == 'textarea' ) {
 			$args['value'] = $value;
+		}
+
+		// checkbox
+		if ( $args['field'] == 'input' and $args['attribute']['type'] == 'checkbox' ) {
+			$args['attribute']['checked'] = ($value == $args['attribute']['value']) ? 'checked' : '';
 		}
 
 		// copy text
