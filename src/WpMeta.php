@@ -71,7 +71,9 @@ class WpMeta {
 			'user_select'      => false, // true
 			'attribute'        => [],
 		];
-		return wp_parse_args( $setup, $default );
+		$return = wp_parse_args( $setup, $default );
+		// echo "<pre>"; print_r($return); echo "</pre>";die;
+		return $return;
 	}
 
 	function register_post_meta( $post_type, $metafields ) {
@@ -156,7 +158,7 @@ class WpMeta {
 										$setup['label'] = '';
 									}
 									$setup['wrap_class'] = 'full_width';
-									echo $this->form_field( $setup, $metafield, '' );
+									echo $this->init_field( $setup, $metafield, '' );
 									?>
 								</span>
 							</label>
@@ -236,7 +238,7 @@ class WpMeta {
 									if ( $setup['callback'] ) {
 										$value = call_user_func( $setup['callback'], $metafield, $post->ID );
 									}
-									echo $this->form_field( $setup, $metafield, $value );
+									echo $this->init_field( $setup, $metafield, $value );
 									?>
 							</div>
 							<?php
@@ -294,15 +296,14 @@ class WpMeta {
 		} );
 	}
 
-	function form_field( $setup, $metafield, $value ) {
+	function init_field( $setup, $metafield, $value ) {
 		$this->enqueue();
 		$a = \WpDatabaseHelper\Init::WpField();
-		// echo "<pre>"; print_r($setup); echo "</pre>";
 
 		// integration
 		$args                       = $setup;
 		$args['attribute']['name']  = $metafield;
-		$args['attribute']['type']  = 'text';
+		$args['attribute']['type']  = $setup['attribute']['type'] ?? 'text';
 		$args['attribute']['value'] = $value;
 
 		// textarea

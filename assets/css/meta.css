@@ -11,6 +11,7 @@ body .WpDatabaseHelper_meta-meta-box-container .grid {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
+  align-items: center;
 }
 body .WpDatabaseHelper_meta-meta-box-container .item {
   box-sizing: border-box;
@@ -23,6 +24,10 @@ body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wra
 }
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field {
   width: 100%;
+}
+body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=checkbox] {
+  width: 19px;
+  height: 19px;
 }
 body .WpDatabaseHelper_meta-meta-box-container .title {
   margin-bottom: 5px;
