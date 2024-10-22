@@ -7,12 +7,12 @@ class WpField {
 	public $id;
 	public $args = [ 
 		// adminz
-		'object'      => '',
-		'name'        => '',
+		'object'         => '',
+		'name'           => '',
 
 		// 
-		'field'       => 'input',
-		'attribute'   => [ 
+		'field'          => 'input',
+		'attribute'      => [ 
 			'name'  => '',
 			'id'    => '',
 			'class' => [],
@@ -22,31 +22,31 @@ class WpField {
 			// 'required'    => '',
 			// 'is_checked'  => false,
 		],
-		'value'       => '',
-		'suggest'     => '',
-		'before'      => '<div class=___default_wrap>', // default is div to break line
-		'after'       => '</div>',
-		'wrap_class'  => [],
-		'note'        => '',
-		'label'       => '',
+		'value'          => '',
+		'suggest'        => '',
+		'before'         => '<div class=___default_wrap>', // default is div to break line
+		'after'          => '</div>',
+		'wrap_class'     => [],
+		'note'           => '',
+		'label'          => '',
 		'label_position' => 'before',
-		'options'     => [
+		'options'        => [
 			// 1 => 1,
 			// 2 => 2,
 			// 3 => 3,
 		],
-		'term_select' => [
+		'term_select'    => [
 			// 'taxonomy'       => 'age-categories',
 			// 'option_value'   => 'term_id',
 			// 'option_display' => 'name',
 		],
-		'post_select' => [
+		'post_select'    => [
 			// 'post_type'      => 'club',
 			// 'option_value'   => 'ID',
 			// 'option_display' => 'post_title',
 		],
-		'selected'    => '',
-		'show_copy_key' => false
+		'selected'       => '',
+		'show_copy_key'  => false,
 	];
 
 	function __construct() {
@@ -63,7 +63,7 @@ class WpField {
 	}
 
 	function enqueue() {
-		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
 		$enqueue_assets = function () use ($plugin_url) {
 			// Check if the script is already enqueued to avoid adding it multiple times
 			if ( wp_script_is( 'wpdatabasehelper-field-js', 'enqueued' ) ) {
@@ -116,10 +116,10 @@ class WpField {
 		$this->args['attribute'] = $keep_args;
 
 		// only for select dropdown
-		if($this->args['field']){
+		if ( $this->args['field'] ) {
 
 			// id
-			$this->id = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name . "_" . wp_rand();
+			$this->id                      = $this->args['attribute']['id'] ?? "" ? $this->args['attribute']['id'] : $this->name . "_" . wp_rand();
 			$this->args['attribute']['id'] = $this->id;
 
 			// options
@@ -137,7 +137,7 @@ class WpField {
 				] );
 				foreach ( $terms as $key => $term ) {
 
-					$_key_ = $this->args['term_select']['option_value'] ?? 'term_id';
+					$_key_   = $this->args['term_select']['option_value'] ?? 'term_id';
 					$_value_ = $this->args['term_select']['option_value'] ?? 'name';
 
 					$_key             = $term->{$_key_};
@@ -162,8 +162,8 @@ class WpField {
 						$__the_query->the_post();
 						global $post;
 
-						$_key_            = $this->args['term_select']['option_value'] ?? 'ID';
-						$_value_          = $this->args['term_select']['option_value'] ?? 'post_title';
+						$_key_   = $this->args['term_select']['option_value'] ?? 'ID';
+						$_value_ = $this->args['term_select']['option_value'] ?? 'post_title';
 
 						$_key             = $post->{$_key_};
 						$_value           = $post->{$_value_};
@@ -176,15 +176,15 @@ class WpField {
 			$this->args['options'] = $options;
 
 			// selected
-			if(!$this->args['selected']){
-				if($this->args['attribute']['value'] ?? ''){
+			if ( !$this->args['selected'] ) {
+				if ( $this->args['attribute']['value'] ?? '' ) {
 					$this->args['selected'] = $this->args['attribute']['value'];
 				}
 			}
 		}
 
 		// only for checkbox
-		if(($this->args['attribute']['type'] ?? '') == 'checkbox'){
+		if ( ( $this->args['attribute']['type'] ?? '' ) == 'checkbox' ) {
 			$this->args['label_position'] = 'after';
 		}
 	}
@@ -197,26 +197,26 @@ class WpField {
 		?>
 		<?php echo wp_kses_post( $this->args['before'] ); ?>
 		<?php
-			$wrap_class = implode(' ', 
-				array_merge(
-					(array)$this->args['wrap_class'], 
-					[ 
-						$this->name . '_wrap',
-						'type-' . $type
-					]
-				)
-			);
-			
+		$wrap_class = implode( ' ',
+			array_merge(
+				(array) $this->args['wrap_class'],
+				[ 
+					$this->name . '_wrap',
+					'type-' . $type
+				]
+			)
+		);
+
 		?>
-		<div class="<?= esc_attr($wrap_class); ?>">
+		<div class="<?= esc_attr( $wrap_class ); ?>">
 			<?php if ( $this->args['label_position'] == 'before' ) echo $this->get_label(); ?>
 			<?php
-				if ( method_exists( $this, $field ) ) {
-					echo $this->{$field}();
-				} else {
-					echo "method is not exists: $field";
-				}
-				echo $this->get_copy();
+			if ( method_exists( $this, $field ) ) {
+				echo $this->{$field}();
+			} else {
+				echo "method is not exists: $field";
+			}
+			echo $this->get_copy();
 			?>
 			<?php if ( $this->args['label_position'] == 'after' ) echo $this->get_label(); ?>
 		</div>
@@ -237,7 +237,7 @@ class WpField {
 		}
 
 		// textarea
-		if($this->args['field'] == 'textarea'){
+		if ( $this->args['field'] == 'textarea' ) {
 			$attribute['rows'] = 5;
 		}
 
@@ -346,7 +346,7 @@ class WpField {
 		<div class="form_field_media">
 			<div class="xpreview">
 				<img class='image-preview' src='<?php echo esc_url( $image_url ); ?>'
-				style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
+					style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
 			</div>
 			<?php $this->args['attribute']['type'] = 'hidden'; ?>
 			<input <?php echo $this->get_attribute(); ?> />
@@ -359,43 +359,17 @@ class WpField {
 	}
 
 	function get_copy() {
-		$field = $this->args['field'] ?? '';
-		$name  = $this->args['attribute']['name'] ?? '';
-		$type  = $this->args['attribute']['type'] ?? '';
-
-		$show = false;
-		// input
-		if ( $field == 'input' and in_array( $type, [ 'text', 'password' ] ) ) {
-			$show = true;
-		}
-
-		// textarea
-		if ( $field == 'textarea' ) {
-			$show = true;
-		}
-
-		// select
-		if ( $field == 'select' ) {
-			$show = true;
-		}
-
-		if ( !$show ) {
-			return;
-		}
-
+		$name = $this->args['attribute']['name'] ?? '';
 		ob_start();
-		$classes = implode(" ", [ 
+		$classes = implode( " ", [ 
 			$this->name . "_click_to_copy",
 			$this->name . "_name",
 			$this->args['show_copy_key'] ? 'show_copy_key' : ''
-		]);
-		$text = $this->args['show_copy_key'] ? $name : __( 'Copy' );
+		] );
+		$text    = $this->args['show_copy_key'] ? $name : __( 'Copy' );
 
 		?>
-		<span
-			class="<?= esc_attr( $classes ) ?>" 
-			data-text="<?= esc_attr( $name ) ?>"
-			>
+		<span class="<?= esc_attr( $classes ) ?>" data-text="<?= esc_attr( $name ) ?>">
 			<?= esc_attr( $text ) ?>
 		</span>
 		<?php
@@ -438,9 +412,9 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_label(){
+	function get_label() {
 		ob_start();
-		if(!$this->args['label']) return;
+		if ( !$this->args['label'] ) return;
 		?>
 		<label for="<?= $this->id; ?>">
 			<?php echo $this->args['label'] ?? "" ?>
