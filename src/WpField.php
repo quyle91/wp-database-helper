@@ -361,7 +361,7 @@ class WpField {
 	function get_copy() {
 
 		// checkbox
-		if ( ( $this->args['attribute']['type'] ?? '' ) == 'checkbox' ) {
+		if ( in_array( $this->args['attribute']['type'] ?? '', [ 'checkbox', 'button', 'hidden' ] ) ) {
 			return;
 		}
 
