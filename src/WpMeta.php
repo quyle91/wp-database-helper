@@ -289,7 +289,7 @@ class WpMeta {
 					// becareful with santize before can be change value strings
 					$new_value = wp_unslash( $_value );
 				}
-				error_log( "$metafield: $new_value" );
+				// error_log( "$metafield: $new_value" );
 				update_post_meta( $post_id, $metafield, $new_value );
 			}
 
