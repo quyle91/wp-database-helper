@@ -3,16 +3,7 @@ namespace WpDatabaseHelper;
 
 class WpMeta {
 	private $version;
-	private static $instance = null;
-	public static function get_instance() {
-		if ( is_null( self::$instance ) ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
 	private static $name = 'WpDatabaseHelper_meta';
-
 	function __construct() {
 		$this->version = $this->getVersion();
 	}
@@ -58,49 +49,80 @@ class WpMeta {
 		}
 	}
 
-	function parse_args_metafield( $setup, $metafield ) {
+	public $post_type;
+	public $metabox_label;
+	public $meta_fields;
+	public $register_post_meta;
+	public $admin_post_columns;
+	public $admin_post_metabox;
+	public $quick_edit_post;
+
+	function init($args){
+
+		// copy args to properties
+		foreach ((array)$args as $key => $value) {
+			$this->$key = $value;
+		}
+	}
+
+	function init_meta() {
+		add_action('init', [$this, 'register_post_meta']);
+		add_action('admin_init', [$this, 'admin_post_columns']);
+		add_action('admin_init', [$this, 'quick_edit_post']);
+		add_action('admin_init', [$this, 'metabox']);
+	}
+
+	function parse_args( $args ) {
+
 		$default = [ 
-			'label'            => $metafield,
-			'admin_column'     => true,
-			'field_classes'    => [], // ['full_width']
-			'quick_edit'       => true,
-			'field'            => 'input', // select, input, media
-			'options'          => [], // [key=>value, key2=>value2]
-			'callback'         => false, // can be function(){return 'x';}
-			'post_type_select' => false, // post, page
-			'user_select'      => false, // true
-			'attribute'        => [],
+			'meta_key'      => '',
+			'label'         => '',
+			'admin_column'  => true, // default = true
+			'field_classes' => [], // ['full_width']
+			'quick_edit'    => true,
+			'field'         => 'input', // select, input, media
+			'options'       => [], // [key=>value, key2=>value2]
+			// 'callback'         => false, // can be function(){return 'x';}
+			// 'post_type_select' => false, // post, page
+			// 'user_select'      => false, // true
+			'attribute'     => [],
 		];
-		$return = wp_parse_args( $setup, $default );
+
+		$return = wp_parse_args( $args, $default );
 		// echo "<pre>"; print_r($return); echo "</pre>";die;
 		return $return;
 	}
 
-	function register_post_meta( $post_type, $metafields ) {
-		foreach ( $metafields as $metafield => $setup ) {
-			$setup = $this->parse_args_metafield( $setup, $metafield );
-			if ( !( $setup['callback'] ?? false ) ) {
-				register_post_meta( $post_type, $metafield, array(
-					'show_in_rest'      => false,
-					'type'              => 'string',
-					'single'            => true,
-					'sanitize_callback' => false,
-					'auth_callback'     => function () {
-						return current_user_can( 'edit_posts' );
-					}
-				) );
-			}
+	function register_post_meta() {
+
+		if(!$this->register_post_meta){
+			return;
+		}
+
+		foreach ((array)$this->meta_fields as $key => $value) {
+			register_post_meta( $this->post_type, $value['meta_key'], array(
+				'show_in_rest'      => false,
+				'type'              => 'string',
+				'single'            => true,
+				'sanitize_callback' => false,
+				'auth_callback'     => function () {
+					return current_user_can( 'edit_posts' );
+				}
+			) );
 		}
 	}
 
-	function setup_admin_post_columns( $post_type, $metafields ) {
-		add_filter( 'manage_' . $post_type . '_posts_columns', function ($columns) use ($metafields) {
+	function admin_post_columns() {
+		if ( !$this->admin_post_columns ) {
+			return;
+		}
+
+		add_filter( 'manage_' . $this->post_type . '_posts_columns', function ($columns) {
 			$insert = [];
-			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args_metafield( $setup, $metafield );
-				if ( $setup['admin_column'] ) {
-					$column_name          = str_replace( [ "_", 'id' ], [ " ", '' ], $metafield );
-					$insert[ $metafield ] = esc_html( $setup['label'] ?? $column_name );
+			foreach ( (array) $this->meta_fields as $key => $value ) {
+				$args = $this->parse_args($value);
+				if($args['admin_column']){
+					$insert[ $value['meta_key'] ] = esc_html( $args['label'] ?? $value['meta_key'] );
 				}
 			}
 			$first_column = array_slice( $columns, 0, 2, true );
@@ -109,25 +131,27 @@ class WpMeta {
 			return $columns;
 		} );
 
-		add_action( 'manage_' . $post_type . '_posts_custom_column', function ($column, $post_id) use ($metafields) {
-			if ( array_key_exists( $column, $metafields ) ) {
-				$setup     = $metafields[ $column ];
-				$metafield = $column;
-				$setup     = $this->parse_args_metafield( $setup, $metafield );
-				// for custom callback
-				if ( $setup['callback'] ) {
-					echo call_user_func( $setup['callback'], $metafield, $post_id );
-				} else {
-					$value = get_post_meta( $post_id, $metafield, true );
-					if ( $value !== '' ) {
-						if ( $metafields[ $metafield ]['post_select'] ?? "" ) {
-							echo $this->get_admin_column_post( $value );
-						} elseif ( ( $metafields[ $metafield ]['field'] ?? "" ) == 'media' ) {
-							echo wp_get_attachment_image( $value, 'thumbnail', false, [ 'style' => 'width: 50px; height: auto;' ] );
-						} else {
-							echo esc_attr( $value );
+		add_action( 'manage_' . $this->post_type . '_posts_custom_column', function ($column, $post_id) {
+			foreach ((array)$this->meta_fields as $key => $value) {
+				$args = $this->parse_args( $value );
+				if($value['meta_key'] == $column){
+					$meta_value = get_post_meta( $post_id, $value['meta_key'], true );
+					if ( $meta_value ) {
+						if($args['field'] == 'media'){
+							echo wp_get_attachment_image( 
+								$meta_value, 
+								'thumbnail', 
+								false, 
+								[ 
+									'style' => 'width: 50px; height: auto;' 
+								]
+							);
+						}elseif(!empty($args['post_select'])){
+							echo $this->get_admin_column_post( $meta_value );
+						}else{
+							echo esc_attr( $meta_value );
 						}
-					} else {
+					}else{
 						echo "--";
 					}
 				}
@@ -135,15 +159,15 @@ class WpMeta {
 		}, 10, 2 );
 	}
 
-	function setup_quick_edit_post( $post_type, $metafields ) {
+	function quick_edit_post() {
 		/* Bởi vì quick edit được load bằng js, nên wordpress ko cung cấp param $post_id, 
 			  vì vậy trong quick_edit_custom_box truyền value = ''
 			  value được lấy từ js trong add_inline_data
 			  field media cũng ko cần update lại nếu ko thực sự quan trọng */
 
-		add_action( 'quick_edit_custom_box', function ($column_name, $_post_type) use ($post_type, $metafields) {
+		/* add_action( 'quick_edit_custom_box', function ($column_name, $_post_type) use ($post_type, $metafields) {
 			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args_metafield( $setup, $metafield );
+				$setup = $this->parse_args( $setup, $metafield );
 				if ( $setup['quick_edit'] and $metafield == $column_name and $_post_type == $post_type ) {
 					?>
 					<fieldset class="custom-fieldset inline-edit-col-left">
@@ -158,7 +182,7 @@ class WpMeta {
 										$setup['label'] = '';
 									}
 									$setup['wrap_class'] = 'full_width';
-									echo $this->init_field( $setup, $metafield, '' );
+									echo $this->init_field( $setup, $metafield, false);
 									?>
 								</span>
 							</label>
@@ -172,7 +196,7 @@ class WpMeta {
 		add_action( 'add_inline_data', function ($post) use ($post_type, $metafields) {
 			$this->enqueue(); // necessary for debug
 			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args_metafield( $setup, $metafield );
+				$setup = $this->parse_args( $setup, $metafield );
 				if ( $setup['quick_edit'] ) {
 					?>
 					<?php // Keep it as 1 line ?>
@@ -201,7 +225,7 @@ class WpMeta {
 			}
 
 			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args_metafield( $setup, $metafield );
+				$setup = $this->parse_args( $setup, $metafield );
 				if ( $setup['quick_edit'] ) {
 					$_value = $_POST[ $metafield ] ?? '';
 
@@ -213,55 +237,53 @@ class WpMeta {
 				}
 			}
 
-		}, 10, 2 );
+		}, 10, 2 ); */
 	}
 
-	function setup_admin_post_metabox( $post_type, $metafields, $metaboxlabel ) {
+	function metabox( ) {
 
+		$post_type = $this->post_type;
+		$metafields = $this->meta_fields;
+		$metaboxlabel = $this->metabox_label;
+		
 		add_action( 'add_meta_boxes', function () use ($post_type, $metafields, $metaboxlabel) {
 			add_meta_box(
 				sanitize_title( $metaboxlabel ), // ID of the meta box
 				$metaboxlabel, // Title of the meta box
-				function ($post) use ($metafields) {
+				function ($post) {
 					wp_nonce_field( 'save_information_metabox', 'information_metabox_nonce' );
 					?>
-				<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
-					<div class="grid">
-						<?php
-							$count = 0;
-							foreach ( $metafields as $metafield => $setup ) {
-								$setup = $this->parse_args_metafield( $setup, $metafield );
-								?>
-							<div class="item <?= implode( " ", $setup['field_classes'] ) ?>">
-								<?php
-									$value = get_post_meta( $post->ID, $metafield, true );
-									if ( $setup['callback'] ) {
-										$value = call_user_func( $setup['callback'], $metafield, $post->ID );
-									}
-									echo $this->init_field( $setup, $metafield, $value );
-									?>
-							</div>
+					<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
+						<div class="grid">
 							<?php
-								$count++;
-							}
-							?>
+								foreach ( $this->meta_fields as $value ) {
+									$args  = $this->parse_args( $value );
+									?>
+									<div class="item <?= implode( " ", $args['field_classes'] ) ?>">
+										<?php
+										echo $this->init_field( 
+											$args, 
+											get_post_meta( $post->ID, $args['meta_key'], true )
+										);
+										?>
+									</div>
+									<?php 
+								}
+								?>
+						</div>
+						<div class="footer">
+							<small>
+								Version: <?= esc_attr( $this->version ) ?>
+							</small>
+						</div>
 					</div>
-					<div class="footer">
-						<small>
-							Version: <?= esc_attr( $this->version ) ?>
-						</small>
-					</div>
-				</div>
 				<?php
 				},
-				$post_type // The post type to which this meta box should be added
+				$post_type
 			);
 		} );
 
-		add_action( 'save_post', function ($post_id) use ($post_type, $metafields) {
-			if ( $post_type != get_post_type( $post_id ) ) {
-				return;
-			}
+		add_action( 'save_post', function ($post_id) {			
 
 			if ( !isset( $_POST['originalaction'] ) ) {
 				return;
@@ -279,45 +301,37 @@ class WpMeta {
 			if ( !current_user_can( 'edit_post', $post_id ) ) {
 				return;
 			}
-			// echo "<pre>"; print_r($_POST); echo "</pre>"; die;
-			foreach ( $metafields as $metafield => $setup ) {
-				$setup  = $this->parse_args_metafield( $setup, $metafield );
-				$_value = $_POST[ $metafield ] ?? '';
 
-				$new_value = sanitize_text_field( $_value );
-				if ( $setup['field'] == 'textarea' ) {
+			if ( $this->post_type != get_post_type( $post_id ) ) {
+				return;
+			}
+			
+			foreach ( $this->meta_fields as $value ) {
+				$args   = $this->parse_args( $value );
+				$meta_value = $_POST[ $value['meta_key'] ] ?? '';
+
+				// sanitize
+				if ( $args['field'] == 'textarea' ) {
 					// becareful with santize before can be change value strings
-					$new_value = wp_unslash( $_value );
+					$meta_value = wp_unslash( $meta_value );
+				}else{
+					$meta_value = sanitize_text_field( $meta_value );
 				}
-				// error_log( "$metafield: $new_value" );
-				update_post_meta( $post_id, $metafield, $new_value );
+				
+				// error_log( "{$value['meta_key']}: $meta_value" );
+				update_post_meta( $post_id, $value['meta_key'], $meta_value );
 			}
 
 		} );
 	}
 
-	function init_field( $setup, $metafield, $meta_value ) {
+	function init_field( $args, $meta_value ) {
+		// enqueue scripts
 		$this->enqueue();
+
 		// integration
-		$args = $setup;
-		$args['show_copy_key'] = true;
-		$args['attribute']['type'] = $setup['attribute']['type'] ?? 'text';
-		$args['attribute']['name'] = $metafield;
-		$args['attribute']['value'] = $meta_value; // be careful for input checkbox
-
-		// textarea
-		if ( $args['field'] == 'textarea' ) {
-			$args['value'] = $meta_value;
-		}
-
-		// checkbox - radio
-		if ( in_array( $args['attribute']['type'] ?? '',['checkbox', 'radio']) ) {
-			//restore value of dom to attritube['value'] 
-			$args['attribute']['value'] = $setup['attribute']['value'];
-			if( $args['attribute']['value'] == $meta_value){
-				$args['attribute']['checked'] = 'checked';
-			}
-		}
+		$args['attribute']['name'] = $args['meta_key'];
+		$args['value'] = $meta_value;
 
 		// init field
 		$a = \WpDatabaseHelper\Init::WpField();

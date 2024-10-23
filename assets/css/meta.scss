@@ -14,7 +14,7 @@ body{
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 10px;
-            align-items: center;
+            align-items: stretch;
         }
 
         .item {
@@ -27,8 +27,10 @@ body{
             .WpDatabaseHelper_field_wrap {
                 width: 100%;
 
-                .WpDatabaseHelper_field:not([type=checkbox]) {
-                    width: 100%;
+                .WpDatabaseHelper_field{
+                    &:not([type=checkbox], [type=radio], [type=range]) {
+                        width: 100%;
+                    }
                 }
             }
         }

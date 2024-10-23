@@ -7,7 +7,7 @@ class Init{
     }
 
 	static function WpMeta() {
-		return \WpDatabaseHelper\WpMeta::get_instance();
+		return new \WpDatabaseHelper\WpMeta;
 	}
 
     static function WpDatabase(){

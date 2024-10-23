@@ -11,7 +11,7 @@ body .WpDatabaseHelper_meta-meta-box-container .grid {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin-bottom: 10px;
-  align-items: center;
+  align-items: stretch;
 }
 body .WpDatabaseHelper_meta-meta-box-container .item {
   box-sizing: border-box;
@@ -22,7 +22,7 @@ body .WpDatabaseHelper_meta-meta-box-container .item.full_width {
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap {
   width: 100%;
 }
-body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox]) {
+body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox], [type=radio], [type=range]) {
   width: 100%;
 }
 body .WpDatabaseHelper_meta-meta-box-container .title {
