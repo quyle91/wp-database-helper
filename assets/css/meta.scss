@@ -11,10 +11,13 @@ body{
     .WpDatabaseHelper_meta-meta-box-container {
         .grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 10px;
             margin-bottom: 10px;
             align-items: stretch;
+            @media(min-width: 850px){
+                grid-template-columns: 1fr 1fr;
+            }
         }
 
         .item {
@@ -28,8 +31,23 @@ body{
                 width: 100%;
 
                 .WpDatabaseHelper_field{
-                    &:not([type=checkbox], [type=radio], [type=range]) {
+                    &:not([type=checkbox]):not([type=radio]){
                         width: 100%;
+                    }
+                    &[type=button],
+                    &[type=button]:hover,
+                    &[type=button]:focus,
+                    &[type=reset],
+                    &[type=reset]:hover,
+                    &[type=reset]:focus {
+                        background-color: #135e96;
+                        line-height: 2;
+                        color: white;
+                        border-radius: 4px;
+                        border: 2px solid #135e96;
+                        padding: 0 10px;
+                        min-height: unset;
+                        width: unset !important;
                     }
                 }
             }
@@ -45,6 +63,34 @@ body{
         }
     }
 
+    .WpDatabaseHelper_meta_quick_edit{
+        height: 100%;
+        border: 1px dashed transparent;
+        &:hover{
+            border-color: lightgray;
+            .quick_edit_icon{
+                display: block;
+            }
+        }
+        // .quick_edit_icon .dashicons-edit{
+        //     &:hover{
+        //         cursor: pointer;
+        //         outline: 1px solid #2271b1;
+        //         border-radius: 4px;
+        //     }
+        // }
+
+        .quick_edit_field{
+            .WpDatabaseHelper_field_wrap,
+            .WpDatabaseHelper_field{
+                max-width: 100%;
+            }
+
+            .WpDatabaseHelper_field_name{
+                display: none;
+            }
+        }
+    }
 }
 
 /* debug js quick edit */

@@ -40,6 +40,18 @@ class WpMeta {
 				$this->version,
 				true
 			);
+
+			wp_add_inline_script(
+				'wpdatabasehelper-meta-js',
+				'const wpdatabasehelper_meta_js = ' . json_encode(
+					array(
+						'ajax_url'     => admin_url( 'admin-ajax.php' ),
+						'nonce'        => wp_create_nonce( 'wpdatabasehelper_meta_js' ),
+					)
+				),
+				'before'
+			);
+
 		};
 
 		if ( did_action( 'admin_enqueue_scripts' ) ) {
@@ -70,6 +82,36 @@ class WpMeta {
 		add_action('admin_init', [$this, 'admin_post_columns']);
 		add_action('admin_init', [$this, 'quick_edit_post']);
 		add_action('admin_init', [$this, 'metabox']);
+		add_action( "wp_ajax_wpmeta_edit__", [$this, 'wpmeta_edit__'] );
+	}
+
+	function wpmeta_edit__() {
+		if ( !wp_verify_nonce( $_POST['nonce'], 'wpdatabasehelper_meta_js' ) ) exit;
+
+		error_log(json_encode($_POST));
+
+		update_post_meta(
+			esc_attr($_POST['post_id']),
+			esc_attr($_POST['meta_key']),
+			esc_attr($_POST['meta_value']),
+		);
+
+		// find a field_data
+		$field_data = [];
+		foreach ((array)$this->meta_fields as $key => $value) {
+			if($value['meta_key'] == $_POST['meta_key']){
+				$field_data = $value;
+				continue;
+			}
+		}
+
+		wp_send_json_success( 
+			$this->quick_edit_value(
+				$field_data, 
+				$_POST['post_id']
+			)
+		);
+		wp_die();
 	}
 
 	function parse_args( $args ) {
@@ -133,30 +175,61 @@ class WpMeta {
 
 		add_action( 'manage_' . $this->post_type . '_posts_custom_column', function ($column, $post_id) {
 			foreach ((array)$this->meta_fields as $key => $value) {
-				$args = $this->parse_args( $value );
 				if($value['meta_key'] == $column){
-					$meta_value = get_post_meta( $post_id, $value['meta_key'], true );
-					if ( $meta_value ) {
-						if($args['field'] == 'media'){
-							echo wp_get_attachment_image( 
-								$meta_value, 
-								'thumbnail', 
-								false, 
-								[ 
-									'style' => 'width: 50px; height: auto;' 
-								]
-							);
-						}elseif(!empty($args['post_select'])){
-							echo $this->get_admin_column_post( $meta_value );
-						}else{
-							echo esc_attr( $meta_value );
-						}
-					}else{
-						echo "--";
-					}
+					echo $this->quick_edit_field( $value, $post_id);
 				}
 			}
 		}, 10, 2 );
+	}
+
+	function quick_edit_value($field_data, $post_id){
+		$args       = $this->parse_args( $field_data );
+		$meta_value = get_post_meta( $post_id, $field_data['meta_key'], true );
+		ob_start();
+		if ( $meta_value ) {
+			if ( $args['field'] == 'media' ) {
+				echo wp_get_attachment_image(
+					$meta_value,
+					'thumbnail',
+					false,
+					[ 
+						'style' => 'width: 50px; height: auto;',
+					]
+				);
+			} elseif ( !empty( $args['post_select'] ) ) {
+				echo $this->get_admin_column_post( $meta_value );
+			} elseif ( !empty( $args['term_select'] ) ) {
+				echo $this->get_admin_column_term( $meta_value, $args );
+			} else {
+				echo esc_attr( $meta_value );
+			}
+		} else {
+			echo "--";
+		}
+		return ob_get_clean();
+	}
+
+	function quick_edit_field( $field_data, $post_id ){
+		$args       = $this->parse_args( $field_data );
+		$meta_value = get_post_meta( $post_id, $field_data['meta_key'], true );
+		ob_start();
+		?>
+		<div 
+			data-meta_key="<?= esc_attr( $field_data['meta_key']); ?>"
+			data-post_id="<?= esc_attr($post_id) ?>"
+			class="<?= esc_attr(self::$name)?>_quick_edit">
+			<div class="quick_edit_value">
+				<?php echo $this->quick_edit_value( $field_data, $post_id ); ?>
+			</div>
+			<div class="quick_edit_field hidden">
+				<?php echo $this->init_field( $args, $meta_value ); ?>
+			</div>
+			<button class="quick_edit_icon button hidden" type="button">
+				<?= __('Edit') ?>
+			</button>
+		</div>
+		<?php
+		return ob_get_clean();
 	}
 
 	function quick_edit_post() {
@@ -165,24 +238,24 @@ class WpMeta {
 			  value được lấy từ js trong add_inline_data
 			  field media cũng ko cần update lại nếu ko thực sự quan trọng */
 
-		/* add_action( 'quick_edit_custom_box', function ($column_name, $_post_type) use ($post_type, $metafields) {
-			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args( $setup, $metafield );
-				if ( $setup['quick_edit'] and $metafield == $column_name and $_post_type == $post_type ) {
+		/* add_action( 'quick_edit_custom_box', function ($column_name, $_post_type)  {
+			foreach ( (array)$this->meta_fields as $key=>$value ) {
+				$args = $this->parse_args( $value );
+				if ( $args['quick_edit'] and $value['meta_key'] == $column_name and $_post_type == $this->post_type ) {
 					?>
 					<fieldset class="custom-fieldset inline-edit-col-left">
 						<div class="inline-edit-col <?= esc_attr( self::$name ) ?>-meta-box-container">
 							<label>
 								<span class="title">
-									<?= esc_attr( $setup['label'] ) ?>
+									<?= esc_attr( $args['label'] ) ?>
 								</span>
 								<span class="input-text-wrap">
 									<?php
-									if ( $setup['label'] ?? '' ) {
-										$setup['label'] = '';
+									if ( $args['label'] ?? '' ) {
+										$args['label'] = '';
 									}
-									$setup['wrap_class'] = 'full_width';
-									echo $this->init_field( $setup, $metafield, false);
+									$args['wrap_class'] = 'full_width';
+									echo $this->init_field( $args, false );
 									?>
 								</span>
 							</label>
@@ -193,21 +266,21 @@ class WpMeta {
 			}
 		}, 10, 2 );
 
-		add_action( 'add_inline_data', function ($post) use ($post_type, $metafields) {
+		add_action( 'add_inline_data', function ($post){
 			$this->enqueue(); // necessary for debug
-			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args( $setup, $metafield );
-				if ( $setup['quick_edit'] ) {
+			foreach ( (array)$this->meta_fields as $key=>$value ) {
+				$args = $this->parse_args( $value );
+				if ( $args['quick_edit'] ) {
 					?>
 					<?php // Keep it as 1 line ?>
-					<div class="<?= esc_attr( $metafield ) ?>"><?= esc_attr( get_post_meta( $post->ID, $metafield, true ) ) ?></div>
+					<div class="<?= esc_attr( $value['meta_key'] ) ?>"><?= esc_attr( get_post_meta( $post->ID, $value['meta_key'], true ) ) ?></div>
 					<?php
 				}
 			}
 		}, 10, 1 );
 
-		add_action( 'save_post', function ($post_id) use ($post_type, $metafields) {
-			if ( $post_type != get_post_type( $post_id ) ) {
+		add_action( 'save_post', function ($post_id){
+			if ( $this->post_type != get_post_type( $post_id ) ) {
 				return;
 			}
 
@@ -224,16 +297,19 @@ class WpMeta {
 				return;
 			}
 
-			foreach ( $metafields as $metafield => $setup ) {
-				$setup = $this->parse_args( $setup, $metafield );
-				if ( $setup['quick_edit'] ) {
-					$_value = $_POST[ $metafield ] ?? '';
-
-					$new_value = sanitize_text_field( $_value );
-					if ( $setup['field'] == 'textarea' ) {
-						$new_value = sanitize_textarea_field( $_value );
+			// Khác biệt so với metabox là nó chỉ lưu lại một số field, ko phải toàn bộ
+			// nên phải check isset $_POST
+			foreach ( (array)$this->meta_fields as $key=>$value ) {
+				if(isset($_POST[$value['meta_key']])){
+					$args = $this->parse_args( $value );
+					if ( $args['quick_edit'] ) {
+						$_value = $_POST[ $value['meta_key'] ] ?? '';
+						$new_value = sanitize_text_field( $_value );
+						if ( $args['field'] == 'textarea' ) {
+							$new_value = sanitize_textarea_field( $_value );
+						}
+						update_post_meta( $post_id, $value['meta_key'], $new_value );
 					}
-					update_post_meta( $post_id, $metafield, $new_value );
 				}
 			}
 
@@ -242,14 +318,10 @@ class WpMeta {
 
 	function metabox( ) {
 
-		$post_type = $this->post_type;
-		$metafields = $this->meta_fields;
-		$metaboxlabel = $this->metabox_label;
-		
-		add_action( 'add_meta_boxes', function () use ($post_type, $metafields, $metaboxlabel) {
+		add_action( 'add_meta_boxes', function (){
 			add_meta_box(
-				sanitize_title( $metaboxlabel ), // ID of the meta box
-				$metaboxlabel, // Title of the meta box
+				sanitize_title( $this->metabox_label ), // ID of the meta box
+				$this->metabox_label, // Title of the meta box
 				function ($post) {
 					wp_nonce_field( 'save_information_metabox', 'information_metabox_nonce' );
 					?>
@@ -279,7 +351,7 @@ class WpMeta {
 					</div>
 				<?php
 				},
-				$post_type
+				$this->post_type
 			);
 		} );
 
@@ -329,17 +401,45 @@ class WpMeta {
 		// enqueue scripts
 		$this->enqueue();
 
+		// parse args
+		$args = wp_parse_args($args, [
+			'field' => 'input'
+		]);
+
 		// integration
 		$args['attribute']['name'] = $args['meta_key'];
 		$args['value'] = $meta_value;
 
+		if($args['field'] == 'input'){
+			if(!isset($args['attribute']['value'])){
+				$args['attribute']['value'] = $meta_value;
+			}
+		}
+
+		if($args['field'] == 'media'){
+			if(!isset($args['attribute']['value'])){
+				$args['attribute']['value'] = $meta_value;
+			}
+		}
+
 		// init field
+		// var_dump($args['field']['value']);
 		$a = \WpDatabaseHelper\Init::WpField();
 		$a->setup_args( $args );
 		return $a->init_field();
 	}
 
 	function get_admin_column_post( $post_id ) {
-		return "<a target=blank href='" . get_edit_post_link( $post_id ) . "'>" . get_the_title( $post_id ) . "</a>";
+		return "<a target=_blank href='" . get_edit_post_link( $post_id ) . "'>" . get_the_title( $post_id ) . "</a>";
+	}
+
+	function get_admin_column_term( $term_id, $args ) {
+		$taxonomy = $args['term_select']['taxonomy'];
+		$term = get_term($term_id, $taxonomy);
+		if ( is_wp_error( $term ) ) {
+			return '--';
+		}
+		$term_link = get_edit_term_link($term_id, $taxonomy);
+		return "<a target=_blank href='".$term_link."'>".$term->name."</a>";
 	}
 }

@@ -18,6 +18,19 @@
             document.querySelectorAll('.WpDatabaseHelper_field_click_to_copy').forEach(element => {
                 this.click_to_copy_init(element);
             });
+
+            // input slider
+            document.querySelectorAll('.form_field_range').forEach(element => {
+                this.form_field_range(element);
+            });
+        },
+
+        form_field_range(element){
+            const input = element.querySelector('input');
+            const input_range_value = element.querySelector('.input_range_value');
+            input.addEventListener('change', function(){
+                input_range_value.textContent = input.value;
+            });
         },
 
         click_to_copy_init(element) {
@@ -49,15 +62,15 @@
 
 
 
-jQuery(document).ready(function ($) {
-    $(".form_field_media").each(function(){
-        const form_field_media = $(this);
-        var preview = form_field_media.find('.image-preview');
-        
-        form_field_media.find('.hepperMeta-media-upload').on('click', function (e) {
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll(".form_field_media").forEach(function (formFieldMedia) {
+        var preview = formFieldMedia.querySelector('.image-preview');
+
+        formFieldMedia.querySelector('.hepperMeta-media-upload').addEventListener('click', function (e) {
             e.preventDefault();
-            var button = $(this);
-            var input = button.closest(".form_field_media").find('input');
+            var button = this;
+            var input = formFieldMedia.querySelector('input');
+
             var frame = wp.media({
                 title: wpdatabasehelper_field_js.text.upload,
                 button: {
@@ -65,20 +78,26 @@ jQuery(document).ready(function ($) {
                 },
                 multiple: false
             });
+
             frame.on('select', function () {
                 var attachment = frame.state().get('selection').first().toJSON();
-                input.val(attachment.id);
-                preview.attr('src', attachment.url).show();
+                input.value = attachment.id;
+                var event = new Event('change');
+                input.dispatchEvent(event);
+                preview.src = attachment.url;
+                preview.style.display = 'block';
             });
+
             frame.open();
         });
 
-        form_field_media.find('.hepperMeta-media-remove').on('click', function (e) {
+        formFieldMedia.querySelector('.hepperMeta-media-remove').addEventListener('click', function (e) {
             e.preventDefault();
-            var button = $(this);
-            var input = button.closest(".form_field_media").find('input');
-            input.val('');
-            preview.attr('src', '').hide();
+            var button = this;
+            var input = formFieldMedia.querySelector('input');
+            input.value = '';
+            preview.src = '';
+            preview.style.display = 'none';
         });
-    })
+    });
 });

@@ -1,37 +1,87 @@
-jQuery(document).ready(function ($) {
-    // quick edit
-    $('body').on('focus', '.ptitle', function (e) {
-        const _ptitle = e.currentTarget;
-        const _tr = $(_ptitle.closest(".inline-edit-row"));
-        const _tr_id = _tr.attr('id');
-        const _inline_id = _tr_id.replace("edit-", "inline_");
-        const _inline = $("#" + _inline_id);
-        if (_inline.length) {
-            const _inline0 = _inline[0];
-            // console.log(_inline0);
-            // console.log(_tr); 
-            _tr.find('.WpDatabaseHelper_field').each(function (index, item) {
-                let _field_name = $(item).attr('name');
-                let _field_searchs = $(_inline0).find("." + _field_name);
-                if (_field_searchs.length) {
-                    _field_search = $(_field_searchs[0]);
-                    let _field_search_value = _field_search.text().trim();
-                    // console.log(_field_search); 
-                    // console.log($(item), _field_search_value); 
+// jQuery(document).ready(function ($) {
+//     $('body').on('focus', '.ptitle', function (e) {
+//         const _ptitle = e.currentTarget;
+//         const wrapper = _ptitle.closest('.inline-edit-wrapper');
+//         console.log(wrapper.querySelectorAll('.WpDatabaseHelper_field ')); 
+//     });
+// });
 
-                    if ($(item).is(':checkbox')) {
-                        $(item).prop('checked', _field_search_value === $(item).val());
-                    } else if ($(item).is(':radio')) {
-                        $(item).prop('checked', $(item).val() === _field_search_value);
-                    } else {
-                        $(item).val(_field_search_value);
-                    }
+document.querySelectorAll(".WpDatabaseHelper_meta_quick_edit").forEach(wrap => {
+    const quick_edit_icon = wrap.querySelector('.quick_edit_icon');
+    const quick_edit_field = wrap.querySelector('.quick_edit_field');
+    const quick_edit_value = wrap.querySelector('.quick_edit_value');
+    const meta_key = wrap.getAttribute('data-meta_key');
+    const post_id = wrap.getAttribute('data-post_id');
+    const form_controls = wrap.querySelectorAll('[name=' + meta_key +']');
 
-                    // fix for input checked
 
-                    $(item).trigger('change');
-                }
-            });
+    // toggle
+    quick_edit_icon.addEventListener("click", (e) => {
+        document.querySelectorAll(".WpDatabaseHelper_meta_quick_edit").forEach(otherWrap => {
+            const otherField = otherWrap.querySelector('.quick_edit_field');
+            const otherValueWrap = otherWrap.querySelector('.quick_edit_value');
+
+            if (otherWrap !== wrap) {
+                otherField.classList.add('hidden');
+                otherValueWrap.classList.remove('hidden');
+            }
+        });
+        quick_edit_field.classList.toggle('hidden');
+        quick_edit_value.classList.toggle('hidden');
+        e.stopPropagation();
+    });
+    document.addEventListener("click", (e) => {
+        if (!wrap.contains(e.target) && !quick_edit_field.classList.contains('hidden')) {
+            quick_edit_field.classList.add('hidden');
+            quick_edit_value.classList.remove('hidden');
         }
     });
+
+    // ajax
+    form_controls.forEach(form_control =>{
+        let timeout;
+        form_control.addEventListener('change', () => {
+            clearTimeout(timeout);
+
+            let form_control_value = form_control.value;
+
+            // checkbox
+            if (form_control.type === 'checkbox') {
+                form_control_value = form_control.checked ? form_control.value : '';
+            }
+
+            timeout = setTimeout(async () => {
+                try {
+                    const url = wpdatabasehelper_meta_js.ajax_url;
+                    const formData = new FormData();
+                    formData.append('action', 'wpmeta_edit__');
+                    formData.append('nonce', wpdatabasehelper_meta_js.nonce);
+                    formData.append('post_id', post_id);
+                    formData.append('meta_key', meta_key);
+                    formData.append('meta_value', form_control_value);
+                    // console.log('Before Fetch:', formData.get('data'));
+
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+
+                    const data = await response.json(); // response.text()
+                    console.log(data);
+                    if (data.success) {
+                        quick_edit_value.innerHTML = data.data;
+                    } else {
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                }
+            }, 300);
+        });
+
+    });
+    
 });

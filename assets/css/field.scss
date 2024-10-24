@@ -1,11 +1,12 @@
 body{
     .WpDatabaseHelper_field{
         background-color: #ededed;
-        border: 2px solid #2271b1;
         max-width: 100%;
     
-        &:not([type="checkbox"], [type="button"]) {
+        &:not([type=checkbox]):not([type=button]):not([type=range]):not([type=radio]) {
+            border: 2px solid #2271b1;
             padding-bottom: 5px;
+            min-height: 37px;
         }
     
         &_click_to_copy {
@@ -51,9 +52,38 @@ body{
                 -webkit-box-orient: vertical;
                 overflow: hidden;
             }
+
+            .form_field_media{
+                img{
+                    width: 100%;
+                    height: auto;
+                    max-width: 100px;
+                    margin-bottom: 5px;
+                    border-radius: 4px;
+                    border: 1px solid lightgray;
+                }
+            }
+
+            .form_field_radio{
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex-wrap: wrap;
+                margin-top: 2px;
+                .item{
+                    display: flex;
+                    align-items: center;
+                    gap: 3px;
+                    input{
+                        margin: 0;
+                    }
+                }
+            }
         }
         &_suggest{
 
         }
+
+        
     }
 }

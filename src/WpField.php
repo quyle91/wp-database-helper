@@ -45,6 +45,7 @@ class WpField {
 			// 'option_display' => 'post_title',
 		],
 		'selected'       => '', // meta_value, only for select dropdown
+		'show_copy'  	=> true,
 		'show_copy_key'  => false,
 	];
 
@@ -115,7 +116,8 @@ class WpField {
 			$args['attribute'], 
 			[
 				'type' => 'text',
-				'value' => ''
+				'value' => '',
+				'class' => [],
 			]
 		);
 		$this->args = wp_parse_args(
@@ -123,6 +125,7 @@ class WpField {
 			$this->args
 		);
 		$this->args['attribute'] = $_attribute;
+		$this->args['attribute']['class'] = (array)$this->args['attribute']['class'];
 
 		// id
 		$this->id = $this->name . "_" . wp_rand();
@@ -131,56 +134,21 @@ class WpField {
 		}
 		$this->args['attribute']['id'] = $this->id;
 
-		// value on attribute: check if wrong position of value param
-		if ( !$this->args['attribute']['value'] and $this->args['value'] ) {
-			$this->args['attribute']['value'] = $this->args['value'];
+		// class
+		$this->args['attribute']['class'][] = $this->name;
+		if ( ( $this->args['field'] ?? '' ) == 'input' and $this->args['attribute']['type'] !='button') {
+			$this->args['attribute']['class'][] = 'regular-text';
 		}
 
 		// options term_select
 		if ( !empty( $this->args['term_select'] ) ) {
-			$options = [ '' => __( 'Select' ) ];
-			$terms   = get_terms( [ 
-				'taxonomy'   => $this->args['term_select']['taxonomy'],
-				'hide_empty' => 'false',
-			] );
-			foreach ( $terms as $key => $term ) {
-
-				$_key_   = $this->args['term_select']['option_value'] ?? 'term_id';
-				$_value_ = $this->args['term_select']['option_value'] ?? 'name';
-
-				$_key             = $term->{$_key_};
-				$_value           = $term->{$_value_};
-				$options[ $_key ] = $_value;
-			}
+			$options = $this->get_options_term_select();
 			$this->args['options'] = $options;
 		}
 
 		// option post_select
 		if ( !empty( $this->args['post_select'] ) ) {
-			$options = ['' => __('Select')];
-			$args    = [ 
-				'post_type'      => [ $this->args['post_select']['post_type'] ],
-				'post_status'    => 'any',
-				'posts_per_page' => -1,
-				'orderby'        => 'name',
-				'order'          => 'asc',
-			];
-
-			$__the_query = new \WP_Query( $args );
-			if ( $__the_query->have_posts() ) {
-				while ( $__the_query->have_posts() ) :
-					$__the_query->the_post();
-					global $post;
-
-					$_key_   = $this->args['term_select']['option_value'] ?? 'ID';
-					$_value_ = $this->args['term_select']['option_value'] ?? 'post_title';
-
-					$_key             = $post->{$_key_};
-					$_value           = $post->{$_value_};
-					$options[ $_key ] = $_value;
-				endwhile;
-				wp_reset_postdata();
-			}
+			$options = $this->get_options_post_select();
 			$this->args['options'] = $options;
 		}
 
@@ -218,6 +186,20 @@ class WpField {
 			}
 		}
 
+		// input button
+		if ( $this->args['attribute']['type'] == 'button') {
+			if(!$this->args['attribute']['value']){
+				$this->args['attribute']['value'] = __('Submit');
+			}
+			$this->args['label'] = "";
+		}
+
+		// input reset
+		if ( $this->args['attribute']['type'] == 'reset') {
+			unset($this->args['attribute']['value']);
+			$this->args['label'] = "";
+		}
+
 		// textarea
 		if ( ( $this->args['field'] ?? '' ) == 'textarea' ) {
 			$this->args['attribute']['rows'] = 3;
@@ -226,6 +208,14 @@ class WpField {
 		// label to after
 		if ( $this->args['attribute']['type'] == 'checkbox') {
 			$this->args['label_position'] = 'after';
+		}
+
+		// show_copy_key
+		if ( 
+			in_array( $this->args['field'], [ 'media' ] ) or 
+			in_array($this->args['attribute']['type'], ['checkbox', 'radio', 'file', 'hidden', 'reset','button'])
+			) {
+			$this->args['show_copy'] = false;
 		}
 
 		// echo "<pre>"; print_r($this->args); echo "</pre>";
@@ -272,10 +262,6 @@ class WpField {
 	function get_attribute() {
 		ob_start();
 
-		// for merge classes
-		$this->args['attribute']['class'][] = $this->name;
-		$this->args['attribute']['class'][] = 'regular-text';
-
 		foreach ( $this->args['attribute'] as $key => $value ) {
 			$value = implode( " ", (array) $value );
 			echo esc_attr( $key ) . '="' . esc_attr( $value ) . '" ';
@@ -287,21 +273,20 @@ class WpField {
 	function input_radio(){
 		ob_start();
 		?>
-		<div>
+		<div class="form_field_radio">
 			<?php 
 			foreach ((array)$this->args['options'] as $key => $value) {
 				$id = wp_rand();
 				?>
-				<input 
-					value="<?= esc_attr($key) ?>"
-					id="<?= esc_attr($id) ?>" 
-					type="radio" 
-					name="<?= esc_attr($this->args['attribute']['name']); ?>"
-					<?php if(($this->args['selected'] ?? '') == $key) echo 'checked'; ?>
-					>
-				<label for="<?= esc_attr( $id ) ?>" style="vertical-align: middle;">
-					<?= esc_attr($value) ?>
-				</label>
+				<div class="item">
+					<input 
+						class="WpDatabaseHelper_field"
+						value="<?= esc_attr( $key ) ?>" id="<?= esc_attr( $id ) ?>" type="radio"
+						name="<?= esc_attr( $this->args['attribute']['name'] ); ?>" <?php if ( ( $this->args['selected'] ?? '' ) == $key ) echo 'checked'; ?>>
+					<label for="<?= esc_attr( $id ) ?>" style="vertical-align: middle;">
+						<?= esc_attr( $value ) ?>
+					</label>
+				</div>
 				<?php
 			}
 			?>
@@ -353,8 +338,22 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function input_checkbox() {
+	function input_range(){
+		ob_start();
+		?>
+		<div class="form_field_range">
+			<div class="input_range_field">
+				<?php echo $this->input_text(); ?>
+			</div>
+			<div class="input_range_value">
+				<?php echo $this->args['attribute']['value'] ?? '' ?>
+			</div>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
 
+	function input_checkbox() {
 		// remove attribute checked if false
 		if ( isset( $this->args['attribute']['checked'] ) and !$this->args['attribute']['checked'] ) {
 			unset( $this->args['attribute']['checked'] );
@@ -376,7 +375,7 @@ class WpField {
 			<input <?php echo $this->get_attribute(); ?> />
 			<div class="xpreview">
 				<img class='image-preview' src='<?php echo esc_url( $image_url ); ?>'
-					style='max-width: 100px; display: <?php echo $image_url ? 'block' : 'none'; ?>' />
+					style='display: <?php echo $image_url ? 'block' : 'none'; ?>' />
 			</div>
 			<button type='button' class='button hepperMeta-media-upload'><?= __( 'Add' ); ?>
 			</button>
@@ -387,14 +386,11 @@ class WpField {
 	}
 
 	function get_copy() {
-
-		// checkbox
-		if ( in_array( $this->args['attribute']['type'] ?? '', [ 'checkbox', 'button', 'hidden' ] ) ) {
+		if(!$this->args['show_copy']){
 			return;
 		}
 
 		$name = $this->args['attribute']['name'] ?? '';
-
 		ob_start();
 		$classes = implode( " ", [ 
 			$this->name . "_click_to_copy",
@@ -456,5 +452,51 @@ class WpField {
 		</label>
 		<?php
 		return ob_get_clean();
+	}
+
+	function get_options_term_select(){
+		$options = [ '' => __( 'Select' ) ];
+		$terms   = get_terms( [ 
+			'taxonomy'   => $this->args['term_select']['taxonomy'],
+			'hide_empty' => 'false',
+		] );
+		foreach ( $terms as $key => $term ) {
+
+			$_key_   = $this->args['term_select']['option_value'] ?? 'term_id';
+			$_value_ = $this->args['term_select']['option_value'] ?? 'name';
+
+			$_key             = $term->{$_key_};
+			$_value           = $term->{$_value_};
+			$options[ $_key ] = $_value;
+		}
+		return $options;
+	}
+
+	function get_options_post_select(){
+		$options = [ '' => __( 'Select' ) ];
+		$args    = [ 
+			'post_type'      => [ $this->args['post_select']['post_type'] ],
+			'post_status'    => 'any',
+			'posts_per_page' => -1,
+			'orderby'        => 'name',
+			'order'          => 'asc',
+		];
+
+		$__the_query = new \WP_Query( $args );
+		if ( $__the_query->have_posts() ) {
+			while ( $__the_query->have_posts() ) :
+				$__the_query->the_post();
+				global $post;
+
+				$_key_   = $this->args['post_select']['option_value'] ?? 'ID';
+				$_value_ = $this->args['post_select']['option_value'] ?? 'post_title';
+
+				$_key             = $post->{$_key_};
+				$_value           = $post->{$_value_};
+				$options[ $_key ] = $_value;
+			endwhile;
+			wp_reset_postdata();
+		}
+		return $options;
 	}
 }
