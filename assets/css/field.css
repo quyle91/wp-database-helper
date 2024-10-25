@@ -2,11 +2,6 @@ body .WpDatabaseHelper_field {
   background-color: #ededed;
   max-width: 100%;
 }
-body .WpDatabaseHelper_field:not([type=checkbox]):not([type=button]):not([type=range]):not([type=radio]) {
-  border: 2px solid #2271b1;
-  padding-bottom: 5px;
-  min-height: 37px;
-}
 body .WpDatabaseHelper_field_click_to_copy {
   border: 1px dashed gray;
   outline: none;
@@ -16,7 +11,7 @@ body .WpDatabaseHelper_field_click_to_copy {
   padding: 0px 5px;
   line-height: 1.6;
   background-color: white;
-  font-size: 0.85em;
+  font-size: x-small;
   border-radius: 3px;
 }
 body .WpDatabaseHelper_field_click_to_copy:hover {
@@ -26,7 +21,7 @@ body .WpDatabaseHelper_field_click_to_copy:hover {
 body .WpDatabaseHelper_field_wrap {
   position: relative;
   display: inline-block;
-  margin-bottom: 5px;
+  margin-bottom: 10px;
   vertical-align: top;
 }
 body .WpDatabaseHelper_field_wrap.type-file {
@@ -55,18 +50,18 @@ body .WpDatabaseHelper_field_wrap .form_field_media img {
   border-radius: 4px;
   border: 1px solid lightgray;
 }
-body .WpDatabaseHelper_field_wrap .form_field_radio {
+body .WpDatabaseHelper_field_wrap .form_field_flex {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 2px;
 }
-body .WpDatabaseHelper_field_wrap .form_field_radio .item {
+body .WpDatabaseHelper_field_wrap .form_field_flex .item {
   display: flex;
   align-items: center;
   gap: 3px;
 }
-body .WpDatabaseHelper_field_wrap .form_field_radio .item input {
+body .WpDatabaseHelper_field_wrap .form_field_flex .item input {
   margin: 0;
 }/*# sourceMappingURL=field.css.map */

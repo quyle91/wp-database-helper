@@ -159,6 +159,7 @@ class WpRepeater {
 				// 'name'  => $field_name,
 				// 'value' => $value,
 			],
+			'value' => '',
 		];
 
 		// match key with str_ends_with and override field_config 
@@ -176,23 +177,10 @@ class WpRepeater {
 			unset( $field_config['label'] );
 		}
 
-		// override selected
-		switch ( $field_config['field'] ) {
-			case 'input':
-				$field_config['attribute']['value'] = $value;
-				break;
-
-			case 'select':
-				$field_config['selected'] = $value;
-				break;
-
-			default:
-				# code...
-				break;
-		}
-
-		// override name
+		// override 
+		$field_config['value'] = $value;
 		$field_config['attribute']['name'] = $field_name;
+		
 
 		$a = \WpDatabaseHelper\Init::WpField();
 		$a->setup_args( $field_config );

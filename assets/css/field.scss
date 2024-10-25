@@ -4,9 +4,9 @@ body{
         max-width: 100%;
     
         &:not([type=checkbox]):not([type=button]):not([type=range]):not([type=radio]) {
-            border: 2px solid #2271b1;
-            padding-bottom: 5px;
-            min-height: 37px;
+            // border: 2px solid #2271b1;
+            // padding-bottom: 5px;
+            // min-height: 37px;
         }
     
         &_click_to_copy {
@@ -18,7 +18,7 @@ body{
             padding: 0px 5px;
             line-height: 1.6;
             background-color: white;
-            font-size: 0.85em;
+            font-size: x-small;
             border-radius: 3px;
             &:hover {
                 background-color: #2271b1;
@@ -29,7 +29,7 @@ body{
         &_wrap {
             position: relative;
             display: inline-block;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             vertical-align: top;
     
             &.type-file {
@@ -64,7 +64,7 @@ body{
                 }
             }
 
-            .form_field_radio{
+            .form_field_flex{
                 display: flex;
                 align-items: center;
                 gap: 10px;

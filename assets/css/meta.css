@@ -30,16 +30,6 @@ body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wra
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox]):not([type=radio]) {
   width: 100%;
 }
-body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=button], body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=button]:hover, body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=button]:focus, body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=reset], body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=reset]:hover, body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field[type=reset]:focus {
-  background-color: #135e96;
-  line-height: 2;
-  color: white;
-  border-radius: 4px;
-  border: 2px solid #135e96;
-  padding: 0 10px;
-  min-height: unset;
-  width: unset !important;
-}
 body .WpDatabaseHelper_meta-meta-box-container .title {
   margin-bottom: 5px;
 }

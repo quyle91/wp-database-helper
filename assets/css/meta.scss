@@ -34,21 +34,6 @@ body{
                     &:not([type=checkbox]):not([type=radio]){
                         width: 100%;
                     }
-                    &[type=button],
-                    &[type=button]:hover,
-                    &[type=button]:focus,
-                    &[type=reset],
-                    &[type=reset]:hover,
-                    &[type=reset]:focus {
-                        background-color: #135e96;
-                        line-height: 2;
-                        color: white;
-                        border-radius: 4px;
-                        border: 2px solid #135e96;
-                        padding: 0 10px;
-                        min-height: unset;
-                        width: unset !important;
-                    }
                 }
             }
         }

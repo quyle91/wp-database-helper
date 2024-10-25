@@ -6,10 +6,7 @@ class WpField {
 	private $version;
 	public $id;
 	public $args = [ 
-		// adminz
 		'object'         => '',
-
-		// 
 		'field'          => 'input',
 		'attribute'      => [ 
 			'name'  => '',
@@ -21,9 +18,9 @@ class WpField {
 			// 'required'    => '',
 			// 'checked'  => false, // true|false
 		],
-		'value'          => '', // meta_value here
+		'value'          => '', // current field
 		'suggest'        => '',
-		'before'         => '<div class=___default_wrap>', // default is div to break line
+		'before'         => '<div class=___default_wrap>',
 		'after'          => '</div>',
 		'wrap_class'     => [],
 		'note'           => '',
@@ -33,7 +30,7 @@ class WpField {
 			// 1 => 1,
 			// 2 => 2,
 			// 3 => 3,
-		],
+		], // for select, radio, checkbox
 		'term_select'    => [
 			// 'taxonomy'       => 'age-categories',
 			// 'option_value'   => 'term_id',
@@ -44,7 +41,6 @@ class WpField {
 			// 'option_value'   => 'ID',
 			// 'option_display' => 'post_title',
 		],
-		'selected'       => '', // meta_value, only for select dropdown
 		'show_copy'  	=> true,
 		'show_copy_key'  => false,
 	];
@@ -126,6 +122,22 @@ class WpField {
 		);
 		$this->args['attribute'] = $_attribute;
 		$this->args['attribute']['class'] = (array)$this->args['attribute']['class'];
+		
+
+		// make sure $args['value'] and $args['attribute][value]
+		if ( !isset( $this->args['attribute']['value'] ) ) {
+			$this->args['attribute']['value'] = '';
+		}
+		if ( !isset( $this->args['value'] ) ) {
+			$this->args['value'] = '';
+		}
+
+		if ( !$this->args['value'] and $this->args['attribute']['value'] ) {
+			$this->args['value'] = $this->args['attribute']['value'];
+		}
+		if ( !$this->args['attribute']['value'] and $this->args['value'] ) {
+			$this->args['attribute']['value'] = $this->args['value'];
+		}
 
 		// id
 		$this->id = $this->name . "_" . wp_rand();
@@ -136,19 +148,21 @@ class WpField {
 
 		// class
 		$this->args['attribute']['class'][] = $this->name;
-		if ( ( $this->args['field'] ?? '' ) == 'input' and $this->args['attribute']['type'] !='button') {
-			$this->args['attribute']['class'][] = 'regular-text';
+		if ( ( $this->args['field'] ?? '' ) == 'input' ) {
+			if ( $this->args['attribute']['type'] != 'button' ) {
+				$this->args['attribute']['class'][] = 'regular-text';
+			}
 		}
 
 		// options term_select
 		if ( !empty( $this->args['term_select'] ) ) {
-			$options = $this->get_options_term_select();
+			$options               = $this->get_options_term_select();
 			$this->args['options'] = $options;
 		}
 
 		// option post_select
 		if ( !empty( $this->args['post_select'] ) ) {
-			$options = $this->get_options_post_select();
+			$options               = $this->get_options_post_select();
 			$this->args['options'] = $options;
 		}
 
@@ -157,47 +171,20 @@ class WpField {
 			$this->args['attribute']['rows'] = 5;
 		}
 
-		// only for select dropdown
-		// nếu là select: chỉ rõ selected là gì
-		if ( ( $this->args['field'] ?? '' ) == 'select' ) {
-			if(!$this->args['selected']){
-				$this->args['selected'] = $this->args['value'];
-			}
-		}
-
-		if ( ( $this->args['attribute']['type'] ?? '' ) == 'radio' ) {
-			$this->args['selected'] = $this->args['value'];
-		}
-
 		// only for checkbox
-		// default value for checkbox = on
-		if (  $this->args['attribute']['type'] == 'checkbox' )  {
-			if ( !$this->args['attribute']['value'] ) {
-				$this->args['attribute']['value'] = 'on';
-			}
-		}
-		
-		// nếu là checkbox: chỉ rõ có checked hay ko
-		if ( $this->args['attribute']['type'] == 'checkbox') {
-			if($this->args['value']){
-				if($this->args['value'] == $this->args['attribute']['value']){
-					$this->args['attribute']['checked'] = true;
-				}
-			}
-		}
+		if ( $this->args['attribute']['type'] == 'checkbox' ) {
 
-		// input button
-		if ( $this->args['attribute']['type'] == 'button') {
-			if(!$this->args['attribute']['value']){
-				$this->args['attribute']['value'] = __('Submit');
+			// make sure at leat 1 options
+			if ( empty( $this->args['options'] ) ) {
+				$this->args['options'] = [ 
+					"on" => "on"
+				];
 			}
-			$this->args['label'] = "";
-		}
 
-		// input reset
-		if ( $this->args['attribute']['type'] == 'reset') {
-			unset($this->args['attribute']['value']);
-			$this->args['label'] = "";
+			// nếu nhiều hơn 2 giá trị thì cho nó là 1 mảng.
+			if ( count( $this->args['options'] ) > 1 ) {
+				$this->args['attribute']['name'] .= '[]';
+			}
 		}
 
 		// textarea
@@ -205,20 +192,13 @@ class WpField {
 			$this->args['attribute']['rows'] = 3;
 		}
 
-		// label to after
-		if ( $this->args['attribute']['type'] == 'checkbox') {
-			$this->args['label_position'] = 'after';
-		}
-
 		// show_copy_key
-		if ( 
-			in_array( $this->args['field'], [ 'media' ] ) or 
-			in_array($this->args['attribute']['type'], ['checkbox', 'radio', 'file', 'hidden', 'reset','button'])
-			) {
+		if (
+			in_array( $this->args['field'], [ 'media' ] ) or
+			in_array( $this->args['attribute']['type'], [ 'button', 'file', 'checkbox', 'radio', 'file', 'hidden' ] )
+		) {
 			$this->args['show_copy'] = false;
 		}
-
-		// echo "<pre>"; print_r($this->args); echo "</pre>";
 	}
 
 	function init_field() {
@@ -259,49 +239,30 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_attribute() {
+	function get_attribute($attr_override = false) {
 		ob_start();
 
-		foreach ( $this->args['attribute'] as $key => $value ) {
+		$args = $this->args['attribute'];
+		if($attr_override){
+			$args = $attr_override;
+		}
+
+		foreach ( $args as $key => $value ) {
 			$value = implode( " ", (array) $value );
 			echo esc_attr( $key ) . '="' . esc_attr( $value ) . '" ';
 		}
-
-		return ob_get_clean();
-	}
-
-	function input_radio(){
-		ob_start();
-		?>
-		<div class="form_field_radio">
-			<?php 
-			foreach ((array)$this->args['options'] as $key => $value) {
-				$id = wp_rand();
-				?>
-				<div class="item">
-					<input 
-						class="WpDatabaseHelper_field"
-						value="<?= esc_attr( $key ) ?>" id="<?= esc_attr( $id ) ?>" type="radio"
-						name="<?= esc_attr( $this->args['attribute']['name'] ); ?>" <?php if ( ( $this->args['selected'] ?? '' ) == $key ) echo 'checked'; ?>>
-					<label for="<?= esc_attr( $id ) ?>" style="vertical-align: middle;">
-						<?= esc_attr( $value ) ?>
-					</label>
-				</div>
-				<?php
-			}
-			?>
-		</div>
-		<?php
 		return ob_get_clean();
 	}
 
 	function select() {
 		ob_start();
+		// echo "<pre>"; print_r($this->args); echo "</pre>";
+		// var_dump($this->args->value);
 		?>
 		<select <?= $this->get_attribute(); ?>>
 			<?php
 			foreach ( $this->args['options'] as $key => $value ) {
-				$selected = in_array( $key, (array) $this->args['selected'] ) ? 'selected' : "";
+				$selected = in_array( $key, (array) $this->args['value'] ) ? 'selected' : "";
 				?>
 				<option <?= esc_attr( $selected ) ?> value="<?= esc_attr( $key ); ?>">
 					<?= esc_attr( $value ); ?>
@@ -353,7 +314,76 @@ class WpField {
 		return ob_get_clean();
 	}
 
+	function input_radio(){
+		ob_start();
+		?>
+		<div class="form_field_radio form_field_flex">
+			<?php 
+			foreach ((array)$this->args['options'] as $key => $value) {
+				$attr_override = $this->args['attribute'];
+				$attr_override['value'] = $key;
+				$attr_override['id'] .= $key;
+				
+				if( ($this->args['value'] ?? '') == $key){
+					$attr_override['checked'] = 'checked';
+				}else{
+					if(isset($attr_override['checked'])){
+						unset($attr_override['checked']);
+					}
+				}
+				?>
+				<div class="item">
+					<input <?= $this->get_attribute($attr_override); ?>>
+					<label for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+						<?= esc_attr( $value ) ?>
+					</label>
+				</div>
+				<?php
+			}
+			?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
 	function input_checkbox() {
+		ob_start();
+		?>
+		<div class="form_field_checkbox form_field_flex">
+			<?php 
+			// echo "<pre>"; print_r($this->args['attribute']['name']); echo "</pre>";
+			// echo "<pre>"; print_r($this->args); echo "</pre>";
+			$field_value = (array)$this->args['value'];
+			// var_dump($field_value);
+			foreach ((array)$this->args['options'] as $key => $value) {
+				$attr_override = $this->args['attribute'];
+				$attr_override['value'] = $key;
+				$attr_override['id'] .= $key;
+
+				if(in_array($key, $field_value)){
+					$attr_override['checked'] = 'checked';
+				}else{
+					if(isset($attr_override['checked'])){
+						unset($attr_override['checked']);
+					}
+				}
+				
+				?>
+				<div class="item">
+					<input <?= $this->get_attribute($attr_override); ?>>
+					<label for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+						<?= esc_attr( $value ) ?>
+					</label>
+				</div>
+				<?php
+			}
+			?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/* function input_checkbox2() {
 		// remove attribute checked if false
 		if ( isset( $this->args['attribute']['checked'] ) and !$this->args['attribute']['checked'] ) {
 			unset( $this->args['attribute']['checked'] );
@@ -361,9 +391,10 @@ class WpField {
 		?>
 		<input <?= $this->get_attribute(); ?>>
 		<?php
-	}
+	} */
 
 	function media() {
+		
 		$value = $this->args['attribute']['value'] ?? '';
 		wp_enqueue_media();
 		$this->args['attribute']['type'] = 'hidden';
@@ -415,12 +446,14 @@ class WpField {
 		ob_start();
 		foreach ( (array) $this->args['suggest'] as $key => $suggest ) {
 			?>
-			<small class="<?= esc_attr( $this->name ) ?>_suggest">
-				<strong>*<?= _ex( 'Suggested', 'custom headers' ) ?>: </strong>
+			<span class="<?= esc_attr( $this->name ) ?>_suggest">
+				<small>
+					<strong>*<?= _ex( 'Suggested', 'custom headers' ) ?>: </strong>
+				</small>
 				<span class="<?= esc_attr( $this->name ) ?>_click_to_copy" data-text="<?= esc_attr( $suggest ); ?>">
 					<?= esc_attr( $suggest ); ?>
 				</span>
-			</small>
+			</span>
 			<?php
 		}
 		return ob_get_clean();
