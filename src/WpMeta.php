@@ -3,7 +3,9 @@ namespace WpDatabaseHelper;
 
 class WpMeta {
 	private $version;
-	private static $name = 'WpDatabaseHelper_meta';
+	public $name = 'WpDatabaseHelper_meta';
+	public $id;
+
 	function __construct() {
 		$this->version = $this->getVersion();
 	}
@@ -75,6 +77,8 @@ class WpMeta {
 		foreach ((array)$args as $key => $value) {
 			$this->$key = $value;
 		}
+
+		$this->id = $this->name."_".sanitize_title($this->metabox_label);
 	}
 
 	function init_meta() {
@@ -101,9 +105,9 @@ class WpMeta {
 		);
 
 		wp_send_json_success( 
-			$this->quick_edit_value(
+			$this->init_meta_value(
 				json_decode( stripslashes($_POST['args']), true),
-				$_POST['post_id']
+				$meta_value
 			)
 		);
 
@@ -189,34 +193,6 @@ class WpMeta {
 		}, 10, 2 );
 	}
 
-	function quick_edit_value($field_args, $post_id){
-		$args       = $this->parse_args( $field_args );
-		$meta_key = $field_args['meta_key'];
-		$meta_value = get_post_meta( $post_id, $meta_key, true );
-		ob_start();
-		if ( $meta_value ) {
-			if ( $args['field'] == 'media' ) {
-				echo wp_get_attachment_image(
-					$meta_value,
-					'thumbnail',
-					false,
-					[ 
-						'style' => 'max-width: 100%; width: 50px; height: auto;',
-					]
-				);
-			} elseif ( !empty( $args['post_select'] ) ) {
-				echo $this->get_admin_column_post( $meta_value );
-			} elseif ( !empty( $args['term_select'] ) ) {
-				echo $this->get_admin_column_term( $meta_value, $args );
-			} else {
-				echo implode(", ", (array)$meta_value);
-			}
-		} else {
-			echo "--";
-		}
-		return ob_get_clean();
-	}
-
 	function quick_edit_field( $field_args, $post_id ){
 		$args       = $this->parse_args( $field_args );
 		$meta_key = $field_args['meta_key'];
@@ -227,13 +203,13 @@ class WpMeta {
 			data-meta_key="<?= esc_attr( $args['meta_key']); ?>"
 			data-post_id="<?= esc_attr($post_id) ?>"
 			data-args="<?= esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE)) ?>"
-			class="<?= esc_attr(self::$name)?>_quick_edit"
+			class="<?= esc_attr($this->name)?>_quick_edit"
 			>
 			<div class="quick_edit_value">
-				<?php echo $this->quick_edit_value( $field_args, $post_id ); ?>
+				<?php echo $this->init_meta_value( $field_args, $meta_value ); ?>
 			</div>
 			<div class="quick_edit_field hidden">
-				<?php echo $this->init_field( $args, $meta_value ); ?>
+				<?php echo $this->init_meta_field( $args, $meta_value ); ?>
 			</div>
 			<button class="quick_edit_icon button hidden" type="button">
 				<?= __('Edit') ?>
@@ -250,9 +226,9 @@ class WpMeta {
 				sanitize_title( $this->metabox_label ), // ID of the meta box
 				$this->metabox_label, // Title of the meta box
 				function ($post) {
-					wp_nonce_field( 'save_information_metabox', 'information_metabox_nonce' );
+					wp_nonce_field( $this->id, "{$this->id}_nonce" );
 					?>
-					<div class="<?= esc_attr( self::$name ) ?>-meta-box-container">
+					<div class="<?= esc_attr( $this->name ) ?>-meta-box-container">
 						<div class="grid">
 							<?php
 							foreach ( $this->meta_fields as $value ) {
@@ -261,7 +237,7 @@ class WpMeta {
 								?>
 								<div class="item <?= implode( " ", $args['field_classes'] ) ?>">
 									<?php
-									echo $this->init_field( 
+									echo $this->init_meta_field( 
 										$args, 
 										get_post_meta( $post->ID, $meta_value, true )
 									);
@@ -290,7 +266,9 @@ class WpMeta {
 			}
 
 			// verify nonce
-			if ( !isset( $_POST['information_metabox_nonce'] ) || !wp_verify_nonce( $_POST['information_metabox_nonce'], 'save_information_metabox' ) ) {
+			if ( 
+				!isset( $_POST["{$this->id}_nonce"] ) || 
+				!wp_verify_nonce( $_POST["{$this->id}_nonce"], $this->id ) ) {
 				return;
 			}
 
@@ -327,37 +305,35 @@ class WpMeta {
 		} );
 	}
 
-	function init_field( $args, $meta_value ) {
-
+	function init_args( $args, $meta_value){
 		// parse args
-		$args = wp_parse_args($args, [
-			'field' => 'input'
-		]);
+		$args = wp_parse_args( $args, [ 
+			'field' => 'input',
+		] );
 
 		// integration
 		$args['attribute']['name'] = $args['meta_key'];
-		$args['attribute']['type'] = $args['attribute']['type'] ?? 'text';
-		$args['attribute']['value'] = $meta_value;
-		$args['value']             = $meta_value;
+		$args['value'] = $meta_value;
 
-		// init field
+		if ( $args['field'] == 'input' ) {
+			$args['attribute']['type']  = $args['attribute']['type'] ?? 'text';
+			$args['attribute']['value'] = $meta_value;
+		}
+		return $args;
+	}
+
+	function init_meta_value($args, $meta_value){
+		$args = $this->init_args( $args, $meta_value );
+		$a    = \WpDatabaseHelper\Init::WpField();
+		$a->setup_args( $args );
+		return $a->init_field_value();
+	}
+
+	function init_meta_field( $args, $meta_value ) {
 		$this->enqueue();
+		$args = $this->init_args( $args, $meta_value);
 		$a = \WpDatabaseHelper\Init::WpField();
 		$a->setup_args( $args );
 		return $a->init_field();
-	}
-
-	function get_admin_column_post( $post_id ) {
-		return "<a target=_blank href='" . get_edit_post_link( $post_id ) . "'>" . get_the_title( $post_id ) . "</a>";
-	}
-
-	function get_admin_column_term( $term_id, $args ) {
-		$taxonomy = $args['term_select']['taxonomy'];
-		$term = get_term($term_id, $taxonomy);
-		if ( is_wp_error( $term ) ) {
-			return '--';
-		}
-		$term_link = get_edit_term_link($term_id, $taxonomy);
-		return "<a target=_blank href='".$term_link."'>".$term->name."</a>";
 	}
 }

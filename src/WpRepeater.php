@@ -156,8 +156,7 @@ class WpRepeater {
 			'field'     => 'input',
 			'attribute' => [ 
 				'type' => 'text',
-				// 'name'  => $field_name,
-				// 'value' => $value,
+				'value' => '',
 			],
 			'value' => '',
 		];
@@ -177,9 +176,12 @@ class WpRepeater {
 			unset( $field_config['label'] );
 		}
 
-		// override 
-		$field_config['value'] = $value;
+		// intergration 
 		$field_config['attribute']['name'] = $field_name;
+		$field_config['value'] = $value;
+		if($field_config['field'] == 'input'){
+			$field_config['attribute']['value'] = $value;
+		}
 		
 
 		$a = \WpDatabaseHelper\Init::WpField();
