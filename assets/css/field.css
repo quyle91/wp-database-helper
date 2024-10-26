@@ -42,16 +42,43 @@ body .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field_click_to_copy {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-body .WpDatabaseHelper_field_wrap .form_field_media img {
+body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview {
+  border-radius: 4px;
   width: 100%;
+  min-height: 38px;
+}
+@media (min-width: 783px) {
+  body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview {
+    min-height: 28px;
+  }
+}
+body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview:not(.has-value) {
+  position: relative;
+  overflow: hidden;
+  background-color: #ededed;
+  border: 1px solid #ededed;
+}
+body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview:not(.has-value):before {
+  content: "--";
+  width: calc(100% - 16px);
+  height: 100%;
+  position: absolute;
+  padding-left: 8px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview img {
+  max-width: 100%;
+  width: 100px;
   height: auto;
-  max-width: 100px;
   border-radius: 4px;
   border: 1px solid lightgray;
+  vertical-align: middle;
 }
 body .WpDatabaseHelper_field_wrap .form_field_flex {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 2px;
@@ -63,4 +90,11 @@ body .WpDatabaseHelper_field_wrap .form_field_flex .item {
 }
 body .WpDatabaseHelper_field_wrap .form_field_flex .item input {
   margin: 0;
+}
+body .WpDatabaseHelper_field_wrap .form_field_flex_nowrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 2px;
+  flex-wrap: nowrap;
 }/*# sourceMappingURL=field.css.map */

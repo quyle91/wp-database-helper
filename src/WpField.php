@@ -375,7 +375,7 @@ class WpField {
 				?>
 				<div class="item">
 					<input <?= $this->get_attribute($attr_override); ?>>
-					<label for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -412,7 +412,7 @@ class WpField {
 				?>
 				<div class="item">
 					<input <?= $this->get_attribute($attr_override); ?>>
-					<label for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -430,10 +430,12 @@ class WpField {
 		$value = $this->args['attribute']['value'] ?? '';
 		ob_start();
 		?>
-		<div class="form_field_media">
+		<div class="form_field_media form_field_flex_nowrap">
 			<input <?php echo $this->get_attribute(); ?> />
+			
 			<?php 
 			if (wp_attachment_is_image($value)) {
+				echo '<div class="form_field_preview has-value">';
 				echo wp_get_attachment_image(
 					$value,
 					'thumbnail',
@@ -448,8 +450,11 @@ class WpField {
 						',
 					]
 				);
+				echo '</div>';
 			}else{
+				echo '<div class="form_field_preview">';
 				echo '<img src="" class="image-preview" style="display: none;">';
+				echo '</div>';
 			}
 			?>
 			<button type='button' class='button hepperMeta-media-upload'><?= __( 'Add' ); ?>
@@ -524,7 +529,7 @@ class WpField {
 		ob_start();
 		if ( !$this->args['label'] ) return;
 		?>
-		<label for="<?= $this->id; ?>">
+		<label class="form_field_label" for="<?= $this->id; ?>">
 			<?php echo $this->args['label'] ?? "" ?>
 		</label>
 		<?php

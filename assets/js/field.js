@@ -31,7 +31,9 @@
         },
 
         form_field_media(element){
+            var divPreview = element.querySelector('.form_field_preview');
             var imagePreview = element.querySelector('.image-preview');
+
             element.querySelector('.hepperMeta-media-upload').addEventListener('click', function (e) {
                 e.preventDefault();
                 var input = element.querySelector('input');
@@ -49,6 +51,7 @@
                     imagePreview.srcset = "";
                     imagePreview.style.display = 'inline';
                     input.dispatchEvent(new Event('change'));
+                    divPreview.classList.add('has-value');
                 });
                 frame.open();
             });
@@ -60,6 +63,7 @@
                 imagePreview.src = '';
                 imagePreview.style.display = 'none';
                 input.dispatchEvent(new Event('change'));
+                divPreview.classList.remove('has-value');
             });
         },
 
