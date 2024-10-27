@@ -100,7 +100,7 @@ class WpRepeater {
 			prefix="<?= esc_attr( $this->prefix ) ?>">
 			<?php
 			if ( $this->repeater_is_empty( $this->current ) ) {
-				echo '<code class="' . $this->name . '_is_empty">' . __( 'Empty' ) . '</code>';
+				echo '<code class="' . $this->name . '_is_empty"><small>' . __( 'Empty' ) . '</small></code>';
 			}
 
 			echo $this->repeater(

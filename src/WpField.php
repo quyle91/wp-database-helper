@@ -100,6 +100,7 @@ class WpField {
 		$default_attribute = [ 
 			'id'    => $this->name . "_" . wp_rand(),
 			'class' => [],
+			'value' => '',
 		];
 		if($this->args['field'] == 'input'){
 			$default_attribute = [ 
@@ -152,6 +153,10 @@ class WpField {
 
 		// input
 		if ( $this->args['field'] == 'input'){
+			if(!$this->args['attribute']['value']){
+				$this->args['attribute']['value'] = $this->args['value'];
+			}
+
 			// checkbox 
 			if($this->args['attribute']['type'] == 'checkbox' ) {
 
