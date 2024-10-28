@@ -547,6 +547,9 @@ class WpField {
 			'taxonomy'   => $this->args['term_select']['taxonomy'],
 			'hide_empty' => 'false',
 		] );
+		if ( is_wp_error( $terms ) ) {
+			return $options;
+		}
 		foreach ( $terms as $key => $term ) {
 			$_key_   = $this->args['term_select']['option_value'] ?? 'term_id';
 			$_value_ = $this->args['term_select']['option_display'] ?? 'name';
