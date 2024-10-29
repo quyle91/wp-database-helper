@@ -2,13 +2,8 @@ body{
     .WpDatabaseHelper_field{
         background-color: #ededed;
         max-width: 100%;
-    
-        &:not([type=checkbox]):not([type=button]):not([type=range]):not([type=radio]) {
-            // border: 2px solid #2271b1;
-            // padding-bottom: 5px;
-            // min-height: 37px;
-        }
-    
+        border-radius: 4px;
+
         &_click_to_copy {
             outline: none;
             opacity: 1;
