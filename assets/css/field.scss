@@ -3,6 +3,10 @@ body{
         background-color: #ededed;
         max-width: 100%;
         border-radius: 4px;
+        
+        &:not([type=checkbox]):not([type=radio]){
+            min-width: 50px;
+        }
 
         &_click_to_copy {
             outline: none;

@@ -3,6 +3,9 @@ body .WpDatabaseHelper_field {
   max-width: 100%;
   border-radius: 4px;
 }
+body .WpDatabaseHelper_field:not([type=checkbox]):not([type=radio]) {
+  min-width: 50px;
+}
 body .WpDatabaseHelper_field_click_to_copy {
   outline: none;
   opacity: 1;

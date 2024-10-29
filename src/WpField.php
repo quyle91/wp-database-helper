@@ -179,7 +179,7 @@ class WpField {
 
 		// show_copy_key
 		if (
-			in_array( $this->args['attribute']['type'] ?? '', [ 'button', 'file', 'checkbox', 'radio', 'file', 'hidden', 'wp_media' ] )
+			in_array( $this->args['attribute']['type'] ?? '', [ 'button', 'file', 'checkbox', 'radio', 'file', 'hidden', 'wp_media', 'color' ] )
 		) {
 			$this->args['show_copy'] = false;
 		}
@@ -341,6 +341,23 @@ class WpField {
 		ob_start();
 		?>
 		<input <?php echo $this->get_attribute(); ?>>
+		<?php
+		return ob_get_clean();
+	}
+
+	function input_color() {
+		ob_start();
+		?>
+		<div class="form_field_color">
+			<?php 
+			// change file type to text
+			$this->args['attribute']['type']='text';
+			?>
+			<input <?php echo $this->get_attribute(); ?>>
+			<input type="color" class="colorControl" style="width: 27px;">
+			<!-- <button class="button deleteColor" type="button"><?= __('Delete') ?></button> -->
+			
+		</div>
 		<?php
 		return ob_get_clean();
 	}

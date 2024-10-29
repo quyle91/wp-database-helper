@@ -28,6 +28,25 @@
             document.querySelectorAll('.form_field_media').forEach(element => {
                 this.form_field_media(element);
             });
+
+            // input color
+            document.querySelectorAll('.form_field_color').forEach(element => {
+                this.form_field_color(element);
+            });
+        },
+
+        form_field_color(element){
+            const fieldInput = element.querySelector('input');
+            const colorControl = element.querySelector('.colorControl');
+            colorControl.addEventListener('change', function () {
+                fieldInput.value = colorControl.value;
+                fieldInput.dispatchEvent(new Event('change'));
+            });
+            // const deleteColor = element.querySelector(".deleteColor");
+            // deleteColor.addEventListener("click", function(){
+            //     fieldInput.value = "";
+            //     fieldInput.dispatchEvent(new Event('change'));
+            // });
         },
 
         form_field_media(element){
