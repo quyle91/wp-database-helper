@@ -88,6 +88,18 @@ body{
                 }
             }
 
+            .form_field_color{
+                .colorControl{
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    right: 5px;
+                    width: 22px;
+                    height: 22px;
+                    padding: 0px;
+                }
+            }
+
             .form_field_flex{
                 display: flex;
                 align-items: flex-start;

@@ -13,24 +13,30 @@
         },
 
         onDOMContentLoaded() {
+            document.querySelectorAll(".WpDatabaseHelper_field_wrap").forEach(fieldWrap => {
+                this.init_field(fieldWrap);
+            });
+        },
+
+        init_field(fieldWrap){
 
             // adminz_click_to_copy
-            document.querySelectorAll('.WpDatabaseHelper_field_click_to_copy').forEach(element => {
+            fieldWrap.querySelectorAll('.WpDatabaseHelper_field_click_to_copy').forEach(element => {
                 this.click_to_copy_init(element);
             });
 
             // input slider
-            document.querySelectorAll('.form_field_range').forEach(element => {
+            fieldWrap.querySelectorAll('.form_field_range').forEach(element => {
                 this.form_field_range(element);
             });
 
             // input media
-            document.querySelectorAll('.form_field_media').forEach(element => {
+            fieldWrap.querySelectorAll('.form_field_media').forEach(element => {
                 this.form_field_media(element);
             });
 
             // input color
-            document.querySelectorAll('.form_field_color').forEach(element => {
+            fieldWrap.querySelectorAll('.form_field_color').forEach(element => {
                 this.form_field_color(element);
             });
         },

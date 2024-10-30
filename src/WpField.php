@@ -354,7 +354,7 @@ class WpField {
 			$this->args['attribute']['type']='text';
 			?>
 			<input <?php echo $this->get_attribute(); ?>>
-			<input type="color" class="colorControl" style="width: 27px;">
+			<input type="color" class="colorControl" value="<?= $this->args['attribute']['value'] ?? ''; ?>">
 			<!-- <button class="button deleteColor" type="button"><?= __('Delete') ?></button> -->
 			
 		</div>

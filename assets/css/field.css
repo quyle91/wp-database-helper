@@ -81,6 +81,15 @@ body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview img {
   border: 1px solid lightgray;
   vertical-align: middle;
 }
+body .WpDatabaseHelper_field_wrap .form_field_color .colorControl {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 5px;
+  width: 22px;
+  height: 22px;
+  padding: 0px;
+}
 body .WpDatabaseHelper_field_wrap .form_field_flex {
   display: flex;
   align-items: flex-start;

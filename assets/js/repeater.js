@@ -15,17 +15,17 @@
         onDOMContentLoaded() {
 
             document.querySelectorAll('.WpDatabaseHelper_repeater').forEach(element => {
-                this.repeater(element);
+                this.init_repeater(element);
             });
         },
 
-        repeater(element) {
-            this.repeater_attachDeleteEvent(element, element.querySelectorAll(".delete"));
-            this.repeater_attachMoveUpEvent(element, element.querySelectorAll(".move_up_one"));
-            this.repeater_attachAddNewEvent(element);
+        init_repeater(element) {
+            this.attachAddNewEvent(element);
+            this.attachDeleteEvent(element, element.querySelectorAll(".delete"));
+            this.attachMoveUpEvent(element, element.querySelectorAll(".move_up_one"));
         },
 
-        repeater_attachAddNewEvent(element) {
+        attachAddNewEvent(element) {            
             const addNewButtons = element.querySelectorAll(".addnew");
             addNewButtons.forEach(addNewButton => {
                 addNewButton.addEventListener("click", () => {
@@ -47,24 +47,27 @@
 
                         // update names
                         const listItem = clone.parentNode;
-                        this.repeater_updateNames(listItem);
+                        this.updateNames(listItem);
 
                         // Reattach events to the new cloned element
-                        this.repeater_attachDeleteEvent(element, clone.querySelectorAll(".delete"));
-                        this.repeater_attachMoveUpEvent(element, clone.querySelectorAll(".move_up_one"));
-                        this.repeater_attachAddNewEvent(clone); // Reattach for cloned addnew buttons
+                        this.attachDeleteEvent(element, clone.querySelectorAll(".delete"));
+                        this.attachMoveUpEvent(element, clone.querySelectorAll(".move_up_one"));
+                        this.attachAddNewEvent(clone); // Reattach for cloned addnew buttons
+
+                        // trigger WpDatabaseHelper_Field event
+                        WpDatabaseHelper_Field.init_field(element);
                     }
                 });
             });
         },
 
-        repeater_attachDeleteEvent(element, buttons) {
+        attachDeleteEvent(element, buttons) {
             buttons.forEach(button => {
                 button.addEventListener("click", () => {
                     // fire before button removed
                     // update names
                     const listItem = button.closest(".adminz_repeater_list_items");
-                    this.repeater_updateNames(listItem);
+                    this.updateNames(listItem);
 
                     const _element = button.closest('fieldset, .repeater_field');
                     _element.remove();
@@ -72,7 +75,7 @@
             });
         },
 
-        repeater_attachMoveUpEvent(element, buttons) {
+        attachMoveUpEvent(element, buttons) {
             buttons.forEach(button => {
                 button.addEventListener("click", () => {
                     const _element = button.closest('fieldset, .repeater_field');
@@ -84,12 +87,12 @@
 
                     // update names
                     const listItem = button.closest(".adminz_repeater_list_items");
-                    this.repeater_updateNames(listItem);
+                    this.updateNames(listItem);
                 });
             });
         },
 
-        repeater_updateNames(parentNode) {
+        updateNames(parentNode) {
             if(parentNode){
                 // settimeout: fix child removed before call childrens
                 setTimeout(() => {
@@ -98,14 +101,14 @@
                         const currentPrefix = parentNode.getAttribute('prefix');
                         if (child.tagName === 'FIELDSET' || child.classList.contains('repeater_field')) {
                             const newPrefix = `${currentPrefix}[${index}]`;
-                            this.repeater_searchAndReplace(child, newPrefix);
+                            this.searchAndReplace(child, newPrefix);
                         }
                     });
                 }, 100);
             }
         },
 
-        repeater_searchAndReplace(child, newPrefix) {
+        searchAndReplace(child, newPrefix) {
             let oldPrefix = child.getAttribute('prefix');
 
             // fix for <label> without old prefix
