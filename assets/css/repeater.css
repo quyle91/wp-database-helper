@@ -25,9 +25,6 @@ body .WpDatabaseHelper_repeater .repeater_field {
   align-items: flex-end;
   position: relative;
 }
-body .WpDatabaseHelper_repeater .WpDatabaseHelper_field_click_to_copy {
-  background-color: white;
-}
 body .WpDatabaseHelper_repeater > fieldset {
   display: flex;
   flex-wrap: wrap;
