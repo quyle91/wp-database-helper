@@ -1,17 +1,33 @@
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.wpdatabasehelper_wrap').forEach(wrap => {
-        const check_all = wrap.querySelector(".check_all");
-        if (check_all) {
-            const all_other_checks = document.querySelectorAll('[name="ids[]"]');
-            check_all.addEventListener('change', function () {
-                const isChecked = check_all.checked;
-                all_other_checks.forEach(function (checkbox) {
-                    checkbox.checked = isChecked;
+
+        wrap.querySelectorAll(".check_all").forEach(checkAll => {
+            checkAll.addEventListener('change', () => {
+                document.querySelectorAll('[name="ids[]"]').forEach(checkbox => {
+                    checkbox.checked = checkAll.checked;
                 });
             });
-        }
+        });
 
-        const spans = wrap.querySelectorAll(".span").forEach((span) => {
+        let lastChecked = null;
+        wrap.querySelectorAll('[name="ids[]').forEach(checkbox => {
+            checkbox.addEventListener('click', (e) => {
+                if (lastChecked && e.shiftKey) {
+                    let inBetween = false;
+                    wrap.querySelectorAll('[name="ids[]').forEach(cb => {
+                        if (cb === checkbox || cb === lastChecked) {
+                            inBetween = !inBetween;
+                        }
+                        if (inBetween) {
+                            cb.checked = checkbox.checked;
+                        }
+                    });
+                }
+                lastChecked = checkbox;
+            });
+        });
+
+        wrap.querySelectorAll(".span").forEach((span) => {
             span.addEventListener("click", function () {
                 span.classList.add("hidden");
                 const textarea = span.closest("td").querySelector(".textarea");

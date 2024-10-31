@@ -89,6 +89,8 @@ class WpDatabase {
 	}
 
 	function init_table( $args = [] ) {
+
+		// default
 		$this->init_table_data( $args );
 		$this->create_table_sql();
 		$this->create_table_view();
@@ -147,11 +149,12 @@ class WpDatabase {
 	}
 
 	function process_table_actions() {
-		add_action( 'admin_init', function () {
-
+		global $wpdb;
+		
+		require_once(ABSPATH.'wp-includes/pluggable.php');
+		if( is_user_logged_in()){
 			// reset table
-			global $wpdb;
-			if ( is_user_logged_in() && isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
+			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
 				if ( current_user_can( 'manage_options' ) ) {
 					$table_name = $this->table_name;
 
@@ -181,7 +184,7 @@ class WpDatabase {
 					}
 				}
 			}
-		} );
+		}
 	}
 
 	function set_records(){
@@ -622,7 +625,7 @@ class WpDatabase {
 				<option value="">-- select --</option>
 				<option value="delete">Delete</option>
 			</select>
-			<button type="submit" class="button">Submit</button>
+			<button type="submit" class="button"><?= __('Submit') ?></button>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -713,7 +716,7 @@ class WpDatabase {
 							name="<?= esc_attr( 'posts_per_page' ) ?>"><?= $_GET['posts_per_page'] ?? "100" ?></textarea>
 					</div>
 				</div>
-				<button class="button">Submit</button>
+				<button class="button"><?= __('Submit') ?></button>
 			</form>
 		</div>
 		<?php
@@ -792,7 +795,7 @@ class WpDatabase {
 					}
 					?>
 				</div>
-				<button class="button">Submit</button>
+				<button class="button"><?= __('Submit') ?></button>
 			</form>
 		</div>
 		<?php
@@ -802,7 +805,7 @@ class WpDatabase {
 	function get_note() {
 		ob_start();
 		?>
-		<div class="section note">
+		<div class="note">
 			<small>
 				<?php
 				$reset_link = $this->get_page_url(
@@ -811,7 +814,7 @@ class WpDatabase {
 					]
 				);
 				?>
-				Link to reset table: <a href="<?= ( $reset_link ) ?>">Link</a>
+				Link to reset table: <a href="<?= ( $reset_link ) ?>"><?= __('Submit') ?></a>
 			</small>
 			<small>
 				Version: <?= esc_attr( $this->version ) ?>
