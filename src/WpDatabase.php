@@ -825,6 +825,9 @@ class WpDatabase {
 	}
 
 	function is_current_table_page() {
+		if(!is_admin()){
+			return;
+		}
 		return ( ( $_GET['page'] ?? '' ) == $this->menu_slug );
 	}
 }
