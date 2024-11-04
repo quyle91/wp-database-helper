@@ -178,16 +178,12 @@ class WpMeta {
 					$insert[ $value['meta_key'] ] = esc_html( $args['label'] ?? $value['meta_key'] );
 				}
 			}
-			// Tìm vị trí của cột 'title'
 			$title_position = array_search( 'title', array_keys( $columns ), true );
-
-			// Nếu tìm thấy cột 'title', chèn các cột mới vào sau cột này
 			if ( $title_position !== false ) {
 				$columns = array_slice( $columns, 0, $title_position + 1, true ) +
 					$insert +
 					array_slice( $columns, $title_position + 1, null, true );
 			} else {
-				// Nếu không tìm thấy 'title', chèn vào đầu mảng
 				$columns = $insert + $columns;
 			}
 			return $columns;
