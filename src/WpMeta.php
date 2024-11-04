@@ -173,16 +173,26 @@ class WpMeta {
 		add_filter( 'manage_' . $this->post_type . '_posts_columns', function ($columns) {
 			$insert = [];
 			foreach ( (array) $this->meta_fields as $key => $value ) {
-				$args = $this->parse_args($value);
-				if($args['admin_column']){
+				$args = $this->parse_args( $value );
+				if ( $args['admin_column'] ) {
 					$insert[ $value['meta_key'] ] = esc_html( $args['label'] ?? $value['meta_key'] );
 				}
 			}
-			$first_column = array_slice( $columns, 0, 2, true );
-			$last_column  = array_slice( $columns, 2, null, true );
-			$columns      = $first_column + $insert + $last_column;
+			// Tìm vị trí của cột 'title'
+			$title_position = array_search( 'title', array_keys( $columns ), true );
+
+			// Nếu tìm thấy cột 'title', chèn các cột mới vào sau cột này
+			if ( $title_position !== false ) {
+				$columns = array_slice( $columns, 0, $title_position + 1, true ) +
+					$insert +
+					array_slice( $columns, $title_position + 1, null, true );
+			} else {
+				// Nếu không tìm thấy 'title', chèn vào đầu mảng
+				$columns = $insert + $columns;
+			}
 			return $columns;
 		} );
+
 
 		add_action( 'manage_' . $this->post_type . '_posts_custom_column', function ($column, $post_id) {
 			foreach ((array)$this->meta_fields as $key => $field_args) {
