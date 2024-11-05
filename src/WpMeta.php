@@ -215,19 +215,21 @@ class WpMeta {
 		$meta_value = get_post_meta( $post_id, $meta_key, true );
 		ob_start();
 		?>
-		<div data-meta_key="<?= esc_attr( $args['meta_key'] ); ?>" data-post_id="<?= esc_attr( $post_id ) ?>"
-			data-args="<?= esc_attr( json_encode( $args, JSON_UNESCAPED_UNICODE ) ) ?>"
-			class="<?= esc_attr( $this->name ) ?>_quick_edit">
-			<div class="quick_edit_value">
-				<?php echo $this->init_meta_value( $field_args, $meta_value ); ?>
+		<form action="">
+			<div data-meta_key="<?= esc_attr( $args['meta_key'] ); ?>" data-post_id="<?= esc_attr( $post_id ) ?>"
+				data-args="<?= esc_attr( json_encode( $args, JSON_UNESCAPED_UNICODE ) ) ?>"
+				class="<?= esc_attr( $this->name ) ?>_quick_edit">
+				<div class="quick_edit_value">
+					<?php echo $this->init_meta_value( $field_args, $meta_value ); ?>
+				</div>
+				<div class="quick_edit_field hidden">
+					<?php echo $this->init_meta_field( $args, $meta_value ); ?>
+				</div>
+				<button class="quick_edit_icon button hidden" type="button">
+					<?= __( 'Edit' ) ?>
+				</button>
 			</div>
-			<div class="quick_edit_field hidden">
-				<?php echo $this->init_meta_field( $args, $meta_value ); ?>
-			</div>
-			<button class="quick_edit_icon button hidden" type="button">
-				<?= __( 'Edit' ) ?>
-			</button>
-		</div>
+		</form>
 		<?php
 		return ob_get_clean();
 	}
@@ -256,7 +258,7 @@ class WpMeta {
 									);
 									?>
 							</div>
-						<?php
+							<?php
 							}
 							?>
 					</div>
