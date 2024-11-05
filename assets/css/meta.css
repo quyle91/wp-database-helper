@@ -60,4 +60,13 @@ body .WpDatabaseHelper_meta_quick_edit .quick_edit_field .form_field_label {
 body .WpDatabaseHelper_meta_quick_edit .quick_edit_field .form_field_media.form_field_flex_nowrap {
   flex-direction: column;
   gap: 5px;
+}
+body form table.wp-list-table .column-product_cat,
+body form table.wp-list-table .column-product_tag,
+body form table.wp-list-table .column-name,
+body form table.wp-list-table .column-sku,
+body form table.wp-list-table .column-is_in_stock,
+body form table.wp-list-table .column-featured,
+body form table.wp-list-table .column-date {
+  width: unset;
 }/*# sourceMappingURL=meta.css.map */

@@ -1,4 +1,4 @@
-body{
+body {
     .WpDatabaseHelper_meta-field {
         width: 100%;
         max-width: unset !important;
@@ -15,7 +15,8 @@ body{
             gap: 10px;
             margin-bottom: 10px;
             align-items: stretch;
-            @media(min-width: 850px){
+
+            @media(min-width: 850px) {
                 grid-template-columns: 1fr 1fr;
             }
         }
@@ -30,8 +31,8 @@ body{
             .WpDatabaseHelper_field_wrap {
                 width: 100%;
 
-                .WpDatabaseHelper_field{
-                    &:not([type=checkbox]):not([type=radio]){
+                .WpDatabaseHelper_field {
+                    &:not([type=checkbox]):not([type=radio]) {
                         width: 100%;
                     }
                 }
@@ -48,36 +49,52 @@ body{
         }
     }
 
-    .WpDatabaseHelper_meta_quick_edit{
+    .WpDatabaseHelper_meta_quick_edit {
         height: 100%;
         border: 1px dashed transparent;
-        &:hover{
+
+        &:hover {
             border-color: lightgray;
-            .quick_edit_icon{
+
+            .quick_edit_icon {
                 display: block;
             }
         }
 
-        .quick_edit_field{
+        .quick_edit_field {
+
             .WpDatabaseHelper_field_wrap,
-            .WpDatabaseHelper_field{
+            .WpDatabaseHelper_field {
                 max-width: 100%;
             }
 
-            .WpDatabaseHelper_field_name{
-                display: none;
-            }
-            
-            .form_field_label{
+            .WpDatabaseHelper_field_name {
                 display: none;
             }
 
-            .form_field_media{
-                &.form_field_flex_nowrap{
+            .form_field_label {
+                display: none;
+            }
+
+            .form_field_media {
+                &.form_field_flex_nowrap {
                     flex-direction: column;
                     gap: 5px;
                 }
             }
+        }
+    }
+
+    form table.wp-list-table {
+
+        .column-product_cat,
+        .column-product_tag,
+        .column-name,
+        .column-sku,
+        .column-is_in_stock,
+        .column-featured,
+        .column-date {
+            width: unset;
         }
     }
 }
