@@ -531,9 +531,8 @@ class WpField {
 	}
 
 	function get_note() {
-		if ( !$this->args['note'] ) {
-			return;
-		}
+		if ( !$this->args['note'] ) return;
+
 		$this->args['note'] = (array) $this->args['note'];
 		ob_start();
 		foreach ( (array) $this->args['note'] as $key => $note ) {
@@ -548,8 +547,8 @@ class WpField {
 	}
 
 	function get_label() {
-		ob_start();
 		if ( !$this->args['label'] ) return;
+		ob_start();
 		?>
 		<label class="form_field_label" for="<?= $this->id; ?>">
 			<?php echo $this->args['label'] ?? "" ?>
