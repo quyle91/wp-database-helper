@@ -396,8 +396,8 @@ class WpField {
 				}
 				?>
 				<div class="item">
-					<input <?= $this->get_attribute($attr_override); ?>>
 					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+						<input <?= $this->get_attribute($attr_override); ?>>
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -433,8 +433,8 @@ class WpField {
 				
 				?>
 				<div class="item">
-					<input <?= $this->get_attribute($attr_override); ?>>
 					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
+						<input <?= $this->get_attribute($attr_override); ?>>
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
