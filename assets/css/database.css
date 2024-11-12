@@ -34,6 +34,7 @@ body .wpdatabasehelper_wrap .pagination .page-numbers.current .button {
 }
 body .wpdatabasehelper_wrap .records {
   overflow: auto;
+  max-height: 75vh;
 }
 body .wpdatabasehelper_wrap .records table {
   border-collapse: collapse;
