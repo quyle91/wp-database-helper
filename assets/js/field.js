@@ -13,17 +13,19 @@
         },
 
         onDOMContentLoaded() {
+
+            // wrap
             document.querySelectorAll(".WpDatabaseHelper_field_wrap").forEach(fieldWrap => {
                 this.init_field(fieldWrap);
+            });
+
+            // suggest
+            document.querySelectorAll('.WpDatabaseHelper_field_click_to_copy').forEach(element => {
+                this.click_to_copy_init(element);
             });
         },
 
         init_field(fieldWrap){
-
-            // adminz_click_to_copy
-            fieldWrap.querySelectorAll('.WpDatabaseHelper_field_click_to_copy').forEach(element => {
-                this.click_to_copy_init(element);
-            });
 
             // input slider
             fieldWrap.querySelectorAll('.form_field_range').forEach(element => {
