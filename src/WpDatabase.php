@@ -293,12 +293,14 @@ class WpDatabase {
 		return $this->read( $args, $show_sql );
 	}
 
-	function set_sql( $args ) {
+	function set_sql( $_args ) {
 		global $wpdb;
-
-		// get parse args from input
 		$args = $this->query_args;
-		// error_log(json_encode($args));
+
+		// only for call as direct
+		if ( empty( $args ) ) {
+			$args = $this->init_query_args( $_args );
+		}
 
 		$sql = "SELECT * FROM $this->table_name WHERE 1=1";
 
