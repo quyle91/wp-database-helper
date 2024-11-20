@@ -835,6 +835,9 @@ class WpDatabase {
 	}
 
 	function get_note() {
+		if ( $_SERVER['SERVER_ADDR'] != '127.0.0.1' ) {
+			return;
+		}
 		ob_start();
 		?>
 		<div class="note">
