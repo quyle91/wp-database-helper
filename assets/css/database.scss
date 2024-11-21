@@ -45,7 +45,7 @@ body{
 
         .records {
             overflow: auto;
-            max-height: 75vh;
+            max-height: 60vh;
             
             table {
                 border-collapse: collapse;
@@ -60,6 +60,7 @@ body{
                     td {
                         border: 1px solid lightgray;
                         padding: 5px;
+                        max-width: 200px;
 
                         span {
                             border: 2px solid transparent;
@@ -70,7 +71,6 @@ body{
                             word-break: break-all;
                             max-height: 100px;
                             overflow: hidden;
-                            min-width: 170px;
 
                             &:hover {
                                 border-color: #2271b1;
