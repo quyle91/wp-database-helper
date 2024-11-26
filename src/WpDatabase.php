@@ -3,15 +3,8 @@ namespace WpDatabaseHelper;
 
 class WpDatabase {
 	private $version;
-	private $wp_parent_slug = 'options-general.php';
-	private $wp_user_role = 'manage_options';
-	// private static $instance = null;
-	// public static function get_instance() {
-	// 	if ( is_null( self::$instance ) ) {
-	// 		self::$instance = new self();
-	// 	}
-	// 	return self::$instance;
-	// }
+	private $wp_parent_slug = 'tools.php';
+	private $wp_user_role = 'administrator';
 
 	private $table_name;
 	private $menu_slug;
@@ -119,7 +112,7 @@ class WpDatabase {
 
 	function create_table_sql() {
 		global $wpdb;
-		$table_name = $this->table_name;
+		$table_name = esc_sql($this->table_name);
 		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
 			$charset_collate = $wpdb->get_charset_collate();
 			$sql             = "CREATE TABLE {$table_name} ({$this->fields_sql}) {$charset_collate};";
@@ -488,14 +481,9 @@ class WpDatabase {
 		);
 
 		if ( !$inserted ) {
-			echo "<pre>";
-			print_r( $_data );
-			echo "</pre>";
-			echo "<pre>";
-			print_r( $wpdb->last_error );
-			echo "</pre>";
-			die;
+			die($wpdb->last_error);
 		}
+		
 		return $wpdb->insert_id;
 	}
 
