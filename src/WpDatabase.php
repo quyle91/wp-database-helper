@@ -183,7 +183,7 @@ class WpDatabase {
 		global $wpdb;
 
 		require_once( ABSPATH . 'wp-includes/pluggable.php' );
-		if ( is_user_logged_in() ) {
+		if ( current_user_can( 'administrator' ) ) {
 
 			// reset table
 			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
