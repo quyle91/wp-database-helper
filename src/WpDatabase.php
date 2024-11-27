@@ -112,10 +112,15 @@ class WpDatabase {
 
 	function create_table_sql() {
 		global $wpdb;
-		$table_name = esc_sql($this->table_name);
-		if ( $wpdb->get_var( "SHOW TABLES LIKE '{$table_name}'" ) != $table_name ) {
+
+		$table_name       = esc_sql( $this->table_name );
+		$query            = $wpdb->prepare( "SHOW TABLES LIKE %s", $table_name );
+		$found_table_name = $wpdb->get_var( $query );
+
+		if ( $found_table_name != $table_name ) {
 			$charset_collate = $wpdb->get_charset_collate();
-			$sql             = "CREATE TABLE {$table_name} ({$this->fields_sql}) {$charset_collate};";
+			$fields_sql = $this->fields_sql;
+			$sql             = "CREATE TABLE {$table_name} ({$fields_sql}) {$charset_collate};";
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 			dbDelta( $sql );
 		}
@@ -126,7 +131,7 @@ class WpDatabase {
 			add_submenu_page(
 				$this->wp_parent_slug,
 				$this->menu_title,
-				$this->menu_title,
+				"[DB] $this->menu_title",
 				$this->wp_user_role,
 				$this->menu_slug,
 				[ $this, 'html' ]
@@ -181,14 +186,10 @@ class WpDatabase {
 			// reset table
 			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
 				if ( current_user_can( $this->wp_user_role ) ) {
-					$table_name = $this->table_name;
-
 					// delete table
-					if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) == $table_name ) {
-						$sql = "DROP TABLE IF EXISTS $table_name;";
-						$wpdb->query( $sql );
-					}
-
+					$table_name_safe = esc_sql( $this->table_name );
+					$sql             = "DROP TABLE IF EXISTS `{$table_name_safe}`";
+					$wpdb->query( $sql );
 					$this->create_table_sql();
 					wp_redirect( $this->get_page_url() ); // reset link
 				}
@@ -197,7 +198,8 @@ class WpDatabase {
 			// add new
 			if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
 				if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
-				$this->insert( $_POST );
+				$_post = array_filter($_POST);
+				$this->insert( $_post );
 				wp_redirect( $this->get_page_url() ); // reset link
 			}
 
@@ -358,12 +360,10 @@ class WpDatabase {
 
 		// fields in $args
 		foreach ( (array) $this->fields_array as $key => $value ) {
-			if ( isset( $args[ $value['name'] ] ) and $args[ $value['name'] ] ) {
-				if ( array_key_exists( $value['name'], $args ) ) {
-					$_name  = $value['name'];
-					$_value = $args[ $value['name'] ];
-					$sql .= " AND ($_name = '$_value')";
-				}
+			if ( array_key_exists( ($value['name'] ?? ''), $args ) ) {
+				$_name  = $value['name'];
+				$_value = $args[ $value['name'] ];
+				$sql .= " AND ($_name = '$_value')";
 			}
 		}
 
@@ -400,7 +400,6 @@ class WpDatabase {
 	}
 
 	function read( $args, $show_sql = false ) {
-
 		// get sql
 		$this->sql = $this->set_sql( $args );
 
@@ -823,9 +822,12 @@ class WpDatabase {
 	}
 
 	function get_note() {
+
+		// only for local
 		if ( $_SERVER['SERVER_ADDR'] != '127.0.0.1' ) {
 			return;
 		}
+
 		ob_start();
 		?>
 		<div class="note">
@@ -854,12 +856,3 @@ class WpDatabase {
 		return ( ( $_GET['page'] ?? '' ) == $this->menu_slug );
 	}
 }
-
-
-
-// $database = new \IctpAds\Helper\DatabaseTable(
-// 	[ 
-// 		'table_name' => $this->table_name,
-// 		'fields'     => $this->fields,
-// 	]
-// );
