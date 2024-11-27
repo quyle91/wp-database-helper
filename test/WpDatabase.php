@@ -1,4 +1,8 @@
 <?php 
+// use to main plugin file
+// require_once( ADMINZ_DIR . "/vendor/quyle91/wp-database-helper/test/WpDatabase.php" );
+
+
 $args  = [ 
 	'table_name' => 'table_name',
 	'menu_title' => 'table name',
