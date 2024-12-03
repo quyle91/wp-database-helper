@@ -80,6 +80,8 @@ body .WpDatabaseHelper_field_wrap .form_field_media .form_field_preview img {
   border-radius: 4px;
   border: 1px solid lightgray;
   vertical-align: middle;
+  -o-object-fit: contain;
+     object-fit: contain;
 }
 body .WpDatabaseHelper_field_wrap .form_field_color .colorControl {
   position: absolute;

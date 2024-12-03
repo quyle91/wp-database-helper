@@ -460,7 +460,7 @@ class WpField {
 				echo '<div class="form_field_preview has-value">';
 				echo wp_get_attachment_image(
 					$value,
-					'thumbnail',
+					'full',
 					false,
 					[ 
 						'class' => 'image-preview',
