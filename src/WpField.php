@@ -147,8 +147,14 @@ class WpField {
 
 		// textarea
 		if ( $this->args['field'] == 'textarea' ) {
-			$this->args['attribute']['cols'] = 50;
-			$this->args['attribute']['rows'] = 3;
+
+			if(!isset($this->args['attribute']['cols'])){
+				$this->args['attribute']['cols'] = 50;
+			}
+			
+			if(!isset($this->args['attribute']['rows'])){
+				$this->args['attribute']['rows'] = 3;
+			}
 		}
 
 		// input
