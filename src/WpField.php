@@ -72,7 +72,7 @@ class WpField {
 	function setup_args( $args ) {
 		// parse args
 		$this->args = wp_parse_args(
-			$args, 
+			$args,
 			[ 
 				'field'          => 'input',
 				'value'          => '', // current field
@@ -102,7 +102,7 @@ class WpField {
 			'class' => [],
 			'value' => '',
 		];
-		if($this->args['field'] == 'input'){
+		if ( $this->args['field'] == 'input' ) {
 			$default_attribute = [ 
 				'id'    => $this->name . "_" . wp_rand(),
 				'class' => [],
@@ -113,65 +113,65 @@ class WpField {
 		$this->args['attribute'] = wp_parse_args( $args['attribute'], $default_attribute );
 
 		// classes
-		$this->args['attribute']['class'] = (array)$this->args['attribute']['class'];
+		$this->args['attribute']['class']   = (array) $this->args['attribute']['class'];
 		$this->args['attribute']['class'][] = $this->name;
 		if ( ( $this->args['field'] ?? '' ) == 'input' ) {
 			if ( $this->args['attribute']['type'] != 'button' ) {
 				$this->args['attribute']['class'][] = 'regular-text';
 			}
 		}
-		
+
 		// options term_select
 		if ( !empty( $this->args['term_select'] ) ) {
-			$default_term_select = [
+			$default_term_select       = [ 
 				'taxonomy'       => 'category',
 				'option_value'   => 'term_id',
 				'option_display' => 'name',
 			];
-			$this->args['term_select'] = wp_parse_args($args['term_select'], $default_term_select);
-			$options               = $this->get_options_term_select();
-			$this->args['options'] = $options;
+			$this->args['term_select'] = wp_parse_args( $args['term_select'], $default_term_select );
+			$options                   = $this->get_options_term_select();
+			$this->args['options']     = $options;
 		}
 
 		// option post_select
 		if ( !empty( $this->args['post_select'] ) ) {
-			$default_post_select = [
+			$default_post_select       = [ 
 				'post_type'      => 'post',
 				'option_value'   => 'ID',
 				'option_display' => 'post_title',
 			];
 			$this->args['post_select'] = wp_parse_args( $args['post_select'], $default_post_select );
-			$options               = $this->get_options_post_select();
-			$this->args['options'] = $options;
+			$options                   = $this->get_options_post_select();
+			$this->args['options']     = $options;
 		}
 
 		// textarea
 		if ( $this->args['field'] == 'textarea' ) {
 
-			if(!isset($this->args['attribute']['cols'])){
+			if ( !isset( $this->args['attribute']['cols'] ) ) {
 				$this->args['attribute']['cols'] = 50;
 			}
-			
-			if(!isset($this->args['attribute']['rows'])){
+
+			if ( !isset( $this->args['attribute']['rows'] ) ) {
 				$this->args['attribute']['rows'] = 3;
 			}
 		}
 
 		// input
-		if ( $this->args['field'] == 'input'){
-			if(!$this->args['attribute']['value']){
+		if ( $this->args['field'] == 'input' ) {
+			if ( !$this->args['attribute']['value'] ) {
 				$this->args['attribute']['value'] = $this->args['value'];
 			}
 
 			// checkbox 
-			if($this->args['attribute']['type'] == 'checkbox' ) {
+			if ( $this->args['attribute']['type'] == 'checkbox' ) {
 
 				// make sure at leat 1 options
 				if ( empty( $this->args['options'] ) ) {
-					$default = ['on' => 'on'];
+					$default = [ 'on' => 'on' ];
 					// override default if has attribute[value]
-					if($this->args['attribute']['value']){
-						$default = ['on' => $this->args['attribute']['value']];
+					if ( $this->args['attribute']['value'] ) {
+						$default = [ 'on' => $this->args['attribute']['value'] ];
 					}
 					$this->args['options'] = $default;
 				}
@@ -191,14 +191,14 @@ class WpField {
 		}
 	}
 
-	function init_field_value(){
+	function init_field_value() {
 		$html_items          = [];
 		$this->args['value'] = (array) $this->args['value'];
 
 		// post select
 		if ( !empty( $this->args['post_select']['post_type'] ) ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
-				if($value){
+				if ( $value ) {
 					$html_items[] = "<a target='_blank' href='" . get_edit_post_link( $value ) . "'>" . get_the_title( $value ) . "</a>";
 				}
 			}
@@ -208,29 +208,27 @@ class WpField {
 		elseif ( !empty( $this->args['term_select']['taxonomy'] ) ) {
 			$taxonomy = $this->args['term_select']['taxonomy'];
 			foreach ( (array) $this->args['value'] as $key => $value ) {
-				if($value){
+				if ( $value ) {
 					$html_items[] = "<a target='_blank' href='" . get_edit_term_link( $value, $taxonomy ) . "'>" . get_term( $value, $taxonomy )->name . "</a>";
 				}
 			}
 		} elseif ( !empty( $this->args['options'] ) ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
-				if($value){
-					if(array_key_exists($value, $this->args['options'])){
-						$html_items[] = $this->args['options'][$value];
+				if ( $value ) {
+					if ( array_key_exists( $value, $this->args['options'] ) ) {
+						$html_items[] = $this->args['options'][ $value ];
 					}
 				}
 			}
-		}
-
-		elseif($this->args['attribute']['type'] == 'wp_media'){
+		} elseif ( $this->args['attribute']['type'] == 'wp_media' ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
-				if($value){
+				if ( $value ) {
 					$html_items[] = wp_get_attachment_image(
-						$value, 
-						'thumbnail', 
-						false, 
-						[
-							'style' => 'max-width: 100%; width: 50px; height: auto;  border-radius: 4px; border: 1px solid lightgray;'
+						$value,
+						'thumbnail',
+						false,
+						[ 
+							'style' => 'max-width: 100%; width: 50px; height: auto;  border-radius: 4px; border: 1px solid lightgray;',
 						]
 					);
 				}
@@ -291,11 +289,11 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_attribute($attr_override = false) {
+	function get_attribute( $attr_override = false ) {
 		ob_start();
 
 		$args = $this->args['attribute'];
-		if($attr_override){
+		if ( $attr_override ) {
 			$args = $attr_override;
 		}
 
@@ -355,20 +353,20 @@ class WpField {
 		ob_start();
 		?>
 		<div class="form_field_color">
-			<?php 
+			<?php
 			// change file type to text
-			$this->args['attribute']['type']='text';
+			$this->args['attribute']['type'] = 'text';
 			?>
 			<input <?php echo $this->get_attribute(); ?>>
 			<input type="color" class="colorControl" value="<?= $this->args['attribute']['value'] ?? ''; ?>">
-			<!-- <button class="button deleteColor" type="button"><?= __('Delete') ?></button> -->
-			
+			<!-- <button class="button deleteColor" type="button"><?= __( 'Delete' ) ?></button> -->
+
 		</div>
 		<?php
 		return ob_get_clean();
 	}
 
-	function input_range(){
+	function input_range() {
 		ob_start();
 		?>
 		<div class="form_field_range">
@@ -383,27 +381,28 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function input_radio(){
+	function input_radio() {
 		ob_start();
 		?>
 		<div class="form_field_radio form_field_flex">
-			<?php 
-			foreach ((array)$this->args['options'] as $key => $value) {
-				$attr_override = $this->args['attribute'];
+			<?php
+			foreach ( (array) $this->args['options'] as $key => $value ) {
+				$attr_override          = $this->args['attribute'];
 				$attr_override['value'] = $key;
-				$attr_override['id'] .= "_".$key;
-				
-				if( ($this->args['value'] ?? '') == $key){
+				$attr_override['id'] .= "_" . $key;
+
+				if ( ( $this->args['value'] ?? '' ) == $key ) {
 					$attr_override['checked'] = 'checked';
-				}else{
-					if(isset($attr_override['checked'])){
-						unset($attr_override['checked']);
+				} else {
+					if ( isset( $attr_override['checked'] ) ) {
+						unset( $attr_override['checked'] );
 					}
 				}
 				?>
 				<div class="item">
-					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
-						<input <?= $this->get_attribute($attr_override); ?>>
+					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>"
+						style="vertical-align: middle;">
+						<input <?= $this->get_attribute( $attr_override ); ?>>
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -419,28 +418,29 @@ class WpField {
 		ob_start();
 		?>
 		<div class="form_field_checkbox form_field_flex">
-			<?php 
+			<?php
 			// echo "<pre>"; print_r($this->args['attribute']['name']); echo "</pre>";
 			// echo "<pre>"; print_r($this->args); echo "</pre>";
-			$field_value = (array)$this->args['value'];
+			$field_value = (array) $this->args['value'];
 			// var_dump($field_value);
-			foreach ((array)$this->args['options'] as $key => $value) {
-				$attr_override = $this->args['attribute'];
+			foreach ( (array) $this->args['options'] as $key => $value ) {
+				$attr_override          = $this->args['attribute'];
 				$attr_override['value'] = $key;
 				$attr_override['id'] .= "_" . $key;
 
-				if(in_array($key, $field_value)){
+				if ( in_array( $key, $field_value ) ) {
 					$attr_override['checked'] = 'checked';
-				}else{
-					if(isset($attr_override['checked'])){
-						unset($attr_override['checked']);
+				} else {
+					if ( isset( $attr_override['checked'] ) ) {
+						unset( $attr_override['checked'] );
 					}
 				}
-				
+
 				?>
 				<div class="item">
-					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>" style="vertical-align: middle;">
-						<input <?= $this->get_attribute($attr_override); ?>>
+					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>"
+						style="vertical-align: middle;">
+						<input <?= $this->get_attribute( $attr_override ); ?>>
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -452,17 +452,17 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function input_wp_media() {		
+	function input_wp_media() {
 		wp_enqueue_media();
 		$this->args['attribute']['type'] = 'hidden';
-		$value = $this->args['attribute']['value'] ?? '';
+		$value                           = $this->args['attribute']['value'] ?? '';
 		ob_start();
 		?>
 		<div class="form_field_media form_field_flex_nowrap">
 			<input <?php echo $this->get_attribute(); ?> />
-			
-			<?php 
-			if (wp_attachment_is_image($value)) {
+
+			<?php
+			if ( wp_attachment_is_image( $value ) ) {
 				echo '<div class="form_field_preview has-value">';
 				echo wp_get_attachment_image(
 					$value,
@@ -479,7 +479,7 @@ class WpField {
 					]
 				);
 				echo '</div>';
-			}else{
+			} else {
 				echo '<div class="form_field_preview">';
 				echo '<img src="" class="image-preview" style="display: none;">';
 				echo '</div>';
@@ -494,7 +494,7 @@ class WpField {
 	}
 
 	function get_copy() {
-		if(!$this->args['show_copy']){
+		if ( !$this->args['show_copy'] ) {
 			return;
 		}
 
@@ -563,18 +563,23 @@ class WpField {
 		return ob_get_clean();
 	}
 
-	function get_options_term_select(){
+	function get_options_term_select() {
 		$options = [ '' => __( 'Select' ) ];
-		$terms   = get_terms( [ 
-			'taxonomy'   => $this->args['term_select']['taxonomy'],
-			'hide_empty' => 'false',
-		] );
+		$args    = wp_parse_args(
+			$this->args['term_select'],
+			[ 
+				'taxonomy'   => 'category',
+				'hide_empty' => 'false',
+			]
+		);
+		$terms   = get_terms( $args );
+
 		if ( is_wp_error( $terms ) ) {
 			return $options;
 		}
 		foreach ( $terms as $key => $term ) {
-			$_key_   = $this->args['term_select']['option_value'] ?? 'term_id';
-			$_value_ = $this->args['term_select']['option_display'] ?? 'name';
+			$_key_            = $this->args['term_select']['option_value'] ?? 'term_id';
+			$_value_          = $this->args['term_select']['option_display'] ?? 'name';
 			$_key             = $term->{$_key_};
 			$_value           = $term->{$_value_};
 			$options[ $_key ] = $_value;
@@ -582,25 +587,32 @@ class WpField {
 		return $options;
 	}
 
-	function get_options_post_select(){
+	function get_options_post_select() {
 		$options = [ '' => __( 'Select' ) ];
-		$__args = [ 
-			'post_type'      => [ $this->args['post_select']['post_type'] ],
-			'post_status'    => 'any',
-			'posts_per_page' => -1,
-			'orderby'        => 'name',
-			'order'          => 'asc',
-		];
+		$__args  = wp_parse_args(
+			$this->args['post_select'],
+			[ 
+				'post_type'      => 'post',
+				'post_status'    => 'any',
+				'posts_per_page' => -1,
+				'orderby'        => 'name',
+				'order'          => 'asc',
+			]
+		);
 		$__posts = get_posts( $__args );
-		if(!empty($__posts) and is_array($__posts)){
+
+		if ( !empty( $__posts ) and is_array( $__posts ) ) {
 			foreach ( (array) $__posts as $key => $__post ) {
 				$_key_   = $this->args['post_select']['option_value'] ?? 'ID';
 				$_value_ = $this->args['post_select']['option_display'] ?? 'post_title';
-				$_key             = $__post->{$_key_};
-				$_value           = $__post->{$_value_};
+				$_key    = $__post->{$_key_};
+				$_value  = $__post->{$_value_};
+				if ( $__post->post_status != 'publish' ) {
+					$_value .= " — " . get_post_statuses()[ $__post->post_status ];
+				}
 				$options[ $_key ] = $_value;
 			}
 		}
-		return $options;		
+		return $options;
 	}
 }
