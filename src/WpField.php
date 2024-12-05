@@ -419,32 +419,32 @@ class WpField {
 		?>
 		<div class="form_field_checkbox form_field_flex">
 			<?php
-			// echo "<pre>"; print_r($this->args['attribute']['name']); echo "</pre>";
-			// echo "<pre>"; print_r($this->args); echo "</pre>";
 			$field_value = (array) $this->args['value'];
-			// var_dump($field_value);
 			foreach ( (array) $this->args['options'] as $key => $value ) {
-				$attr_override          = $this->args['attribute'];
-				$attr_override['value'] = $key;
-				$attr_override['id'] .= "_" . $key;
+				if ( !$key ) {
+					continue;
+				}
+				$attribute          = $this->args['attribute'];
+				$attribute['value'] = $key;
+				$attribute['id'] .= "_" . $key;
 
 				if ( in_array( $key, $field_value ) ) {
-					$attr_override['checked'] = 'checked';
+					$attribute['checked'] = 'checked';
 				} else {
-					if ( isset( $attr_override['checked'] ) ) {
-						unset( $attr_override['checked'] );
+					if ( isset( $attribute['checked'] ) ) {
+						unset( $attribute['checked'] );
 					}
 				}
 
 				?>
-				<div class="item">
-					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>"
-						style="vertical-align: middle;">
-						<input <?= $this->get_attribute( $attr_override ); ?>>
-						<?= esc_attr( $value ) ?>
-					</label>
-				</div>
-				<?php
+					<div class="item">
+						<label class="form_field_label_item" for="<?= esc_attr( $attribute['id'] ) ?>"
+							style="vertical-align: middle;">
+							<input <?= $this->get_attribute( $attribute ); ?>>
+							<?= esc_attr( $value ) ?>
+						</label>
+					</div>
+					<?php
 			}
 			?>
 		</div>
