@@ -470,12 +470,7 @@ class WpField {
 					false,
 					[ 
 						'class' => 'image-preview',
-						'style' => '
-							max-width: 100%; 
-							width: 100px; 
-							height: auto;  
-							border-radius: 4px;
-						',
+						'style' => '',
 					]
 				);
 				echo '</div>';
