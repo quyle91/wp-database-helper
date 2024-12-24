@@ -25,7 +25,7 @@
             this.attachMoveUpEvent(element, element.querySelectorAll(".move_up_one"));
         },
 
-        attachAddNewEvent(element) {            
+        attachAddNewEvent(element) {   
             const addNewButtons = element.querySelectorAll(".addnew");
             addNewButtons.forEach(addNewButton => {
                 addNewButton.addEventListener("click", () => {
@@ -34,16 +34,7 @@
                         const clone = lastElement.cloneNode(true);
                         addNewButton.parentNode.insertBefore(clone, addNewButton);
 
-                        // focus after clone
-                        clone.querySelector('.WpDatabaseHelper_field');
-                        const input = clone.querySelector('.WpDatabaseHelper_field');
-                        input.focus();
-
-                        if (input.tagName === 'INPUT') {
-                            input.select();
-                            const valueLength = input.value.length;
-                            input.setSelectionRange(valueLength, valueLength);
-                        }
+                        
 
                         // update names
                         const listItem = clone.parentNode;
@@ -52,10 +43,10 @@
                         // Reattach events to the new cloned element
                         this.attachDeleteEvent(element, clone.querySelectorAll(".delete"));
                         this.attachMoveUpEvent(element, clone.querySelectorAll(".move_up_one"));
-                        this.attachAddNewEvent(clone); // Reattach for cloned addnew buttons
+                        // this.attachAddNewEvent(clone); // Reattach for cloned addnew buttons
 
-                        // trigger WpDatabaseHelper_Field event
-                        WpDatabaseHelper_Field.init_field(element);
+                        // console.log('::WpDatabaseHelper_Field.init_field(element)::'); 
+                        WpDatabaseHelper_Field.init_field(element, 'repeater_init');
                     }
                 });
             });
@@ -125,6 +116,7 @@
                 let oldName = adminzField.getAttribute('name');
                 let newName = oldName.replace(oldPrefix, newPrefix);
                 adminzField.setAttribute('name', newName);
+                adminzField.setAttribute('id', 'clone_'+Math.random());
                 // console.log(adminzField, oldPrefix, newPrefix); 
             });
 

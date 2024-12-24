@@ -16,7 +16,7 @@
 
             // wrap
             document.querySelectorAll(".WpDatabaseHelper_field_wrap").forEach(fieldWrap => {
-                this.init_field(fieldWrap);
+                this.init_field(fieldWrap, 'field_init');
             });
 
             // suggest
@@ -25,7 +25,7 @@
             });
         },
 
-        init_field(fieldWrap){
+        init_field(fieldWrap, event){
 
             // input slider
             fieldWrap.querySelectorAll('.form_field_range').forEach(element => {
@@ -41,6 +41,23 @@
             fieldWrap.querySelectorAll('.form_field_color').forEach(element => {
                 this.form_field_color(element);
             });
+
+            // select
+            fieldWrap.querySelectorAll('.form_field_select').forEach(element => {
+                this.form_field_select(element, event);
+            });
+        },
+
+        form_field_select(element, event){
+            let select = element.querySelector('select');
+            select = jQuery(select);
+
+            // remove old select2, .select2('destroy') not working then i have to do that.
+            select.next('.select2').remove();
+
+            setTimeout(() => {
+                select.select2();
+            }, 100);
         },
 
         form_field_color(element){
@@ -50,11 +67,6 @@
                 fieldInput.value = colorControl.value;
                 fieldInput.dispatchEvent(new Event('change'));
             });
-            // const deleteColor = element.querySelector(".deleteColor");
-            // deleteColor.addEventListener("click", function(){
-            //     fieldInput.value = "";
-            //     fieldInput.dispatchEvent(new Event('change'));
-            // });
         },
 
         form_field_media(element){

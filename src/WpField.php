@@ -22,7 +22,7 @@ class WpField {
 	}
 
 	function enqueue() {
-		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
+		$plugin_url     = plugins_url( '', __DIR__ );
 		$enqueue_assets = function () use ($plugin_url) {
 			// Check if the script is already enqueued to avoid adding it multiple times
 			if ( wp_script_is( 'wpdatabasehelper-field-js', 'enqueued' ) ) {
@@ -30,7 +30,7 @@ class WpField {
 			}
 			wp_enqueue_style(
 				'wpdatabasehelper-field-css',
-				$plugin_url . "/css/field.css",
+				$plugin_url . "/assets/css/field.css",
 				[],
 				$this->version,
 				'all'
@@ -38,7 +38,7 @@ class WpField {
 
 			wp_enqueue_script(
 				'wpdatabasehelper-field-js',
-				$plugin_url . "/js/field.js",
+				$plugin_url . "/assets/js/field.js",
 				[],
 				$this->version,
 				true
@@ -59,6 +59,23 @@ class WpField {
 					)
 				),
 				'before'
+			);
+
+			// select2
+			wp_enqueue_style(
+				'adminz_admin_select2_css',
+				$plugin_url . "/assets/vendor/select2/select2.min.css",
+				[],
+				$this->version,
+				'all'
+			);
+
+			wp_enqueue_script(
+				'adminz_admin_select2_js',
+				$plugin_url . "/assets/vendor/select2/select2.min.js",
+				[],
+				$this->version,
+				true,
 			);
 		};
 
@@ -309,18 +326,20 @@ class WpField {
 		// echo "<pre>"; print_r($this->args); echo "</pre>";
 		// var_dump($this->args->value);
 		?>
-		<select <?= $this->get_attribute(); ?>>
-			<?php
-			foreach ( $this->args['options'] as $key => $value ) {
-				$selected = in_array( $key, (array) $this->args['value'] ) ? 'selected' : "";
-				?>
-				<option <?= esc_attr( $selected ) ?> value="<?= esc_attr( $key ); ?>">
-					<?= esc_attr( $value ); ?>
-				</option>
+		<div class="form_field_select">
+			<select <?= $this->get_attribute(); ?>>
 				<?php
-			}
-			?>
-		</select>
+				foreach ( $this->args['options'] as $key => $value ) {
+					$selected = in_array( $key, (array) $this->args['value'] ) ? 'selected' : "";
+					?>
+					<option <?= esc_attr( $selected ) ?> value="<?= esc_attr( $key ); ?>">
+						<?= esc_attr( $value ); ?>
+					</option>
+					<?php
+				}
+				?>
+			</select>
+		</div>
 		<?php
 		return ob_get_clean();
 	}
@@ -328,7 +347,9 @@ class WpField {
 	function textarea() {
 		ob_start();
 		?>
-		<textarea <?= $this->get_attribute(); ?>><?= esc_attr( $this->args['value'] ) ?></textarea>
+		<div class="form_field_textarea">
+			<textarea <?= $this->get_attribute(); ?>><?= esc_attr( $this->args['value'] ) ?></textarea>
+		</div>
 		<?php
 		return ob_get_clean();
 	}
@@ -400,9 +421,9 @@ class WpField {
 				}
 				?>
 				<div class="item">
+					<input <?= $this->get_attribute( $attr_override ); ?>>
 					<label class="form_field_label_item" for="<?= esc_attr( $attr_override['id'] ) ?>"
 						style="vertical-align: middle;">
-						<input <?= $this->get_attribute( $attr_override ); ?>>
 						<?= esc_attr( $value ) ?>
 					</label>
 				</div>
@@ -438,9 +459,9 @@ class WpField {
 
 				?>
 					<div class="item">
+						<input <?= $this->get_attribute( $attribute ); ?>>
 						<label class="form_field_label_item" for="<?= esc_attr( $attribute['id'] ) ?>"
 							style="vertical-align: middle;">
-							<input <?= $this->get_attribute( $attribute ); ?>>
 							<?= esc_attr( $value ) ?>
 						</label>
 					</div>
