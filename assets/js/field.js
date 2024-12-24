@@ -54,6 +54,7 @@
 
             // remove old select2, .select2('destroy') not working then i have to do that.
             select.next('.select2').remove();
+            select.removeClass('select2-hidden-accessible');
 
             setTimeout(() => {
                 select.select2();
