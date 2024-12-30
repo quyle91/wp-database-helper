@@ -1,6 +1,8 @@
 body .WpDatabaseHelper_field {
   background-color: #ededed;
   max-width: 100%;
+}
+body .WpDatabaseHelper_field:not([type=radio]) {
   border-radius: 4px;
 }
 body .WpDatabaseHelper_field[type=text], body .WpDatabaseHelper_field[type=email], body .WpDatabaseHelper_field[type=tel], body .WpDatabaseHelper_field[type=password], body .WpDatabaseHelper_field[type=text] {

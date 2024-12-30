@@ -2,7 +2,9 @@ body{
     .WpDatabaseHelper_field{
         background-color: #ededed;
         max-width: 100%;
-        border-radius: 4px;
+        &:not([type="radio"]){
+            border-radius: 4px;
+        }
         
         &[type=text],
         &[type=email],

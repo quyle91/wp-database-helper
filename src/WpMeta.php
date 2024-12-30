@@ -82,10 +82,28 @@ class WpMeta {
 	}
 
 	function init_meta() {
-		add_action( 'init', [ $this, 'register_post_meta' ] );
-		add_action( 'admin_init', [ $this, 'admin_post_columns' ] );
-		add_action( 'admin_init', [ $this, 'metabox' ] );
-		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+		// Kiểm tra xem action 'init' đã chạy chưa
+		if ( did_action( 'init' ) ) {
+			$this->register_post_meta();
+		} else {
+			add_action( 'init', [ $this, 'register_post_meta' ] );
+		}
+
+		// Kiểm tra xem action 'admin_init' đã chạy chưa
+		if ( did_action( 'admin_init' ) ) {
+			$this->admin_post_columns();
+			$this->metabox();
+		} else {
+			add_action( 'admin_init', [ $this, 'admin_post_columns' ] );
+			add_action( 'admin_init', [ $this, 'metabox' ] );
+		}
+
+		// Kiểm tra xem action 'wp_ajax_wpmeta_edit__' đã chạy chưa
+		if ( did_action( 'wp_ajax_wpmeta_edit__' ) ) {
+			$this->wpmeta_edit__();
+		} else {
+			add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+		}
 	}
 
 	function wpmeta_edit__() {
