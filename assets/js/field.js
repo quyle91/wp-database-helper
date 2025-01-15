@@ -56,6 +56,7 @@
             select.next('.select2').remove();
             select.removeClass('select2-hidden-accessible');
 
+            // after 0.1s
             setTimeout(() => {
                 select.select2();
             }, 100);
