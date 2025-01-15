@@ -116,11 +116,15 @@ class WpMeta {
 			$meta_value = json_decode( stripslashes( $_POST['meta_value'] ) );
 		}
 
+		$post_id  = $_POST['post_id'];
+		$meta_key = $_POST['meta_key'];
+
 		update_post_meta(
-			esc_attr( $_POST['post_id'] ),
-			esc_attr( $_POST['meta_key'] ),
+			esc_attr( $post_id ),
+			esc_attr( $meta_key ),
 			$meta_value,
 		);
+		error_log( "update_post_meta_wpmeta_edit__: $post_id - $meta_key - $meta_value" );
 
 		wp_send_json_success(
 			$this->init_meta_value(
@@ -332,7 +336,12 @@ class WpMeta {
 					}
 				}
 
-				update_post_meta( $post_id, $meta_key, $meta_value );
+				update_post_meta(
+					$post_id,
+					$meta_key,
+					$meta_value
+				);
+				error_log( "update_post_metametabox: $post_id - $meta_key - $meta_value" );
 			}
 
 		} );
@@ -348,7 +357,7 @@ class WpMeta {
 		$args['attribute']['name'] = $args['meta_key'];
 		$args['value']             = $meta_value;
 
-		if ( $args['field'] == 'input' ) {
+		if ( str_contains( $args['field'], 'input' ) ) {
 			$args['attribute']['type']  = $args['attribute']['type'] ?? 'text';
 			$args['attribute']['value'] = $meta_value;
 		}

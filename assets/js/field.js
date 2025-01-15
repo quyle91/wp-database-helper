@@ -88,6 +88,7 @@
                     var attachment = frame.state().get('selection').first().toJSON();
                     input.value = attachment.id;
                     imagePreview.src = attachment.url;
+                    console.log(":::Set image and url ", attachment); 
                     imagePreview.srcset = "";
                     imagePreview.style.display = 'inline';
                     input.dispatchEvent(new Event('change'));
