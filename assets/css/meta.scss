@@ -30,6 +30,9 @@ body {
 
             .WpDatabaseHelper_field_wrap {
                 width: 100%;
+                &.field_input_wp_media{
+                    width: unset;
+                }
 
                 .WpDatabaseHelper_field {
                     &:not([type=checkbox]):not([type=radio]) {

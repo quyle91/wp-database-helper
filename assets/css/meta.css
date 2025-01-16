@@ -27,6 +27,9 @@ body .WpDatabaseHelper_meta-meta-box-container .item.full_width {
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap {
   width: 100%;
 }
+body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap.field_input_wp_media {
+  width: unset;
+}
 body .WpDatabaseHelper_meta-meta-box-container .item .WpDatabaseHelper_field_wrap .WpDatabaseHelper_field:not([type=checkbox]):not([type=radio]) {
   width: 100%;
 }

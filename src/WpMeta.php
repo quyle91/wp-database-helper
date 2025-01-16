@@ -358,9 +358,9 @@ class WpMeta {
 		$args['value']             = $meta_value;
 
 		if ( str_contains( $args['field'], 'input' ) ) {
-			$args['attribute']['type']  = $args['attribute']['type'] ?? 'text';
 			$args['attribute']['value'] = $meta_value;
 		}
+		
 		return $args;
 	}
 

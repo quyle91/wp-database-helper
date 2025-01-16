@@ -280,8 +280,9 @@ class WpField {
 			array_merge(
 				(array) $this->args['wrap_class'],
 				[ 
-					$this->name . '_wrap',
-					'type-' . $type
+					"{$this->name}_wrap",
+					"type-$type",
+					"field_$field",
 				]
 			)
 		);
@@ -458,14 +459,13 @@ class WpField {
 				}
 
 				?>
-					<div class="item">
-						<input <?= $this->get_attribute( $attribute ); ?>>
-						<label class="form_field_label_item" for="<?= esc_attr( $attribute['id'] ) ?>"
-							style="vertical-align: middle;">
-							<?= esc_attr( $value ) ?>
-						</label>
-					</div>
-					<?php
+				<div class="item">
+					<input <?= $this->get_attribute( $attribute ); ?>>
+					<label class="form_field_label_item" for="<?= esc_attr( $attribute['id'] ) ?>" style="vertical-align: middle;">
+						<?= esc_attr( $value ) ?>
+					</label>
+				</div>
+				<?php
 			}
 			?>
 		</div>
