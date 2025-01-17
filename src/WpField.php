@@ -237,7 +237,7 @@ class WpField {
 					}
 				}
 			}
-		} elseif ( $this->args['attribute']['type'] == 'wp_media' ) {
+		} elseif ( $this->args['field'] == 'input_wp_media' ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
 				if ( $value ) {
 					$html_items[] = wp_get_attachment_image(
