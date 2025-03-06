@@ -78,7 +78,8 @@ class WpDatabase {
 
 		if ( did_action( 'admin_enqueue_scripts' ) ) {
 			$enqueue_assets();
-		} else {
+		}
+		else {
 			add_action( 'admin_enqueue_scripts', $enqueue_assets );
 		}
 	}
@@ -119,11 +120,19 @@ class WpDatabase {
 
 		if ( $found_table_name != $table_name ) {
 			$charset_collate = $wpdb->get_charset_collate();
-			$fields_sql = $this->fields_sql;
+			$fields_sql      = $this->fields_sql;
 			$sql             = "CREATE TABLE {$table_name} ({$fields_sql}) {$charset_collate};";
 			require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
 			dbDelta( $sql );
 		}
+	}
+
+	function delete_table_sql() {
+		global $wpdb;
+		require_once( ABSPATH . 'wp-includes/pluggable.php' );
+		$table_name_safe = esc_sql( $this->table_name );
+		$sql             = "DROP TABLE IF EXISTS `{$table_name_safe}`";
+		$wpdb->query( $sql );
 	}
 
 	function create_table_view() {
@@ -181,30 +190,25 @@ class WpDatabase {
 		global $wpdb;
 
 		require_once( ABSPATH . 'wp-includes/pluggable.php' );
-		if ( current_user_can( 'administrator' ) ) {
+		if ( current_user_can( $this->wp_user_role ) ) {
 
 			// reset table
 			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
-				if ( current_user_can( $this->wp_user_role ) ) {
-					// delete table
-					$table_name_safe = esc_sql( $this->table_name );
-					$sql             = "DROP TABLE IF EXISTS `{$table_name_safe}`";
-					$wpdb->query( $sql );
-					$this->create_table_sql();
-					wp_redirect( $this->get_page_url() ); // reset link
-				}
+				$this->delete_table_sql();
+				$this->create_table_sql();
+				wp_redirect( $this->get_page_url() ); // reset link
 			}
 
 			// add new
 			if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
 				if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
-				$_post = array_filter($_POST);
+				$_post = array_filter( $_POST );
 				$this->insert( $_post );
 				wp_redirect( $this->get_page_url() ); // reset link
 			}
 
 			// search
-			if ( isset( $_GET[ 'search_'.$this->table_name ] ) ) {
+			if ( isset( $_GET[ 'search_' . $this->table_name ] ) ) {
 				$this->query_args['where_conditions'] = 'like';
 			}
 
@@ -307,11 +311,11 @@ class WpDatabase {
 			if ( !isset( $args['where'][0] ) ) {
 				$where = [];
 				foreach ( $args['where'] as $field => $value ) {
-					switch ( ($args['where_conditions'] ?? '')) {
+					switch ( ( $args['where_conditions'] ?? '' ) ) {
 						case 'like':
 							$tmp = "$field like '%$value%'";
 							break;
-						
+
 						default:
 							$tmp = "$field = '$value'";
 							break;
@@ -330,20 +334,25 @@ class WpDatabase {
 				foreach ( $args['where'] as $key => $value ) {
 					if ( $key == 'relation' ) {
 						continue;
-					} else {
+					}
+					else {
 
 						// data type
 						if ( in_array( $value['type'], [ 'CHAR', 'VARCHAR', 'TEXT', 'DATETIME', 'DATE', 'TIME' ] ) ) {
 							$value_type = '%s';
-						} elseif ( in_array( $value['type'], [ 'INT', 'BIGINT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'YEAR' ] ) ) {
+						}
+						elseif ( in_array( $value['type'], [ 'INT', 'BIGINT', 'TINYINT', 'SMALLINT', 'MEDIUMINT', 'YEAR' ] ) ) {
 							$value_type = '%d';
-						} elseif ( in_array( $value['type'], [ 'DECIMAL', 'FLOAT', 'DOUBLE' ] ) ) {
+						}
+						elseif ( in_array( $value['type'], [ 'DECIMAL', 'FLOAT', 'DOUBLE' ] ) ) {
 							$value_type = '%f';
-						} elseif ( in_array( $value['type'], [ 'BINARY', 'VARBINARY' ] ) ) {
+						}
+						elseif ( in_array( $value['type'], [ 'BINARY', 'VARBINARY' ] ) ) {
 							$value_type = '%b';
-						} else {
+						}
+						else {
 							$value_type = '%s';
-						}						
+						}
 
 						// prepare
 						$where[] = $wpdb->prepare(
@@ -360,7 +369,7 @@ class WpDatabase {
 
 		// fields in $args
 		foreach ( (array) $this->fields_array as $key => $value ) {
-			if ( array_key_exists( ($value['name'] ?? ''), $args ) ) {
+			if ( array_key_exists( ( $value['name'] ?? '' ), $args ) ) {
 				$_name  = $value['name'];
 				$_value = $args[ $value['name'] ];
 				$sql .= " AND ($_name = '$_value')";
@@ -480,9 +489,9 @@ class WpDatabase {
 		);
 
 		if ( !$inserted ) {
-			die($wpdb->last_error);
+			die( $wpdb->last_error );
 		}
-		
+
 		return $wpdb->insert_id;
 	}
 
@@ -498,7 +507,8 @@ class WpDatabase {
 		if ( $existing_id ) {
 			$data['id'] = $existing_id;
 			return $this->update( $data );
-		} else {
+		}
+		else {
 			return $this->insert( $data );
 		}
 	}
@@ -687,15 +697,15 @@ class WpDatabase {
 
 	function get_search_form() {
 		ob_start();
-		$action = admin_url( $this->wp_parent_slug );
-		$classes = [
-			'section', 'filters'
+		$action  = admin_url( $this->wp_parent_slug );
+		$classes = [ 
+			'section', 'filters',
 		];
-		if(!isset($_GET['search_'.$this->table_name])){
+		if ( !isset( $_GET[ 'search_' . $this->table_name ] ) ) {
 			$classes[] = 'hidden';
 		}
 		?>
-		<div class="<?= implode (" ", $classes) ?>">
+		<div class="<?= implode( " ", $classes ) ?>">
 			<h4>Filters</h4>
 			<form action="<?= esc_url( $action ) ?>" method="get">
 				<input type="hidden" name="page" value="<?= esc_attr( $this->menu_slug ) ?>">
@@ -754,8 +764,8 @@ class WpDatabase {
 		?>
 		<div class="section navigation">
 			<code>
-				<?php echo $this->sql; ?>
-			</code>
+																		<?php echo $this->sql; ?>
+																	</code>
 			<div class="actions">
 				<button class="button box_show_filter"><?= __( 'Search' ) ?></button>
 				<button class="button button-primary box_add_record_button"><?= __( 'Add' ) ?></button>
@@ -782,7 +792,7 @@ class WpDatabase {
 	}
 
 	function get_box_add_record() {
-		$action = $this->get_page_url();
+		$action  = $this->get_page_url();
 		$classes = [ 
 			'section', 'box_add_record',
 		];

@@ -22,7 +22,45 @@ class WpRepeater {
 		return '0.0.0';
 	}
 
-	static function repeater_default_value( $type = 1, $count_items = 1, $key = 'key', $value = 'value' ) {
+	// static function repeater_default_value( $type = 1, $count_items = 1, $key = 'key', $value = 'value' ) {
+
+	// 	// ['','',''] with count = $count_items
+	// 	$default_values = [];
+	// 	for ( $i = 0; $i < $count_items; $i++ ) {
+	// 		$default_values[] = '';
+	// 	}
+
+	// 	$return = [];
+	// 	switch ( $type ) {
+	// 		case 1:
+	// 			$return = $default_values;
+	// 			break;
+
+	// 		case 2:
+	// 			$return = [ $default_values ];
+	// 			break;
+
+	// 		case 3:
+	// 			$return = [ 
+	// 				[ 
+	// 					$key   => '',
+	// 					$value => '',
+	// 				],
+	// 			];
+	// 			break;
+	// 		case 4:
+	// 			$return = [ 
+	// 				[ 
+	// 					$key   => '',
+	// 					$value => [ $default_values ],
+	// 				],
+	// 			];
+	// 			break;
+	// 	}
+	// 	return $return;
+	// }
+	
+	static function repeater_default_value( $type = 1, $count_items = 1, ...$params ) {
 
 		// ['','',''] with count = $count_items
 		$default_values = [];
@@ -41,18 +79,16 @@ class WpRepeater {
 				break;
 
 			case 3:
-				$return = [ 
-					[ 
-						$key   => '',
-						$value => '',
-					],
-				];
+				$return = [];
+				foreach ( (array) $params as $value ) {
+					$return[0][ $value ] = '';
+				}
 				break;
 			case 4:
 				$return = [ 
 					[ 
-						$key   => '',
-						$value => [ $default_values ],
+						$params[0] => '',
+						$params[1] => [ $default_values ],
 					],
 				];
 				break;
