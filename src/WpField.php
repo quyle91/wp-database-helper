@@ -166,11 +166,11 @@ class WpField {
 		if ( $this->args['field'] == 'textarea' ) {
 
 			if ( !isset( $this->args['attribute']['cols'] ) ) {
-				$this->args['attribute']['cols'] = 50;
+				$this->args['attribute']['cols'] = 65;
 			}
 
 			if ( !isset( $this->args['attribute']['rows'] ) ) {
-				$this->args['attribute']['rows'] = 3;
+				$this->args['attribute']['rows'] = 8;
 			}
 		}
 
