@@ -61,6 +61,9 @@ class WpRepeater {
 	// }
 	
 	static function repeater_default_value( $type = 1, $count_items = 1, ...$params ) {
+		if ( empty( $params ) ) {
+			$params = [ 'key', 'value' ];
+		}
 
 		// ['','',''] with count = $count_items
 		$default_values = [];
