@@ -69,6 +69,7 @@ body {
             .WpDatabaseHelper_field_wrap,
             .WpDatabaseHelper_field {
                 max-width: 100%;
+                min-width: unset;
             }
 
             .WpDatabaseHelper_field_name {
