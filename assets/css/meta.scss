@@ -30,7 +30,8 @@ body {
 
             .WpDatabaseHelper_field_wrap {
                 width: 100%;
-                &.field_input_wp_media{
+
+                &.field_input_wp_media {
                     width: unset;
                 }
 
@@ -56,15 +57,14 @@ body {
         height: 100%;
         border: 1px dashed transparent;
 
-        &:hover {
-            border-color: lightgray;
 
-            .quick_edit_icon {
-                display: block;
-            }
+
+        .quick_edit_icon {
+            visibility: hidden;
         }
 
         .quick_edit_field {
+            display: none;
 
             .WpDatabaseHelper_field_wrap,
             .WpDatabaseHelper_field {
@@ -84,6 +84,28 @@ body {
                     flex-direction: column;
                     gap: 5px;
                 }
+            }
+        }
+
+        &.active {
+            .quick_edit_value {
+                display: none;
+            }
+
+            .quick_edit_field {
+                display: block;
+            }
+
+            .quick_edit_icon {
+                visibility: visible !important;
+            }
+        }
+
+        &:hover {
+            border-color: lightgray;
+
+            .quick_edit_icon {
+                visibility: visible !important;
             }
         }
     }

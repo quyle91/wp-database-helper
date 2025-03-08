@@ -11,17 +11,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // toggle
         quick_edit_icon.addEventListener("click", (e) => {
-            document.querySelectorAll(".WpDatabaseHelper_meta_quick_edit").forEach(otherWrap => {
-                const otherField = otherWrap.querySelector('.quick_edit_field');
-                const otherValueWrap = otherWrap.querySelector('.quick_edit_value');
-
-                if (otherWrap !== wrap) {
-                    otherField.classList.add('hidden');
-                    otherValueWrap.classList.remove('hidden');
-                }
-            });
-            quick_edit_field.classList.toggle('hidden');
-            quick_edit_value.classList.toggle('hidden');
+            wrap.classList.toggle('active');
             e.stopPropagation();
         });
         
@@ -32,9 +22,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 quick_edit_value.classList.remove('hidden');
             }
         });
-        
-        
-        
 
         // Hàm tạo FormData
         function createFormData(post_id, meta_key, meta_value, meta_value_is_json, args) {
@@ -68,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     console.log(data);
                     if (data.success) {
                         quick_edit_value.innerHTML = data.data;
+                        wrap.classList.remove('active');
                     }
                 } catch (error) {
                     console.error('Fetch error:', error);

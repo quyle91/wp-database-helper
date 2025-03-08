@@ -58,7 +58,8 @@ class WpMeta {
 
 		if ( did_action( 'admin_enqueue_scripts' ) ) {
 			$enqueue_assets();
-		} else {
+		}
+		else {
 			add_action( 'admin_enqueue_scripts', $enqueue_assets );
 		}
 	}
@@ -78,33 +79,58 @@ class WpMeta {
 			$this->$key = $value;
 		}
 
-		$this->id = $this->name . "_" . sanitize_title( $this->metabox_label );
+		$this->id = $this->name . "_" . sanitize_title( $this->metabox_label ?? '' );
 	}
 
+	// init all options
 	function init_meta() {
+		$this->init_register_post_meta();
+		$this->init_admin_columns();
+		$this->init_metabox();
+	}
+
+	function init_register_post_meta() {
 		// Kiểm tra xem action 'init' đã chạy chưa
 		if ( did_action( 'init' ) ) {
 			$this->register_post_meta();
-		} else {
+		}
+		else {
 			add_action( 'init', [ $this, 'register_post_meta' ] );
 		}
+	}
 
+	function init_admin_columns() {
 		// Kiểm tra xem action 'admin_init' đã chạy chưa
 		if ( did_action( 'admin_init' ) ) {
-			$this->admin_post_columns();
-			$this->metabox();
-		} else {
-			add_action( 'admin_init', [ $this, 'admin_post_columns' ] );
-			add_action( 'admin_init', [ $this, 'metabox' ] );
+			$this->make_admin_columns();
+		}
+		else {
+			add_action( 'admin_init', [ $this, 'make_admin_columns' ] );
 		}
 
-		// Kiểm tra xem action 'wp_ajax_wpmeta_edit__' đã chạy chưa
-		if ( did_action( 'wp_ajax_wpmeta_edit__' ) ) {
-			$this->wpmeta_edit__();
-		} else {
-			add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+		// ajax on admin column
+		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+	}
+
+	function init_metabox() {
+		// Kiểm tra xem action 'admin_init' đã chạy chưa
+		if ( did_action( 'admin_init' ) ) {
+			$this->make_metabox();
+		}
+		else {
+			add_action( 'admin_init', [ $this, 'make_metabox' ] );
 		}
 	}
+
+	// function init_ajax_metabox() {
+	// 	// Kiểm tra xem action 'wp_ajax_wpmeta_edit__' đã chạy chưa
+	// 	if ( did_action( 'wp_ajax_wpmeta_edit__' ) ) {
+	// 		$this->wpmeta_edit__();
+	// 	}
+	// 	else {
+	// 		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+	// 	}
+	// }
 
 	function wpmeta_edit__() {
 		if ( !wp_verify_nonce( $_POST['nonce'], 'wpdatabasehelper_meta_js' ) ) exit;
@@ -183,11 +209,10 @@ class WpMeta {
 					return current_user_can( 'edit_posts' );
 				}
 			) );
-
 		}
 	}
 
-	function admin_post_columns() {
+	function make_admin_columns() {
 		if ( !$this->admin_post_columns ) {
 			return;
 		}
@@ -213,7 +238,8 @@ class WpMeta {
 				$columns = array_slice( $columns, 0, $position + 1, true ) +
 					$insert +
 					array_slice( $columns, $position + 1, null, true );
-			} else {
+			}
+			else {
 				$columns = $insert + $columns;
 			}
 
@@ -244,10 +270,10 @@ class WpMeta {
 				<div class="quick_edit_value">
 					<?php echo $this->init_meta_value( $field_args, $meta_value ); ?>
 				</div>
-				<div class="quick_edit_field hidden">
+				<div class="quick_edit_field">
 					<?php echo $this->init_meta_field( $args, $meta_value ); ?>
 				</div>
-				<button class="quick_edit_icon button hidden" type="button">
+				<button class="quick_edit_icon button" type="button">
 					<?= __( 'Edit' ) ?>
 				</button>
 			</div>
@@ -256,7 +282,7 @@ class WpMeta {
 		return ob_get_clean();
 	}
 
-	function metabox() {
+	function make_metabox() {
 
 		add_action( 'add_meta_boxes', function () {
 			add_meta_box(
@@ -331,7 +357,8 @@ class WpMeta {
 					if ( $args['field'] == 'textarea' ) {
 						// becareful with santize before can be change value strings
 						$meta_value = wp_unslash( $meta_value );
-					} else {
+					}
+					else {
 						$meta_value = sanitize_text_field( $meta_value );
 					}
 				}
@@ -360,7 +387,7 @@ class WpMeta {
 		if ( str_contains( $args['field'], 'input' ) ) {
 			$args['attribute']['value'] = $meta_value;
 		}
-		
+
 		return $args;
 	}
 
