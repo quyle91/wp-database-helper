@@ -189,38 +189,41 @@ class WpDatabase {
 	function init_table_actions() {
 		global $wpdb;
 
-		require_once( ABSPATH . 'wp-includes/pluggable.php' );
-		if ( current_user_can( $this->wp_user_role ) ) {
+		// require_once( ABSPATH . 'wp-includes/pluggable.php' );
+		// đưa vào init để tương thích với plugin được đặttrong mu-plugins
+		add_action( 'init', function () {
+			if ( current_user_can( $this->wp_user_role ) ) {
 
-			// reset table
-			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
-				$this->delete_table_sql();
-				$this->create_table_sql();
-				wp_redirect( $this->get_page_url() ); // reset link
-			}
+				// reset table
+				if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
+					$this->delete_table_sql();
+					$this->create_table_sql();
+					wp_redirect( $this->get_page_url() ); // reset link
+				}
 
-			// add new
-			if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
-				if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
-				$_post = array_filter( $_POST );
-				$this->insert( $_post );
-				wp_redirect( $this->get_page_url() ); // reset link
-			}
+				// add new
+				if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
+					if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
+					$_post = array_filter( $_POST );
+					$this->insert( $_post );
+					wp_redirect( $this->get_page_url() ); // reset link
+				}
 
-			// search
-			if ( isset( $_GET[ 'search_' . $this->table_name ] ) ) {
-				$this->query_args['where_conditions'] = 'like';
-			}
+				// search
+				if ( isset( $_GET[ 'search_' . $this->table_name ] ) ) {
+					$this->query_args['where_conditions'] = 'like';
+				}
 
-			// delete
-			if ( isset( $_POST[ $this->table_name ] ) ) {
-				if ( ( $_POST['action'] ?? "" ) == 'delete' ) {
-					if ( $_POST['ids'] ?? "" ) {
-						$this->delete( $_POST['ids'] );
+				// delete
+				if ( isset( $_POST[ $this->table_name ] ) ) {
+					if ( ( $_POST['action'] ?? "" ) == 'delete' ) {
+						if ( $_POST['ids'] ?? "" ) {
+							$this->delete( $_POST['ids'] );
+						}
 					}
 				}
 			}
-		}
+		} );
 	}
 
 	// parse with get params
