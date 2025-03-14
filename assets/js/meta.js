@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const quick_edit_field = wrap.querySelector('.quick_edit_field');
         const quick_edit_value = wrap.querySelector('.quick_edit_value');
         const meta_key = wrap.getAttribute('data-meta_key');
-        const post_id = wrap.getAttribute('data-post_id');
+        const object_id = wrap.getAttribute('data-object_id');
+        const action = wrap.getAttribute('data-action');
         const args = wrap.getAttribute('data-args');
         const form_controls = wrap.querySelectorAll('.WpDatabaseHelper_field ');
 
@@ -14,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
             wrap.classList.toggle('active');
             e.stopPropagation();
         });
-        
+
         // toggle
         document.addEventListener("click", (e) => {
             if (!wrap.contains(e.target) && !quick_edit_field.classList.contains('hidden')) {
@@ -24,11 +25,11 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Hàm tạo FormData
-        function createFormData(post_id, meta_key, meta_value, meta_value_is_json, args) {
+        function createFormData(meta_value, meta_value_is_json) {
             const formData = new FormData();
-            formData.append('action', 'wpmeta_edit__');
+            formData.append('action', action);
             formData.append('nonce', wpdatabasehelper_meta_js.nonce);
-            formData.append('post_id', post_id);
+            formData.append('object_id', object_id);
             formData.append('meta_key', meta_key);
             formData.append('meta_value', meta_value);
             formData.append('meta_value_is_json', meta_value_is_json);
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 let meta_value_is_json = false;
 
                 // Tạo FormData
-                const formData = createFormData(post_id, meta_key, form_control_value, meta_value_is_json, args);
+                const formData = createFormData(form_control_value, meta_value_is_json);
 
                 // Gọi hàm handleFormControlChange và truyền FormData
                 handleFormControlChange(formData, quick_edit_value);
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 // Tạo FormData
-                const formData = createFormData(post_id, meta_key, form_control_value, meta_value_is_json, args);
+                const formData = createFormData(form_control_value, meta_value_is_json);
 
                 // Gọi hàm handleFormControlChange và truyền FormData
                 handleFormControlChange(formData, quick_edit_value);

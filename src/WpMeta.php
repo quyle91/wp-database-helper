@@ -64,6 +64,7 @@ class WpMeta {
 		}
 	}
 
+	// post_type
 	public $post_type;
 	public $metabox_label;
 	public $meta_fields;
@@ -71,6 +72,11 @@ class WpMeta {
 	public $admin_post_columns;
 	public $admin_post_metabox;
 	public $quick_edit_post;
+
+	// term taxonomy
+	public $taxonomy;
+	public $taxonomy_admin_post_columns;
+	public $taxonomy_meta_fields;
 
 	function init( $args ) {
 
@@ -112,6 +118,20 @@ class WpMeta {
 		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
 	}
 
+	function init_admin_term_taxonomy_columns() {
+		// echo "<pre>"; print_r($this); echo "</pre>"; die;
+		// Kiểm tra xem action 'admin_init' đã chạy chưa
+		if ( did_action( 'admin_init' ) ) {
+			$this->make_admin_term_taxonomy_columns();
+		}
+		else {
+			add_action( 'admin_init', [ $this, 'make_admin_term_taxonomy_columns' ] );
+		}
+
+		// ajax on admin column
+		add_action( 'wp_ajax_wpmeta_edit_term_taxonomy__', [ $this, 'wpmeta_edit_term_taxonomy__' ] );
+	}
+
 	function init_metabox() {
 		// Kiểm tra xem action 'admin_init' đã chạy chưa
 		if ( did_action( 'admin_init' ) ) {
@@ -142,15 +162,43 @@ class WpMeta {
 			$meta_value = json_decode( stripslashes( $_POST['meta_value'] ) );
 		}
 
-		$post_id  = $_POST['post_id'];
-		$meta_key = $_POST['meta_key'];
+		$object_id = $_POST['object_id'];
+		$meta_key  = $_POST['meta_key'];
 
 		update_post_meta(
-			esc_attr( $post_id ),
+			esc_attr( $object_id ),
 			esc_attr( $meta_key ),
 			$meta_value,
 		);
-		error_log( "update_post_meta_wpmeta_edit__: $post_id - $meta_key - $meta_value" );
+		error_log( __FUNCTION__ . ": $object_id | $meta_key | $meta_value" );
+
+		wp_send_json_success(
+			$this->init_meta_value(
+				json_decode( stripslashes( $_POST['args'] ), true ),
+				$meta_value
+			)
+		);
+
+		wp_die();
+	}
+
+	function wpmeta_edit_term_taxonomy__() {
+		if ( !wp_verify_nonce( $_POST['nonce'], 'wpdatabasehelper_meta_js' ) ) exit;
+
+		$meta_value = esc_attr( $_POST['meta_value'] );
+		if ( $_POST['meta_value_is_json'] == 'true' ) {
+			$meta_value = json_decode( stripslashes( $_POST['meta_value'] ) );
+		}
+
+		$object_id = $_POST['object_id'];
+		$meta_key  = $_POST['meta_key'];
+
+		update_term_meta(
+			esc_attr( $object_id ),
+			esc_attr( $meta_key ),
+			$meta_value,
+		);
+		error_log( __FUNCTION__ . ": $object_id | $meta_key | $meta_value" );
 
 		wp_send_json_success(
 			$this->init_meta_value(
@@ -228,12 +276,13 @@ class WpMeta {
 				}
 			}
 
-			// price for woocommerce
+			// position
 			$position = array_search( 'title', array_keys( $columns ), true );
 			if ( $position === false ) {
 				$position = array_search( 'price', array_keys( $columns ), true );
 			}
 
+			//
 			if ( $position !== false ) {
 				$columns = array_slice( $columns, 0, $position + 1, true ) +
 					$insert +
@@ -257,6 +306,47 @@ class WpMeta {
 		}, 10, 2 );
 	}
 
+	function make_admin_term_taxonomy_columns() {
+		if ( !$this->taxonomy_admin_post_columns ) {
+			return;
+		}
+
+		add_filter( 'manage_edit-' . $this->taxonomy . '_columns', function ($columns) {
+			$insert = [];
+
+			// prepare array
+			foreach ( (array) $this->taxonomy_meta_fields as $key => $value ) {
+				$args = $this->parse_args( $value );
+				if ( $args['admin_column'] ) {
+					$insert[ $value['meta_key'] ] = esc_html( $args['label'] ?? $value['meta_key'] );
+				}
+			}
+
+			// position
+			$position = array_search( 'name', array_keys( $columns ), true );
+
+			//
+			if ( $position !== false ) {
+				$columns = array_slice( $columns, 0, $position + 1, true ) +
+					$insert +
+					array_slice( $columns, $position + 1, null, true );
+			}
+			else {
+				$columns = $insert + $columns;
+			}
+
+			return $columns;
+		}, 11, 1 ); // 11 for compatity with woocommerce
+
+		add_action( 'manage_' . $this->taxonomy . '_custom_column', function ($content, $column, $term_id) {
+			foreach ( (array) $this->taxonomy_meta_fields as $key => $field_args ) {
+				if ( $field_args['meta_key'] == $column ) {
+					echo $this->quick_edit_field_term_taxonomy( $field_args, $term_id );
+				}
+			}
+		}, 10, 3 );
+	}
+
 	function quick_edit_field( $field_args, $post_id ) {
 		$args       = $this->parse_args( $field_args );
 		$meta_key   = $field_args['meta_key'];
@@ -264,7 +354,34 @@ class WpMeta {
 		ob_start();
 		?>
 		<form action="">
-			<div data-meta_key="<?= esc_attr( $args['meta_key'] ); ?>" data-post_id="<?= esc_attr( $post_id ) ?>"
+			<div data-action="wpmeta_edit__" data-meta_key="<?= esc_attr( $args['meta_key'] ); ?>"
+				data-object_id="<?= esc_attr( $post_id ) ?>"
+				data-args="<?= esc_attr( json_encode( $args, JSON_UNESCAPED_UNICODE ) ) ?>"
+				class="<?= esc_attr( $this->name ) ?>_quick_edit">
+				<div class="quick_edit_value">
+					<?php echo $this->init_meta_value( $field_args, $meta_value ); ?>
+				</div>
+				<div class="quick_edit_field">
+					<?php echo $this->init_meta_field( $args, $meta_value ); ?>
+				</div>
+				<button class="quick_edit_icon button" type="button">
+					<?= __( 'Edit' ) ?>
+				</button>
+			</div>
+		</form>
+		<?php
+		return ob_get_clean();
+	}
+
+	function quick_edit_field_term_taxonomy( $field_args, $term_id ) {
+		$args       = $this->parse_args( $field_args );
+		$meta_key   = $field_args['meta_key'];
+		$meta_value = get_term_meta( $term_id, $meta_key, true );
+		ob_start();
+		?>
+		<form action="">
+			<div data-action="wpmeta_edit_term_taxonomy__" data-meta_key="<?= esc_attr( $args['meta_key'] ); ?>"
+				data-object_id="<?= esc_attr( $term_id ) ?>"
 				data-args="<?= esc_attr( json_encode( $args, JSON_UNESCAPED_UNICODE ) ) ?>"
 				class="<?= esc_attr( $this->name ) ?>_quick_edit">
 				<div class="quick_edit_value">
