@@ -40,63 +40,63 @@ class WpDatabase {
 	}
 
 	function enqueue() {
-		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
-		$enqueue_assets = function () use ($plugin_url) {
-			// Check if the script is already enqueued to avoid adding it multiple times
-			if ( wp_script_is( 'wpdatabasehelper-database-js', 'enqueued' ) ) {
-				return;
-			}
+		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
 
-			wp_enqueue_style(
-				'wpdatabasehelper-database-css',
-				$plugin_url . "/css/database.css",
-				[],
-				$this->version,
-				'all'
-			);
-
-			wp_enqueue_script(
-				'wpdatabasehelper-database-js',
-				$plugin_url . "/js/database.js",
-				[],
-				$this->version,
-				true
-			);
-
-			wp_add_inline_script(
-				'wpdatabasehelper-database-js',
-				'const wpdatabasehelper_database = ' . json_encode(
-					array(
-						'ajax_url'           => admin_url( 'admin-ajax.php' ),
-						'nonce'              => wp_create_nonce( $this->table_name ),
-						'update_action_name' => $this->table_name . "_update_data"
-					)
-				),
-				'before'
-			);
-		};
-
-		if ( did_action( 'admin_enqueue_scripts' ) ) {
-			$enqueue_assets();
+		// Check if the script is already enqueued to avoid adding it multiple times
+		if ( wp_script_is( 'wpdatabasehelper-database-js', 'enqueued' ) ) {
+			return;
 		}
-		else {
-			add_action( 'admin_enqueue_scripts', $enqueue_assets );
-		}
+
+		wp_enqueue_style(
+			'wpdatabasehelper-database-css',
+			$plugin_url . "/css/database.css",
+			[],
+			$this->version,
+			'all'
+		);
+
+		wp_enqueue_script(
+			'wpdatabasehelper-database-js',
+			$plugin_url . "/js/database.js",
+			[],
+			$this->version,
+			true
+		);
+
+		wp_add_inline_script(
+			'wpdatabasehelper-database-js',
+			'const wpdatabasehelper_database = ' . json_encode(
+				array(
+					'ajax_url'           => admin_url( 'admin-ajax.php' ),
+					'nonce'              => wp_create_nonce( $this->table_name ),
+					'update_action_name' => $this->table_name . "_update_data"
+				)
+			),
+			'before'
+		);
 	}
 
 	function init_table( $args = [] ) {
+		
+		if ( did_action( 'init' ) ) {
+			exit( 'Do not run after init' );
+		}
 
 		// default
 		$this->init_table_data( $args );
-		$this->create_table_sql();
-		$this->create_table_view();
-		$this->create_ajax();
+		add_action( 'init', [ $this, 'create_table_sql' ] );
 
 		if ( $this->is_current_table_page() ) {
-			$this->init_query_args();
-			$this->init_table_actions();
-			$this->set_records();
+			// đưa vào init để tương thích với plugin được đặt trong mu-plugins
+			add_action( 'init', [ $this, 'init_table_actions' ] );
+			add_action( 'init', [ $this, 'init_query_args' ] );
+			add_action( 'init', [ $this, 'init_records' ] );
 		}
+
+		// ajax
+		add_action( 'admin_menu', [ $this, 'create_table_view' ] );
+		add_action( 'wp_ajax_' . $this->table_name . '_update_data', [ $this, 'create_ajax' ] );
+
 	}
 
 	function init_table_data( $args = [] ) {
@@ -136,94 +136,84 @@ class WpDatabase {
 	}
 
 	function create_table_view() {
-		add_action( 'admin_menu', function () {
-			add_submenu_page(
-				$this->wp_parent_slug,
-				$this->menu_title,
-				"[DB] $this->menu_title",
-				$this->wp_user_role,
-				$this->menu_slug,
-				[ $this, 'html' ]
-			);
-		} );
+		add_submenu_page(
+			$this->wp_parent_slug,
+			$this->menu_title,
+			"[DB] $this->menu_title",
+			$this->wp_user_role,
+			$this->menu_slug,
+			[ $this, 'html' ]
+		);
 	}
 
 	function create_ajax() {
-		add_action( 'wp_ajax_' . $this->table_name . '_update_data', function () {
-			if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
-			$return = false;
+		if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
+		$return = false;
 
-			ob_start();
+		ob_start();
 
-			// code here
-			$data = [];
-			$post = $_POST;
+		// code here
+		$data = [];
+		$post = $_POST;
 
-			if ( isset( $post['field_id'] ) ) {
-				$data['id'] = $post['field_id'];
+		if ( isset( $post['field_id'] ) ) {
+			$data['id'] = $post['field_id'];
+		}
+
+		// value
+		if ( isset( $post['field_id'] ) and isset( $post['field_value'] ) ) {
+			$_value        = $post['field_value'];
+			$_key          = $post['field_name'];
+			$data[ $_key ] = $_value;
+
+			if ( $this->update( $data ) ) {
+				echo apply_filters( "{$this->table_name}_{$_key}", $_value );
 			}
+		}
 
-			// value
-			if ( isset( $post['field_id'] ) and isset( $post['field_value'] ) ) {
-				$_value        = $post['field_value'];
-				$_key          = $post['field_name'];
-				$data[ $_key ] = $_value;
-
-				if ( $this->update( $data ) ) {
-					echo apply_filters( "{$this->table_name}_{$_key}", $_value );
-				}
-			}
-
-			$return = ob_get_clean();
-			if ( !$return ) {
-				wp_send_json_error( 'Error' );
-				wp_die();
-			}
-
-			wp_send_json_success( $return );
+		$return = ob_get_clean();
+		if ( !$return ) {
+			wp_send_json_error( 'Error' );
 			wp_die();
-		} );
+		}
 
+		wp_send_json_success( $return );
+		wp_die();
 	}
 
 	function init_table_actions() {
 		global $wpdb;
+		if ( current_user_can( $this->wp_user_role ) ) {
 
-		// require_once( ABSPATH . 'wp-includes/pluggable.php' );
-		// đưa vào init để tương thích với plugin được đặttrong mu-plugins
-		add_action( 'init', function () {
-			if ( current_user_can( $this->wp_user_role ) ) {
+			// reset table
+			if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
+				$this->delete_table_sql();
+				$this->create_table_sql();
+				wp_redirect( $this->get_page_url() ); // reset link
+			}
 
-				// reset table
-				if ( isset( $_GET[ 'reset_' . $this->table_name ] ) ) {
-					$this->delete_table_sql();
-					$this->create_table_sql();
-					wp_redirect( $this->get_page_url() ); // reset link
-				}
+			// add new
+			if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
+				if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
+				$_post = array_filter( $_POST );
+				$this->insert( $_post );
+				wp_redirect( $this->get_page_url() ); // reset link
+			}
 
-				// add new
-				if ( isset( $_POST[ 'add_record_' . $this->table_name ] ) ) {
-					if ( !wp_verify_nonce( $_POST['nonce'], $this->table_name ) ) exit;
-					$_post = array_filter( $_POST );
-					$this->insert( $_post );
-					wp_redirect( $this->get_page_url() ); // reset link
-				}
+			// search
+			if ( isset( $_GET[ 'search_' . $this->table_name ] ) ) {
+				$this->query_args['where_conditions'] = 'like';
+			}
 
-				// search
-				if ( isset( $_GET[ 'search_' . $this->table_name ] ) ) {
-					$this->query_args['where_conditions'] = 'like';
-				}
-
-				// delete
-				if ( isset( $_POST[ $this->table_name ] ) ) {
-					if ( ( $_POST['action'] ?? "" ) == 'delete' ) {
-						if ( $_POST['ids'] ?? "" ) {
-							$this->delete( $_POST['ids'] );
-						}
+			// delete
+			if ( isset( $_POST[ $this->table_name ] ) ) {
+				if ( ( $_POST['action'] ?? "" ) == 'delete' ) {
+					if ( $_POST['ids'] ?? "" ) {
+						$this->delete( $_POST['ids'] );
 					}
 				}
 			}
-		} );
+		}
 	}
 
 	// parse with get params
@@ -281,7 +271,7 @@ class WpDatabase {
 		return $return;
 	}
 
-	function set_records() {
+	function init_records() {
 		$this->records       = $this->read( $this->query_args );
 		$this->records_count = $this->read_count( $this->query_args );
 	}
@@ -767,8 +757,8 @@ class WpDatabase {
 		?>
 		<div class="section navigation">
 			<code>
-																		<?php echo $this->sql; ?>
-																	</code>
+																																																																						<?php echo $this->sql; ?>
+																																																																					</code>
 			<div class="actions">
 				<button class="button box_show_filter"><?= __( 'Search' ) ?></button>
 				<button class="button button-primary box_add_record_button"><?= __( 'Add' ) ?></button>

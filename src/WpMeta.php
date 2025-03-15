@@ -20,48 +20,39 @@ class WpMeta {
 	}
 
 	function enqueue() {
-		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
-		$enqueue_assets = function () use ($plugin_url) {
-			// Return early if the script is already enqueued
-			if ( wp_script_is( 'wpdatabasehelper-meta-js', 'enqueued' ) ) {
-				return;
-			}
-
-			wp_enqueue_style(
-				'wpdatabasehelper-meta-css',
-				$plugin_url . "/css/meta.css",
-				[],
-				$this->version,
-				'all'
-			);
-
-			wp_enqueue_script(
-				'wpdatabasehelper-meta-js',
-				$plugin_url . "/js/meta.js",
-				[],
-				$this->version,
-				true
-			);
-
-			wp_add_inline_script(
-				'wpdatabasehelper-meta-js',
-				'const wpdatabasehelper_meta_js = ' . json_encode(
-					array(
-						'ajax_url' => admin_url( 'admin-ajax.php' ),
-						'nonce'    => wp_create_nonce( 'wpdatabasehelper_meta_js' ),
-					)
-				),
-				'before'
-			);
-
-		};
-
-		if ( did_action( 'admin_enqueue_scripts' ) ) {
-			$enqueue_assets();
+		$plugin_url = plugins_url( '', __DIR__ ) . "/assets";
+		
+		// Return early if the script is already enqueued
+		if ( wp_script_is( 'wpdatabasehelper-meta-js', 'enqueued' ) ) {
+			return;
 		}
-		else {
-			add_action( 'admin_enqueue_scripts', $enqueue_assets );
-		}
+
+		wp_enqueue_style(
+			'wpdatabasehelper-meta-css',
+			$plugin_url . "/css/meta.css",
+			[],
+			$this->version,
+			'all'
+		);
+
+		wp_enqueue_script(
+			'wpdatabasehelper-meta-js',
+			$plugin_url . "/js/meta.js",
+			[],
+			$this->version,
+			true
+		);
+
+		wp_add_inline_script(
+			'wpdatabasehelper-meta-js',
+			'const wpdatabasehelper_meta_js = ' . json_encode(
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'wpdatabasehelper_meta_js' ),
+				)
+			),
+			'before'
+		);
 	}
 
 	// post_type
@@ -98,59 +89,39 @@ class WpMeta {
 	function init_register_post_meta() {
 		// Kiểm tra xem action 'init' đã chạy chưa
 		if ( did_action( 'init' ) ) {
-			$this->register_post_meta();
+			exit( 'Do not run after init' );
 		}
-		else {
-			add_action( 'init', [ $this, 'register_post_meta' ] );
-		}
+		add_action( 'init', [ $this, 'register_post_meta' ] );
 	}
 
 	function init_admin_columns() {
-		// Kiểm tra xem action 'admin_init' đã chạy chưa
-		if ( did_action( 'admin_init' ) ) {
-			$this->make_admin_columns();
-		}
-		else {
-			add_action( 'admin_init', [ $this, 'make_admin_columns' ] );
-		}
-
 		// ajax on admin column
 		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
+
+		// Kiểm tra xem action 'admin_init' đã chạy chưa
+		if ( did_action( 'admin_init' ) ) {
+			exit( 'Do not run after admin_init' );
+		}
+		add_action( 'admin_init', [ $this, 'make_admin_columns' ] );
 	}
 
 	function init_admin_term_taxonomy_columns() {
-		// echo "<pre>"; print_r($this); echo "</pre>"; die;
-		// Kiểm tra xem action 'admin_init' đã chạy chưa
-		if ( did_action( 'admin_init' ) ) {
-			$this->make_admin_term_taxonomy_columns();
-		}
-		else {
-			add_action( 'admin_init', [ $this, 'make_admin_term_taxonomy_columns' ] );
-		}
-
 		// ajax on admin column
 		add_action( 'wp_ajax_wpmeta_edit_term_taxonomy__', [ $this, 'wpmeta_edit_term_taxonomy__' ] );
+
+		if ( did_action( 'admin_init' ) ) {
+			exit( 'Do not run after admin_init' );
+		}
+		add_action( 'admin_init', [ $this, 'make_admin_term_taxonomy_columns' ] );
 	}
 
 	function init_metabox() {
 		// Kiểm tra xem action 'admin_init' đã chạy chưa
 		if ( did_action( 'admin_init' ) ) {
-			$this->make_metabox();
+			exit( 'Do not run after admin_init' );
 		}
-		else {
-			add_action( 'admin_init', [ $this, 'make_metabox' ] );
-		}
+		add_action( 'admin_init', [ $this, 'make_metabox' ] );
 	}
-
-	// function init_ajax_metabox() {
-	// 	// Kiểm tra xem action 'wp_ajax_wpmeta_edit__' đã chạy chưa
-	// 	if ( did_action( 'wp_ajax_wpmeta_edit__' ) ) {
-	// 		$this->wpmeta_edit__();
-	// 	}
-	// 	else {
-	// 		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
-	// 	}
-	// }
 
 	function wpmeta_edit__() {
 		if ( !wp_verify_nonce( $_POST['nonce'], 'wpdatabasehelper_meta_js' ) ) exit;

@@ -22,68 +22,61 @@ class WpField {
 	}
 
 	function enqueue() {
-		$plugin_url     = plugins_url( '', __DIR__ );
-		$enqueue_assets = function () use ($plugin_url) {
-			// Check if the script is already enqueued to avoid adding it multiple times
-			if ( wp_script_is( 'wpdatabasehelper-field-js', 'enqueued' ) ) {
-				return;
-			}
-			wp_enqueue_style(
-				'wpdatabasehelper-field-css',
-				$plugin_url . "/assets/css/field.css",
-				[],
-				$this->version,
-				'all'
-			);
+		$plugin_url = plugins_url( '', __DIR__ );
 
-			wp_enqueue_script(
-				'wpdatabasehelper-field-js',
-				$plugin_url . "/assets/js/field.js",
-				[],
-				$this->version,
-				true
-			);
-
-			// Add inline script only once
-			wp_add_inline_script(
-				'wpdatabasehelper-field-js',
-				'const wpdatabasehelper_field_js = ' . json_encode(
-					array(
-						'ajax_url'     => admin_url( 'admin-ajax.php' ),
-						'nonce'        => wp_create_nonce( 'wpdatabasehelper_field_js' ),
-						'script_debug' => ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ),
-						'text'         => [ 
-							'upload'         => __( 'Upload' ),
-							'use_this_media' => __( 'Choose image' ),
-						],
-					)
-				),
-				'before'
-			);
-
-			// select2
-			wp_enqueue_style(
-				'adminz_admin_select2_css',
-				$plugin_url . "/assets/vendor/select2/select2.min.css",
-				[],
-				$this->version,
-				'all'
-			);
-
-			wp_enqueue_script(
-				'adminz_admin_select2_js',
-				$plugin_url . "/assets/vendor/select2/select2.min.js",
-				[],
-				$this->version,
-				true,
-			);
-		};
-
-		if ( did_action( 'admin_enqueue_scripts' ) ) {
-			$enqueue_assets();
-		} else {
-			add_action( 'admin_enqueue_scripts', $enqueue_assets );
+		// Check if the script is already enqueued to avoid adding it multiple times
+		if ( wp_script_is( 'wpdatabasehelper-field-js', 'enqueued' ) ) {
+			return;
 		}
+		wp_enqueue_style(
+			'wpdatabasehelper-field-css',
+			$plugin_url . "/assets/css/field.css",
+			[],
+			$this->version,
+			'all'
+		);
+
+		wp_enqueue_script(
+			'wpdatabasehelper-field-js',
+			$plugin_url . "/assets/js/field.js",
+			[],
+			$this->version,
+			true
+		);
+
+		// Add inline script only once
+		wp_add_inline_script(
+			'wpdatabasehelper-field-js',
+			'const wpdatabasehelper_field_js = ' . json_encode(
+				array(
+					'ajax_url'     => admin_url( 'admin-ajax.php' ),
+					'nonce'        => wp_create_nonce( 'wpdatabasehelper_field_js' ),
+					'script_debug' => ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ),
+					'text'         => [ 
+						'upload'         => __( 'Upload' ),
+						'use_this_media' => __( 'Choose image' ),
+					],
+				)
+			),
+			'before'
+		);
+
+		// select2
+		wp_enqueue_style(
+			'adminz_admin_select2_css',
+			$plugin_url . "/assets/vendor/select2/select2.min.css",
+			[],
+			$this->version,
+			'all'
+		);
+
+		wp_enqueue_script(
+			'adminz_admin_select2_js',
+			$plugin_url . "/assets/vendor/select2/select2.min.js",
+			[],
+			$this->version,
+			true,
+		);
 	}
 
 	function setup_args( $args ) {
@@ -211,6 +204,7 @@ class WpField {
 	function init_field_value() {
 		$html_items          = [];
 		$this->args['value'] = (array) $this->args['value'];
+		// echo "<pre>"; print_r( $this->args ); echo "</pre>"; die;
 
 		// post select
 		if ( !empty( $this->args['post_select']['post_type'] ) ) {
@@ -229,7 +223,8 @@ class WpField {
 					$html_items[] = "<a target='_blank' href='" . get_edit_term_link( $value, $taxonomy ) . "'>" . get_term( $value, $taxonomy )->name . "</a>";
 				}
 			}
-		} elseif ( !empty( $this->args['options'] ) ) {
+		}
+		elseif ( !empty( $this->args['options'] ) ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
 				if ( $value ) {
 					if ( array_key_exists( $value, $this->args['options'] ) ) {
@@ -237,7 +232,8 @@ class WpField {
 					}
 				}
 			}
-		} elseif ( $this->args['field'] == 'input_wp_media' ) {
+		}
+		elseif ( $this->args['field'] == 'input' and ( $this->args['attribute']['type'] ?? '' ) == 'wp_media' ) {
 			foreach ( (array) $this->args['value'] as $key => $value ) {
 				if ( $value ) {
 					$html_items[] = wp_get_attachment_image(
@@ -293,7 +289,8 @@ class WpField {
 			<?php
 			if ( method_exists( $this, $field ) ) {
 				echo $this->{$field}();
-			} else {
+			}
+			else {
 				echo "method is not exists: $field";
 			}
 			echo $this->get_copy();
@@ -415,7 +412,8 @@ class WpField {
 
 				if ( ( $this->args['value'] ?? '' ) == $key ) {
 					$attr_override['checked'] = 'checked';
-				} else {
+				}
+				else {
 					if ( isset( $attr_override['checked'] ) ) {
 						unset( $attr_override['checked'] );
 					}
@@ -452,7 +450,8 @@ class WpField {
 
 				if ( in_array( $key, $field_value ) ) {
 					$attribute['checked'] = 'checked';
-				} else {
+				}
+				else {
 					if ( isset( $attribute['checked'] ) ) {
 						unset( $attribute['checked'] );
 					}
@@ -495,7 +494,8 @@ class WpField {
 					]
 				);
 				echo '</div>';
-			} else {
+			}
+			else {
 				echo '<div class="form_field_preview">';
 				echo '<img src="" class="image-preview" style="display: none;">';
 				echo '</div>';
