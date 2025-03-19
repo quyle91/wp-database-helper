@@ -124,11 +124,7 @@ class WpRepeater {
 			);
 		};
 
-		if ( did_action( 'admin_enqueue_scripts' ) ) {
-			$enqueue_assets();
-		} else {
-			add_action( 'admin_enqueue_scripts', $enqueue_assets );
-		}
+		add_action( 'admin_enqueue_scripts', $enqueue_assets );
 	}
 
 	function init_repeater() {

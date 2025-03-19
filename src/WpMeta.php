@@ -88,9 +88,9 @@ class WpMeta {
 
 	function init_register_post_meta() {
 		// Kiểm tra xem action 'init' đã chạy chưa
-		if ( did_action( 'init' ) ) {
-			exit( 'Do not run after init' );
-		}
+		// if ( did_action( 'init' ) ) {
+		// 	exit( 'Do not run after init' );
+		// }
 		add_action( 'init', [ $this, 'register_post_meta' ] );
 	}
 
@@ -99,9 +99,9 @@ class WpMeta {
 		add_action( 'wp_ajax_wpmeta_edit__', [ $this, 'wpmeta_edit__' ] );
 
 		// Kiểm tra xem action 'admin_init' đã chạy chưa
-		if ( did_action( 'admin_init' ) ) {
-			exit( 'Do not run after admin_init' );
-		}
+		// if ( did_action( 'admin_init' ) ) {
+		// 	exit( 'Do not run after admin_init' );
+		// }
 		add_action( 'admin_init', [ $this, 'make_admin_columns' ] );
 	}
 
@@ -109,17 +109,17 @@ class WpMeta {
 		// ajax on admin column
 		add_action( 'wp_ajax_wpmeta_edit_term_taxonomy__', [ $this, 'wpmeta_edit_term_taxonomy__' ] );
 
-		if ( did_action( 'admin_init' ) ) {
-			exit( 'Do not run after admin_init' );
-		}
+		// if ( did_action( 'admin_init' ) ) {
+		// 	exit( 'Do not run after admin_init' );
+		// }
 		add_action( 'admin_init', [ $this, 'make_admin_term_taxonomy_columns' ] );
 	}
 
 	function init_metabox() {
 		// Kiểm tra xem action 'admin_init' đã chạy chưa
-		if ( did_action( 'admin_init' ) ) {
-			exit( 'Do not run after admin_init' );
-		}
+		// if ( did_action( 'admin_init' ) ) {
+		// 	exit( 'Do not run after admin_init' );
+		// }
 		add_action( 'admin_init', [ $this, 'make_metabox' ] );
 	}
 

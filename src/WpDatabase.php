@@ -78,9 +78,9 @@ class WpDatabase {
 
 	function init_table( $args = [] ) {
 		
-		if ( did_action( 'init' ) ) {
-			exit( 'Do not run after init' );
-		}
+		// if ( did_action( 'init' ) ) {
+		// 	exit( 'Do not run after init' );
+		// }
 
 		// default
 		$this->init_table_data( $args );
