@@ -101,30 +101,27 @@ class WpRepeater {
 
 	function enqueue() {
 		$plugin_url     = plugins_url( '', __DIR__ ) . "/assets";
-		$enqueue_assets = function () use ($plugin_url) {
-			// Return early if the script is already enqueued
-			if ( wp_script_is( 'wpdatabasehelper-repeater-js', 'enqueued' ) ) {
-				return;
-			}
+		
+		// Return early if the script is already enqueued
+		if (wp_script_is('wpdatabasehelper-repeater-js', 'enqueued')) {
+			return;
+		}
 
-			wp_enqueue_style(
-				'wpdatabasehelper-repeater-css',
-				$plugin_url . "/css/repeater.css",
-				[],
-				$this->version,
-				'all'
-			);
+		wp_enqueue_style(
+			'wpdatabasehelper-repeater-css',
+			$plugin_url . "/css/repeater.css",
+			[],
+			$this->version,
+			'all'
+		);
 
-			wp_enqueue_script(
-				'wpdatabasehelper-repeater-js',
-				$plugin_url . "/js/repeater.js",
-				[],
-				$this->version,
-				true
-			);
-		};
-
-		add_action( 'admin_enqueue_scripts', $enqueue_assets );
+		wp_enqueue_script(
+			'wpdatabasehelper-repeater-js',
+			$plugin_url . "/js/repeater.js",
+			[],
+			$this->version,
+			true
+		);
 	}
 
 	function init_repeater() {
