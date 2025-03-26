@@ -59,6 +59,7 @@ class WpMeta {
     // post_type
     public $post_type;
     public $metabox_label;
+    public $metabox_description;
     public $meta_fields;
     public $register_post_meta;
     public $admin_post_columns;
@@ -385,13 +386,13 @@ class WpMeta {
                     <?php
                     foreach ($this->taxonomy_meta_fields as $value) {
                         $args       = $this->parse_args($value);
-                        $meta_value = $value['meta_key'];
+                        $meta_key = $value['meta_key'];
                     ?>
                         <div class="item <?= implode(" ", $args['field_classes']) ?>">
                             <?php
                             $value = '';
-                            if ($term->term_id ?? '') {
-                                $value = get_term_meta($term->term_id, $meta_value, true);
+                            if (is_object($term) && isset($term->term_id)) {
+                                $value = get_term_meta($term->term_id, $meta_key, true);
                             }
                             echo $this->init_meta_field(
                                 $args,
@@ -421,6 +422,12 @@ class WpMeta {
                 <th scope="row">
                     <label for="parent">
                         <?php echo esc_attr($this->metabox_label) ?>
+                        <?php
+                        // description
+                        if ($this->metabox_description) {
+                            echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
+                        }
+                        ?>
                     </label>
                 </th>
                 <td>
@@ -438,6 +445,12 @@ class WpMeta {
             <div class="form-field">
                 <label for="extra_info">
                     <?php echo esc_attr($this->metabox_label) ?>
+                    <?php
+                    // description
+                    if ($this->metabox_description) {
+                        echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
+                    }
+                    ?>
                 </label>
                 <!-- form here -->
                 <?php echo $form(false) ?>
@@ -496,7 +509,6 @@ class WpMeta {
     }
 
     function make_metabox() {
-
         add_action(
             'add_meta_boxes',
             function () {
@@ -504,6 +516,16 @@ class WpMeta {
                     sanitize_title($this->metabox_label), // ID of the meta box
                     $this->metabox_label, // Title of the meta box
                     function ($post) {
+                        // make sure correct post_id
+                        if ($_REQUEST['post'] ?? '') {
+                            $post = get_post($_REQUEST['post']);
+                        }
+
+                        // description
+                        if ($this->metabox_description) {
+                            echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
+                        }
+
                         wp_nonce_field($this->id, "{$this->id}_nonce");
             ?>
                 <div class="<?= esc_attr($this->name) ?>-meta-box-container">
@@ -511,13 +533,15 @@ class WpMeta {
                         <?php
                         foreach ($this->meta_fields as $value) {
                             $args       = $this->parse_args($value);
-                            $meta_value = $value['meta_key'];
+                            $meta_key = $value['meta_key'];
                         ?>
                             <div class="item <?= implode(" ", $args['field_classes']) ?>">
                                 <?php
+                                // echo "<pre>"; print_r($post->ID); echo "</pre>";
+                                // echo "<pre>"; print_r($meta_key); echo "</pre>";
                                 echo $this->init_meta_field(
                                     $args,
-                                    get_post_meta($post->ID, $meta_value, true)
+                                    get_post_meta($post->ID, $meta_key, true)
                                 );
                                 ?>
                             </div>
