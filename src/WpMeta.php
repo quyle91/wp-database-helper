@@ -214,27 +214,26 @@ class WpMeta {
         }
 
         foreach ((array) $this->meta_fields as $key => $value) {
+            $type = 'string';
+            if ($meta_key = ($value['meta_key'] ?? '')) {
 
-            $type         = 'string';
-            $meta_key     = $value['meta_key'];
-            $show_in_rest = false;
-
-            // checkbox
-            if (($value['attribute']['type'] ?? '') == 'checkbox') {
-                if (count($value['options'] ?? []) > 1) {
-                    $type = 'array';
+                // checkbox
+                if (($value['attribute']['type'] ?? '') == 'checkbox') {
+                    if (count($value['options'] ?? []) > 1) {
+                        $type = 'array';
+                    }
                 }
+
+                register_post_meta($this->post_type, $meta_key, array(
+                    'type'              => $type,
+                    'show_in_rest'      => true, // skip it on $this->register_post_meta = false
+                    'single'            => true,
+                    'sanitize_callback' => false,
+                    'auth_callback'     => function () {
+                        return current_user_can('edit_posts');
+                    }
+                ));
             }
-
-            register_post_meta($this->post_type, $meta_key, array(
-                'type'              => $type,
-                'show_in_rest'      => $show_in_rest,
-                'single'            => true,
-                'sanitize_callback' => false,
-                'auth_callback'     => function () {
-                    return current_user_can('edit_posts');
-                }
-            ));
         }
     }
 
@@ -250,7 +249,9 @@ class WpMeta {
             foreach ((array) $this->meta_fields as $key => $value) {
                 $args = $this->parse_args($value);
                 if ($args['admin_column']) {
-                    $insert[$value['meta_key']] = esc_html($args['label'] ?? $value['meta_key']);
+                    if ($value['meta_key'] ?? '') {
+                        $insert[$value['meta_key']] = esc_html($args['label'] ?? $value['meta_key']);
+                    }
                 }
             }
 
@@ -276,7 +277,7 @@ class WpMeta {
 
         add_action('manage_' . $this->post_type . '_posts_custom_column', function ($column, $post_id) {
             foreach ((array) $this->meta_fields as $key => $field_args) {
-                if ($field_args['meta_key'] == $column) {
+                if (($field_args['meta_key'] ?? '') == $column) {
                     echo $this->quick_edit_field($field_args, $post_id);
                 }
             }
@@ -386,21 +387,15 @@ class WpMeta {
                     <?php
                     foreach ($this->taxonomy_meta_fields as $value) {
                         $args       = $this->parse_args($value);
-                        $meta_key = $value['meta_key'];
-                    ?>
-                        <div class="item <?= implode(" ", $args['field_classes']) ?>">
-                            <?php
-                            $value = '';
-                            if (is_object($term) && isset($term->term_id)) {
-                                $value = get_term_meta($term->term_id, $meta_key, true);
-                            }
-                            echo $this->init_meta_field(
-                                $args,
-                                $value
-                            );
-                            ?>
-                        </div>
-                    <?php
+                        $meta_key = $value['meta_key'] ?? '_';
+                        $value = '';
+                        if (is_object($term) && isset($term->term_id)) {
+                            $value = get_term_meta($term->term_id, $meta_key, true);
+                        }
+                        echo $this->init_meta_field(
+                            $args,
+                            $value
+                        );
                     }
                     ?>
                 </div>
@@ -533,19 +528,13 @@ class WpMeta {
                         <?php
                         foreach ($this->meta_fields as $value) {
                             $args       = $this->parse_args($value);
-                            $meta_key = $value['meta_key'];
-                        ?>
-                            <div class="item <?= implode(" ", $args['field_classes']) ?>">
-                                <?php
-                                // echo "<pre>"; print_r($post->ID); echo "</pre>";
-                                // echo "<pre>"; print_r($meta_key); echo "</pre>";
-                                echo $this->init_meta_field(
-                                    $args,
-                                    get_post_meta($post->ID, $meta_key, true)
-                                );
-                                ?>
-                            </div>
-                        <?php
+                            $meta_key = $value['meta_key'] ?? '_';
+                            // echo "<pre>"; print_r($post->ID); echo "</pre>";
+                            // echo "<pre>"; print_r($meta_key); echo "</pre>";
+                            echo $this->init_meta_field(
+                                $args,
+                                get_post_meta($post->ID, $meta_key, true)
+                            );
                         }
                         ?>
                     </div>
@@ -588,27 +577,33 @@ class WpMeta {
                 return;
             }
 
+            // echo "<pre>"; print_r($_POST); echo "</pre>";
+            // echo "<pre>"; print_r($this->meta_fields); echo "</pre>"; die;
+
             foreach ($this->meta_fields as $value) {
                 $args       = $this->parse_args($value);
-                $meta_key   = $value['meta_key'];
+                $meta_key   = $value['meta_key'] ?? '';
                 $meta_value = $_POST[$meta_key] ?? '';
 
-                if (!is_array($meta_value)) {
-                    // sanitize
-                    if ($args['field'] == 'textarea') {
-                        // becareful with santize before can be change value strings
-                        $meta_value = wp_unslash($meta_value);
-                    } else {
-                        $meta_value = sanitize_text_field($meta_value);
+                if ($meta_key) {
+                    if (!is_array($meta_value)) {
+                        // sanitize
+                        if ($args['field'] == 'textarea') {
+                            // becareful with santize before can be change value strings
+                            $meta_value = wp_unslash($meta_value);
+                        } else {
+                            $meta_value = sanitize_text_field($meta_value);
+                        }
                     }
-                }
 
-                update_post_meta(
-                    $post_id,
-                    $meta_key,
-                    $meta_value
-                );
-                error_log("update_post_meta: $post_id - $meta_key - $meta_value");
+                    update_post_meta(
+                        $post_id,
+                        $meta_key,
+                        $meta_value
+                    );
+
+                    error_log("update_post_meta: $post_id - $meta_key - " . json_encode($meta_value));
+                }
             }
         });
     }
@@ -639,6 +634,9 @@ class WpMeta {
 
     function init_meta_field($args, $meta_value) {
         $this->enqueue();
+        // echo "<pre>"; print_r($args); echo "</pre>";
+        // echo "<pre>"; print_r($meta_value); echo "</pre>";
+        // die;
         $args = $this->init_args($args, $meta_value);
         $a    = \WpDatabaseHelper\Init::WpField();
         $a->setup_args($args);

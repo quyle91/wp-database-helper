@@ -107,6 +107,12 @@ class WpField {
             ]
         );
 
+        // tabs
+        if (in_array($this->args['field'], ['tab', 'tab_end', 'tab_nav'])) {
+            $this->args['before'] = '';
+            $this->args['after'] = '';
+        }
+
         // parse args attribute for input
         $default_attribute = [
             'id'    => $this->name . "_" . wp_rand(),
@@ -266,47 +272,86 @@ class WpField {
     function init_field() {
         $this->enqueue();
         $field = $this->args['field'];
+
+        if (in_array($field, ['tab', 'tab_end', 'tab_nav'])) {
+            return $this->$field();
+        }
+
         $type  = $this->args['attribute']['type'] ?? '';
         ob_start();
+        echo wp_kses_post($this->args['before']);
 ?>
-        <?php echo wp_kses_post($this->args['before']); ?>
-        <?php
-        $wrap_class = implode(
-            ' ',
-            array_merge(
-                (array) $this->args['wrap_class'],
-                [
-                    "{$this->name}_wrap",
-                    "type-$type",
-                    "field_$field",
-                ]
-            )
-        );
-
-        ?>
-        <div class="<?= esc_attr($wrap_class); ?>">
+        <div class="<?= implode(' ', array_merge((array) $this->args['wrap_class'], ["{$this->name}_wrap", "type-$type", "field_$field",])); ?>">
             <?php if ($this->args['label_position'] == 'before') echo $this->get_label(); ?>
             <?php
             if (method_exists($this, $field)) {
                 echo $this->{$field}();
             } else {
-                echo "method is not exists: $field";
+                echo "<mark>$field method is not exists</mark>";
             }
             echo $this->get_copy();
             ?>
             <?php if ($this->args['label_position'] == 'after') echo $this->get_label(); ?>
         </div>
-        <?php echo $this->get_note(); ?>
-        <?php echo $this->get_suggest(); ?>
-        <?php echo wp_kses_post($this->args['after']); ?>
     <?php
+        echo $this->get_note();
+        echo $this->get_suggest();
+        echo wp_kses_post($this->args['after']);
+        return ob_get_clean();
+    }
+
+    function tab_nav() {
+        ob_start();
+        $this->args['attribute']['class'][] = '___tab_nav';
+        echo '<div ' . $this->get_attribute() . '>';
+        $labels = $this->args['labels'] ?? [];
+        foreach ((array)$labels as $key => $label) {
+            echo '<button type="button" class="button button-large button-primary" data-id="' . sanitize_title($label) . '">';
+            echo esc_attr($label);
+            echo '</button>';
+        }
+        echo '</div>';
+        return ob_get_clean();
+    }
+
+    function tab() {
+        ob_start();
+        echo wp_kses_post($this->args['before']);
+        $label = $this->args['label'] ?? '';
+        $this->args['attribute']['class'][] = '___tab_content';
+        $this->args['attribute']['class'][] = 'hidden';
+        $this->args['attribute']['data-id'] = sanitize_title($label);
+        echo '<div ' . $this->get_attribute() . '>';
+        echo '<div class="inner">';
+        return ob_get_clean();
+    }
+
+    function tab_end() {
+        ob_start();
+        echo '</div>'; // col inner
+        echo '</div>'; 
+        echo $this->get_note();
+        echo $this->get_suggest();
+        echo wp_kses_post($this->args['after']);
+        return ob_get_clean();
+    }
+
+    function repeater() {
+        ob_start();
+        $a = \WpDatabaseHelper\Init::WpRepeater();
+        $default = $this->args['default'] ?? [];
+        $value = $this->args['value'] ?? [];
+        $a->current = !empty($value) ? $value : $default;
+        $a->prefix = $this->args['meta_key'] ?? '';
+        $a->field_configs = $this->args['field_configs'] ?? [];
+        echo $a->init_repeater();
         return ob_get_clean();
     }
 
     function get_attribute($attr_override = false) {
         ob_start();
 
-        $args = $this->args['attribute'];
+        $args = $this->args['attribute'] ?? [];
         if ($attr_override) {
             $args = $attr_override;
         }
@@ -475,9 +520,11 @@ class WpField {
     }
 
     function textarea_wp_editor() {
+        ob_start();
         // Lấy giá trị cũ nếu có
         $name = $this->args['attribute']['name'] ?? '';
         $value = $this->args['value'] ?? '';
+        $id = wp_rand() . $name;
 
         // Cấu hình TinyMCE
         $editor_settings = array(
@@ -491,7 +538,8 @@ class WpField {
             'editor_height' => 30,
         );
 
-        wp_editor($value, $name, $editor_settings);
+        wp_editor($value, $id, $editor_settings);
+        return ob_get_clean();
     }
 
     function input_wp_media() {
@@ -536,6 +584,10 @@ class WpField {
         }
 
         $name = $this->args['attribute']['name'] ?? '';
+        if (!$name) {
+            return;
+        }
+
         ob_start();
         $classes = implode(" ", [
             $this->name . "_click_to_copy",
