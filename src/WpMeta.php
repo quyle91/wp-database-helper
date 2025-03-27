@@ -511,6 +511,10 @@ class WpMeta {
     }
 
     function make_metabox() {
+
+        // remove wp custom fields support
+        remove_meta_box('postcustom', $this->post_type, 'normal');
+
         add_action('add_meta_boxes', function () {
             add_meta_box(
                 sanitize_title($this->metabox_label), // ID of the meta box
