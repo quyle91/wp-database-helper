@@ -524,130 +524,126 @@ class WpDatabase {
 
     function html() {
         if (!current_user_can($this->wp_user_role)) {
-            wp_die('Can not manage this page');
+            wp_die(__('You do not have permission to manage this page.', 'text-domain'));
         }
 
-?>
-        <div class="wpdatabasehelper_wrap wrap <?= esc_attr($this->wrap_id) ?>">
-            <h2>
-                <?php echo esc_attr($this->menu_title); ?>
-                <small><?php echo esc_attr($this->table_name); ?></small>
-            </h2>
+        $this->enqueue();
 
-            <!-- assets -->
-            <?php echo $this->enqueue(); ?>
+        $class = $this->wrap_id;
+        $menu_title = $this->menu_title;
+        $table_name = $this->table_name;
+
+        echo <<<HTML
+        <div class="wpdatabasehelper_wrap wrap $class">
+            <h2>
+                $menu_title
+                <small>$table_name</small>
+            </h2>
 
             <!-- html -->
             <div class="wrap_inner">
 
                 <!-- navigation -->
-                <?php echo $this->get_navigation(); ?>
+                {$this->get_navigation()}
 
                 <!-- add -->
-                <?php echo $this->get_box_add_record(); ?>
+                {$this->get_box_add_record()}
 
                 <!-- filter -->
-                <?php echo $this->get_search_form(); ?>
+                {$this->get_search_form()}
 
                 <!-- search results -->
-                <?php echo $this->get_search_count(); ?>
+                {$this->get_search_count()}
 
                 <form action="" method="post">
                     <input type="hidden" name="<?= $this->table_name ?>">
-                    <?php
-                    echo $this->get_table_items();
-
-                    ?>
+                    {$this->get_table_items()}
                     <div class="section bot">
-                        <?php echo $this->get_bulk_edit(); ?>
-                        <?php echo $this->get_pagination(); ?>
+                        {$this->get_bulk_edit()}
+                        {$this->get_pagination()}
                     </div>
-                    <?php
-
-                    echo $this->get_note();
-                    ?>
+                    {$this->get_note()}
                 </form>
             </div>
         </div>
-    <?php
+        HTML;
+        return;
     }
 
     function get_table_items() {
-        ob_start();
-    ?>
+        $table_name = esc_attr($this->table_name);
+
+        $thead = '';
+        foreach ($this->fields_array as $field) {
+            $field_name = esc_html($field['name']);
+            $field_type = esc_html($field['type']);
+            $thead .= <<<HTML
+            <th>
+                {$field_name}
+                <small>{$field_type}</small>
+            </th>
+            HTML;
+        }
+
+        $tbody = '';
+        foreach ((array) $this->records as $record) {
+            $row = "<td><input type='checkbox' name='ids[]' value='" . esc_attr($record['id']) . "'></td>";
+            foreach ((array) $record as $key => $value) {
+                $escaped_value = esc_html($value ?? '');
+                $textarea_value = esc_textarea($value ?? '');
+                $filtered_value = apply_filters("{$table_name}_{$key}", $escaped_value);
+                $row .= <<<HTML
+                <td>
+                    <span class="span">{$filtered_value}</span>
+                    <textarea class="textarea hidden" name="{$key}">{$textarea_value}</textarea>
+                </td>
+                HTML;
+            }
+            $tbody .= "<tr>{$row}</tr>";
+        }
+
+        return <<<HTML
         <div class="section records">
-            <table class="widefat striped" data-table-name="<?= $this->table_name ?>">
+            <table class="widefat striped" data-table-name="{$table_name}">
                 <tr>
                     <th></th>
-                    <?php
-                    foreach ($this->fields_array as $key => $value) {
-                    ?>
-                        <th>
-                            <?= esc_attr($value['name']); ?>
-                            <small>
-                                <?= esc_attr($value['type']); ?>
-                            </small>
-                        </th>
-                    <?php
-                    }
-                    ?>
+                    {$thead}
                 </tr>
-                <?php
-                foreach ((array) $this->records as $key => $record) {
-                ?>
-                    <tr>
-                        <td> <input type="checkbox" name="ids[]" value="<?= $record['id'] ?>"> </td>
-                        <?php
-                        foreach ((array) $record as $_key => $_value) {
-                            // "{$wpdb->prefix}{$this->table_name}_xxx"
-                        ?>
-                            <td>
-                                <span class="span"><?= apply_filters("{$this->table_name}_{$_key}", esc_attr($_value)) ?></span>
-                                <textarea class="textarea hidden" name="<?= $_key ?>" id=""><?= esc_attr($_value) ?></textarea>
-                            </td>
-                        <?php
-                        }
-                        ?>
-                    </tr>
-                <?php
-                }
-                ?>
+                {$tbody}
             </table>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_bulk_edit() {
-        ob_start();
-    ?>
+        return <<<HTML
         <div class="bulk">
             <label for="ac">
                 <input id="ac" type="checkbox" class="check_all">
                 Check All
             </label>
-            <select name="action" id="">
+            <select name="action">
                 <option value="">-- select --</option>
                 <option value="delete">Delete</option>
             </select>
-            <button type="submit" class="button"><?= __('Submit') ?></button>
+            <button type="submit" class="button">Submit</button>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_pagination() {
         $args       = $this->query_args;
-        $table_name = $this->menu_slug;
-        $count      = $this->records_count;
-    ?>
+        $table_name = esc_attr($this->menu_slug);
+        $count      = esc_html($this->records_count);
+
+        $pagination_links = $this->get_pagination_links($count, $table_name, $args);
+
+        return <<<HTML
         <div class="pagination">
-            <?php
-            echo $this->get_pagination_links($count, $table_name, $args);
-            echo "<span class='button'> $count record(s) </span>";
-            ?>
+            {$pagination_links}
+            <span class="button">{$count} record(s)</span>
         </div>
-    <?php
+        HTML;
     }
 
     function get_pagination_links($count_all, $page, $args) {
@@ -684,84 +680,89 @@ class WpDatabase {
     }
 
     function get_search_form() {
-        ob_start();
-        $action  = admin_url($this->wp_parent_slug);
-        $classes = [
-            'section',
-            'filters',
-        ];
-        if (!isset($_GET['search_' . $this->table_name])) {
+        $action = esc_url(admin_url($this->wp_parent_slug));
+        $menu_slug = esc_attr($this->menu_slug);
+        $search_key = "search_" . esc_attr($this->table_name);
+
+        $classes = ['section', 'filters'];
+        if (!isset($_GET[$search_key])) {
             $classes[] = 'hidden';
         }
-    ?>
-        <div class="<?= implode(" ", $classes) ?>">
-            <h4>Filters</h4>
-            <form action="<?= esc_url($action) ?>" method="get">
-                <input type="hidden" name="page" value="<?= esc_attr($this->menu_slug) ?>">
-                <input type="hidden" name="search_<?= $this->table_name ?>">
+        $class_attr = esc_attr(implode(" ", $classes));
 
-                <div class="form_wrap">
-                    <?php
-                    foreach ((array) $this->fields_array as $key => $value) {
-                    ?>
-                        <div class="per_page item">
-                            <?php $id = wp_rand(); ?>
-                            <div>
-                                <label>
-                                    <?= esc_attr($value['name']) ?>
-                                </label>
-                            </div>
-                            <textarea id="<?= esc_attr($id) ?>"
-                                name="<?= esc_attr($value['name']) ?>"><?= $_GET[$value['name']] ?? "" ?></textarea>
-                        </div>
-                    <?php
-                    }
-                    ?>
-                    <div class="per_page item">
-                        <?php $id = wp_rand(); ?>
-                        <div>
-                            <label>
-                                <?= esc_attr('posts per page') ?>
-                            </label>
-                        </div>
-                        <textarea id="<?= esc_attr($id) ?>"
-                            name="<?= esc_attr('posts_per_page') ?>"><?= $_GET['posts_per_page'] ?? "100" ?></textarea>
-                    </div>
+        // Input fields
+        $fields_html = "";
+        foreach ((array) $this->fields_array as $key => $value) {
+            $id = wp_rand();
+            $field_name = esc_attr($value['name']);
+            $field_value = esc_textarea($_GET[$field_name] ?? "");
+            $fields_html .= <<<HTML
+            <div class="per_page item">
+                <div>
+                    <label for="{$id}">{$field_name}</label>
                 </div>
-                <button class="button"><?= __('Submit') ?></button>
+                <textarea id="{$id}" name="{$field_name}">{$field_value}</textarea>
+            </div>
+        HTML;
+        }
+
+        // Posts per page field
+        $id = wp_rand();
+        $posts_per_page = esc_textarea($_GET['posts_per_page'] ?? "100");
+        $posts_per_page_html = <<<HTML
+        <div class="per_page item">
+            <div>
+                <label for="{$id}">Posts per page</label>
+            </div>
+            <textarea id="{$id}" name="posts_per_page">{$posts_per_page}</textarea>
+        </div>
+        HTML;
+
+        return <<<HTML
+        <div class="{$class_attr}">
+            <h4>Filters</h4>
+            <form action="{$action}" method="get">
+                <input type="hidden" name="page" value="{$menu_slug}">
+                <input type="hidden" name="{$search_key}">
+                <div class="form_wrap">
+                    {$fields_html}
+                    {$posts_per_page_html}
+                </div>
+                <button class="button">Submit</button>
             </form>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_search_count() {
         if (!isset($_GET['search_' . $this->table_name])) {
             return;
         }
-        ob_start();
-    ?>
+
+        $records_count = intval($this->records_count);
+        $found_text = sprintf(esc_html__("Found %d record(s)", "text-domain"), $records_count);
+
+        return <<<HTML
         <div class="section search_count">
-            <?php echo sprintf(__("Found %d record(s)"), $this->records_count) ?>
+            {$found_text}
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_navigation() {
-        ob_start();
-    ?>
+        $sql = esc_html($this->sql);
+        $search_text = esc_html__('Search', 'text-domain');
+        $add_text = esc_html__('Add', 'text-domain');
+
+        return <<<HTML
         <div class="section navigation">
-            <code>
-                <?php echo $this->sql; ?>
-            </code>
+            <code>{$sql}</code>
             <div class="actions">
-                <button class="button box_show_filter"><?= __('Search') ?></button>
-                <button class="button button-primary box_add_record_button"><?= __('Add') ?></button>
+                <button class="button box_show_filter">{$search_text}</button>
+                <button class="button button-primary box_add_record_button">{$add_text}</button>
             </div>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_page_url($args = []) {
@@ -781,72 +782,73 @@ class WpDatabase {
     }
 
     function get_box_add_record() {
-        $action  = $this->get_page_url();
-        $classes = [
-            'section',
-            'box_add_record',
-        ];
-        if (!isset($_GET['add_record_' . $this->table_name])) {
+
+        $classes = ['section', 'box_add_record'];
+        if (!isset($_GET["add_record_{$this->table_name}"])) {
             $classes[] = 'hidden';
         }
-    ?>
-        <div class="<?= implode(" ", $classes) ?>">
-            <h4>Add new </h4>
-            <form action="<?= esc_url($action) ?>" method="post">
-                <input type="hidden" name="page" value="<?= esc_attr($this->menu_slug) ?>">
-                <input type="hidden" name="add_record_<?= $this->table_name ?>">
-                <input type="hidden" name="nonce" value="<?= wp_create_nonce($this->table_name) ?>">
+
+        $form_action = esc_url($this->get_page_url());
+        $menu_slug   = esc_attr($this->menu_slug);
+        $nonce       = esc_attr(wp_create_nonce($this->table_name));
+        $class_list  = esc_attr(implode(" ", $classes));
+
+        $return = '';
+        $return .= <<<HTML
+        <div class="$class_list">
+            <h4>Add new xxxxx</h4>
+            <form action="$form_action" method="post">
+                <input type="hidden" name="page" value="$menu_slug">
+                <input type="hidden" name="add_record_{$this->table_name}">
+                <input type="hidden" name="nonce" value="$nonce">
+
                 <div class="form_wrap">
-                    <?php
-                    foreach ((array) $this->fields_array as $key => $field) {
-                    ?>
-                        <div class="item">
-                            <?php $id = 'wp_' . wp_rand(); ?>
-                            <div>
-                                <label for="<?= esc_attr($id) ?>">
-                                    <?= esc_attr($field['name']) ?>
-                                </label>
-                            </div>
-                            <textarea id="<?= esc_attr($id) ?>" <?php if ($field['name'] == 'id') echo 'disabled'; ?>
-                                name="<?= esc_attr($field['name']) ?>"><?= $_POST[$field['name']] ?? "" ?></textarea>
-                        </div>
-                    <?php
-                    }
-                    ?>
+        HTML;
+
+        foreach ((array) $this->fields_array as $field) {
+            $field_name = esc_attr($field['name']);
+            $field_value = esc_attr($_POST[$field['name']] ?? "");
+            $id = esc_attr('wp_' . wp_rand());
+            $disabled = ($field['name'] === 'id') ? 'disabled' : '';
+
+            $return .= <<<HTML
+                <div class="item">
+                    <div>
+                        <label for="$id">$field_name</label>
+                    </div>
+                    <textarea id="$id" name="$field_name" $disabled>$field_value</textarea>
                 </div>
-                <button class="button"><?= __('Submit') ?></button>
+            HTML;
+        }
+
+        $return .= <<<HTML
+            </div>
+            <button class="button">Submit</button>
             </form>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
+
+        return $return;
     }
 
     function get_note() {
-
-        // only for local
-        if ($_SERVER['SERVER_ADDR'] != '127.0.0.1') {
+        // Chỉ hiển thị trên localhost
+        if ($_SERVER['SERVER_ADDR'] !== '127.0.0.1') {
             return;
         }
 
-        ob_start();
-    ?>
+        $reset_link = esc_url($this->get_page_url(["reset_{$this->table_name}" => 1]));
+        $version    = esc_attr($this->version);
+        return <<<HTML
         <div class="note">
             <small>
-                <?php
-                $reset_link = $this->get_page_url(
-                    [
-                        'reset_' . $this->table_name => 1,
-                    ]
-                );
-                ?>
-                Link to reset table: <a href="<?= ($reset_link) ?>"><?= __('Submit') ?></a>
+                Link to reset table: <a href="$reset_link">Submit</a>
             </small>
             <small>
-                Version: <?= esc_attr($this->version) ?>
+                Version: $version
             </small>
         </div>
-<?php
-        return ob_get_clean();
+        HTML;
     }
 
     function is_current_table_page() {

@@ -273,31 +273,33 @@ class WpField {
         $this->enqueue();
         $field = $this->args['field'];
 
+        // skip on logics
         if (in_array($field, ['tab', 'tab_end', 'tab_nav'])) {
             return $this->$field();
         }
 
         $type  = $this->args['attribute']['type'] ?? '';
-        ob_start();
-        echo wp_kses_post($this->args['before']);
-?>
-        <div class="<?= implode(' ', array_merge((array) $this->args['wrap_class'], ["{$this->name}_wrap", "type-$type", "field_$field",])); ?>">
-            <?php if ($this->args['label_position'] == 'before') echo $this->get_label(); ?>
-            <?php
-            if (method_exists($this, $field)) {
-                echo $this->{$field}();
-            } else {
-                echo "<mark>$field method is not exists</mark>";
-            }
-            echo $this->get_copy();
-            ?>
-            <?php if ($this->args['label_position'] == 'after') echo $this->get_label(); ?>
+        $wrap_class = esc_attr(implode(' ', array_filter(array_merge((array) $this->args['wrap_class'], [
+            "{$this->name}_wrap",
+            "type-$type",
+            "field_$field"
+        ]))));
+        $label_before = $this->args['label_position'] == 'before' ? $this->get_label() : '';
+        $label_after  = $this->args['label_position'] == 'after' ? $this->get_label() : '';
+        $field_output = method_exists($this, $field) ? $this->{$field}() : "<mark>{$field} method does not exist</mark>";
+
+        return <<<HTML
+        {$this->args['before']}
+        <div class="{$wrap_class}">
+            {$label_before}
+            {$field_output}
+            {$this->get_copy()}
+            {$label_after}
         </div>
-    <?php
-        echo $this->get_note();
-        echo $this->get_suggest();
-        echo wp_kses_post($this->args['after']);
-        return ob_get_clean();
+        {$this->get_note()}
+        {$this->get_suggest()}
+        {$this->args['after']}
+        HTML;
     }
 
     function tab_nav() {
@@ -329,7 +331,7 @@ class WpField {
     function tab_end() {
         ob_start();
         echo '</div>'; // col inner
-        echo '</div>'; 
+        echo '</div>';
         echo $this->get_note();
         echo $this->get_suggest();
         echo wp_kses_post($this->args['after']);
@@ -365,40 +367,46 @@ class WpField {
 
     function select() {
         ob_start();
-        // echo "<pre>"; print_r($this->args); echo "</pre>";
-        // var_dump($this->args->value);
-    ?>
+
+        $attributes = $this->get_attribute();
+        $options    = $this->args['options'] ?? [];
+        $selected_values = (array) ($this->args['value'] ?? []);
+
+        $options_html = '';
+        foreach ($options as $key => $value) {
+            $selected = in_array($key, $selected_values) ? 'selected' : '';
+            $escaped_key = esc_attr($key);
+            $escaped_value = esc_attr($value);
+
+            $options_html .= <<<HTML
+        <option value="{$escaped_key}" {$selected}>{$escaped_value}</option>
+        HTML;
+        }
+
+        return <<<HTML
         <div class="form_field_select">
-            <select <?= $this->get_attribute(); ?>>
-                <?php
-                foreach ($this->args['options'] as $key => $value) {
-                    $selected = in_array($key, (array) $this->args['value']) ? 'selected' : "";
-                ?>
-                    <option <?= esc_attr($selected) ?> value="<?= esc_attr($key); ?>">
-                        <?= esc_attr($value); ?>
-                    </option>
-                <?php
-                }
-                ?>
+            <select {$attributes}>
+                {$options_html}
             </select>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function textarea() {
         $type = $this->args['attribute']['type'] ?? "text";
+
         if (method_exists($this, "textarea_" . $type)) {
             return $this->{"textarea_" . $type}();
         }
 
-        ob_start();
-    ?>
+        $attributes = $this->get_attribute();
+        $value = esc_textarea($this->args['value'] ?? '');
+
+        return <<<HTML
         <div class="form_field_textarea">
-            <textarea <?= $this->get_attribute(); ?>><?= esc_attr($this->args['value']) ?></textarea>
+            <textarea {$attributes}>{$value}</textarea>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function input() {
@@ -410,113 +418,106 @@ class WpField {
     }
 
     function input_text() {
-        ob_start();
-    ?>
-        <input <?php echo $this->get_attribute(); ?>>
-    <?php
-        return ob_get_clean();
+        $attributes = $this->get_attribute();
+        return <<<HTML
+        <input {$attributes}>
+        HTML;
     }
 
     function input_color() {
-        ob_start();
-    ?>
-        <div class="form_field_color">
-            <?php
-            // change file type to text
-            $this->args['attribute']['type'] = 'text';
-            ?>
-            <input <?php echo $this->get_attribute(); ?>>
-            <input type="color" class="colorControl" value="<?= $this->args['attribute']['value'] ?? ''; ?>">
-            <!-- <button class="button deleteColor" type="button"><?= __('Delete') ?></button> -->
+        // Đổi type thành text
+        $this->args['attribute']['type'] = 'text';
+        $attributes = $this->get_attribute();
+        $color_value = $this->args['attribute']['value'] ?? '';
 
+        return <<<HTML
+        <div class="form_field_color">
+            <input {$attributes}>
+            <input type="color" class="colorControl" value="{$color_value}">
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function input_range() {
-        ob_start();
-    ?>
+        $input_text = $this->input_text();
+        $range_value = $this->args['attribute']['value'] ?? '';
+
+        return <<<HTML
         <div class="form_field_range">
-            <div class="input_range_field">
-                <?php echo $this->input_text(); ?>
-            </div>
-            <div class="input_range_value">
-                <?php echo $this->args['attribute']['value'] ?? '' ?>
-            </div>
+            <div class="input_range_field">{$input_text}</div>
+            <div class="input_range_value">{$range_value}</div>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function input_radio() {
-        ob_start();
-    ?>
-        <div class="form_field_radio form_field_flex">
-            <?php
-            foreach ((array) $this->args['options'] as $key => $value) {
-                $attr_override          = $this->args['attribute'];
-                $attr_override['value'] = $key;
-                $attr_override['id'] .= "_" . $key;
+        $options = (array) $this->args['options'];
+        $selected_value = $this->args['value'] ?? '';
+        $radio_buttons = '';
 
-                if (($this->args['value'] ?? '') == $key) {
-                    $attr_override['checked'] = 'checked';
-                } else {
-                    if (isset($attr_override['checked'])) {
-                        unset($attr_override['checked']);
-                    }
-                }
-            ?>
-                <div class="item">
-                    <input <?= $this->get_attribute($attr_override); ?>>
-                    <label class="form_field_label_item" for="<?= esc_attr($attr_override['id']) ?>"
-                        style="vertical-align: middle;">
-                        <?= esc_attr($value) ?>
-                    </label>
-                </div>
-            <?php
+        foreach ($options as $key => $value) {
+            $attr_override = $this->args['attribute'];
+            $attr_override['value'] = $key;
+            $attr_override['id'] .= "_{$key}";
+
+            if ($selected_value == $key) {
+                $attr_override['checked'] = 'checked';
+            } else {
+                unset($attr_override['checked']);
             }
-            ?>
+
+            $radio_buttons .= <<<HTML
+            <div class="item">
+                <input {$this->get_attribute($attr_override)}>
+                <label class="form_field_label_item" for="{$attr_override['id']}" style="vertical-align: middle;">
+                    {$value}
+                </label>
+            </div>
+            HTML;
+        }
+
+        return <<<HTML
+        <div class="form_field_radio form_field_flex">
+            {$radio_buttons}
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function input_checkbox() {
-        ob_start();
-    ?>
-        <div class="form_field_checkbox form_field_flex">
-            <?php
-            $field_value = (array) $this->args['value'];
-            foreach ((array) $this->args['options'] as $key => $value) {
-                if (!$key) {
-                    continue;
-                }
-                $attribute          = $this->args['attribute'];
-                $attribute['value'] = $key;
-                $attribute['id'] .= "_" . $key;
+        $options = (array) $this->args['options'];
+        $selected_values = (array) $this->args['value'];
+        $checkbox_buttons = '';
 
-                if (in_array($key, $field_value)) {
-                    $attribute['checked'] = 'checked';
-                } else {
-                    if (isset($attribute['checked'])) {
-                        unset($attribute['checked']);
-                    }
-                }
-
-            ?>
-                <div class="item">
-                    <input <?= $this->get_attribute($attribute); ?>>
-                    <label class="form_field_label_item" for="<?= esc_attr($attribute['id']) ?>" style="vertical-align: middle;">
-                        <?= esc_attr($value) ?>
-                    </label>
-                </div>
-            <?php
+        foreach ($options as $key => $value) {
+            if (!$key) {
+                continue;
             }
-            ?>
+
+            $attribute = $this->args['attribute'];
+            $attribute['value'] = $key;
+            $attribute['id'] .= "_{$key}";
+
+            if (in_array($key, $selected_values)) {
+                $attribute['checked'] = 'checked';
+            } else {
+                unset($attribute['checked']);
+            }
+
+            $checkbox_buttons .= <<<HTML
+            <div class="item">
+                <input {$this->get_attribute($attribute)}>
+                <label class="form_field_label_item" for="{$attribute['id']}" style="vertical-align: middle;">
+                    {$value}
+                </label>
+            </div>
+            HTML;
+        }
+
+        return <<<HTML
+        <div class="form_field_checkbox form_field_flex">
+            {$checkbox_buttons}
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function textarea_wp_editor() {
@@ -536,6 +537,7 @@ class WpField {
                 // 'toolbar2' => '',
             ),
             'editor_height' => 30,
+            'editor_class'  => 'WpDatabaseHelper_field'
         );
 
         wp_editor($value, $id, $editor_settings);
@@ -544,42 +546,40 @@ class WpField {
 
     function input_wp_media() {
         wp_enqueue_media();
-        $this->args['attribute']['type'] = 'hidden';
-        $value                           = $this->args['attribute']['value'] ?? '';
-        ob_start();
-    ?>
-        <div class="form_field_media form_field_flex_nowrap">
-            <input <?php echo $this->get_attribute(); ?> />
 
-            <?php
-            if (wp_attachment_is_image($value)) {
-                echo '<div class="form_field_preview has-value">';
-                echo wp_get_attachment_image(
-                    $value,
-                    'full',
-                    false,
-                    [
-                        'class' => 'image-preview',
-                        'style' => '',
-                    ]
-                );
-                echo '</div>';
-            } else {
-                echo '<div class="form_field_preview">';
-                echo '<img src="" class="image-preview" style="display: none;">';
-                echo '</div>';
-            }
-            ?>
-            <button type='button' class='button hepperMeta-media-upload'><?= __('Add'); ?>
-            </button>
-            <button type='button' class='button hepperMeta-media-remove'><?= __('Delete'); ?></button>
+        $this->args['attribute']['type'] = 'hidden';
+        $value = $this->args['attribute']['value'] ?? '';
+        $input_field = $this->get_attribute();
+
+        $image_preview = '';
+        $has_value_class = '';
+
+        if (wp_attachment_is_image($value)) {
+            $image_preview = wp_get_attachment_image(
+                $value,
+                'full',
+                false,
+                ['class' => 'image-preview']
+            );
+            $has_value_class = 'has-value';
+        } else {
+            $image_preview = '<img src="" class="image-preview" style="display: none;">';
+        }
+
+        return <<<HTML
+        <div class="form_field_media form_field_flex_nowrap">
+            <input {$input_field} />
+            <div class="form_field_preview {$has_value_class}">
+                {$image_preview}
+            </div>
+            <button type="button" class="button hepperMeta-media-upload">Add</button>
+            <button type="button" class="button hepperMeta-media-remove">Delete</button>
         </div>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_copy() {
-        if (!$this->args['show_copy']) {
+        if (empty($this->args['show_copy'])) {
             return;
         }
 
@@ -588,68 +588,79 @@ class WpField {
             return;
         }
 
-        ob_start();
         $classes = implode(" ", [
-            $this->name . "_click_to_copy",
-            $this->name . "_name",
-            $this->args['show_copy_key'] ? 'show_copy_key' : ''
+            "{$this->name}_click_to_copy",
+            "{$this->name}_name",
+            !empty($this->args['show_copy_key']) ? 'show_copy_key' : ''
         ]);
-        $text    = $this->args['show_copy_key'] ? $name : __('Copy');
 
-    ?>
-        <span class="<?= esc_attr($classes) ?>" data-text="<?= esc_attr($name) ?>">
-            <?= esc_attr($text) ?>
+        $text = !empty($this->args['show_copy_key']) ? $name : __('Copy');
+
+        return <<<HTML
+        <span class="{$classes}" data-text="{$name}">
+            {$text}
         </span>
-        <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function get_suggest() {
-        if (!$this->args['suggest']) {
+        if (empty($this->args['suggest'])) {
             return;
         }
-        $this->args['suggest'] = (array) $this->args['suggest'];
-        ob_start();
-        foreach ((array) $this->args['suggest'] as $key => $suggest) {
-        ?>
-            <span class="<?= esc_attr($this->name) ?>_suggest">
-                <small>
-                    <strong>*<?= _ex('Suggested', 'custom headers') ?>: </strong>
-                </small>
-                <span class="<?= esc_attr($this->name) ?>_click_to_copy" data-text="<?= esc_attr($suggest); ?>">
-                    <?= esc_attr($suggest); ?>
+
+        $suggestions = (array) $this->args['suggest'];
+        $class_name = esc_attr($this->name);
+        $suggest_label = _ex('Suggested', 'custom headers');
+
+        $output = '';
+
+        foreach ($suggestions as $suggest) {
+            $suggest_esc = esc_attr($suggest);
+            $output .= <<<HTML
+            <span class="{$class_name}_suggest">
+                <small><strong>*{$suggest_label}: </strong></small>
+                <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">
+                    {$suggest_esc}
                 </span>
             </span>
-        <?php
+            HTML;
         }
-        return ob_get_clean();
+        return $output;
     }
 
     function get_note() {
-        if (!$this->args['note']) return;
-
-        $this->args['note'] = (array) $this->args['note'];
-        ob_start();
-        foreach ((array) $this->args['note'] as $key => $note) {
-        ?>
-            <small class="<?= esc_attr($this->name) ?>_note">
-                <strong>*<?= __('Note') ?> <?= ($key) ? $key : ""; ?>:</strong>
-                <?= wp_kses_post($note) ?>.
-            </small>
-        <?php
+        if (empty($this->args['note'])) {
+            return;
         }
-        return ob_get_clean();
+
+        $notes = (array) $this->args['note'];
+        $class_name = esc_attr($this->name);
+        $note_label = __('Note');
+
+        $output = '';
+
+        foreach ($notes as $key => $note) {
+            $key_label = $key ? esc_html($key) : '';
+            $note_text = wp_kses_post($note);
+
+            $output .= <<<HTML
+            <small class="{$class_name}_note">
+                <strong>*{$note_label} {$key_label}:</strong> {$note_text}.
+            </small>
+            HTML;
+        }
+        return $output;
     }
 
     function get_label() {
-        if (!$this->args['label']) return;
-        ob_start();
-        ?>
-        <label class="form_field_label" for="<?= $this->id; ?>">
-            <?php echo $this->args['label'] ?? "" ?>
-        </label>
-<?php
-        return ob_get_clean();
+        if (empty($this->args['label'])) {
+            return '';
+        }
+
+        $label = esc_html($this->args['label']);
+        $id = esc_attr($this->id);
+
+        return "<label class='form_field_label' for='{$id}'>{$label}</label>";
     }
 
     function get_options_term_select() {

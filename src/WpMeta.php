@@ -197,6 +197,7 @@ class WpMeta {
 
         $return = wp_parse_args($args, $default);
         // echo "<pre>"; print_r($return); echo "</pre>";die;
+
         return $return;
     }
 
@@ -326,54 +327,67 @@ class WpMeta {
 
     function quick_edit_field($field_args, $post_id) {
         $args       = $this->parse_args($field_args);
-        $meta_key   = $field_args['meta_key'];
+
+        // wp_editor
+        if (($args['attribute']['type'] ?? '') == 'wp_editor') {
+            $args['attribute']['type'] = '';
+        }
+
+        $meta_key   = esc_attr($field_args['meta_key']);
         $meta_value = get_post_meta($post_id, $meta_key, true);
-        ob_start();
-?>
+        $object_id  = esc_attr($post_id);
+        $args_json  = esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE));
+        $class_name = esc_attr($this->name) . "_quick_edit";
+        $meta_value_html = $this->init_meta_value($field_args, $meta_value);
+        $meta_field_html = $this->init_meta_field($args, $meta_value);
+        $edit_label = __('Edit');
+
+        return <<<HTML
         <form action="">
-            <div data-action="wpmeta_edit__" data-meta_key="<?= esc_attr($args['meta_key']); ?>"
-                data-object_id="<?= esc_attr($post_id) ?>"
-                data-args="<?= esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE)) ?>"
-                class="<?= esc_attr($this->name) ?>_quick_edit">
+            <div data-action="wpmeta_edit__" data-meta_key="{$meta_key}"
+                data-object_id="{$object_id}" data-args="{$args_json}"
+                class="{$class_name}">
                 <div class="quick_edit_value">
-                    <?php echo $this->init_meta_value($field_args, $meta_value); ?>
+                    {$meta_value_html}
                 </div>
                 <div class="quick_edit_field">
-                    <?php echo $this->init_meta_field($args, $meta_value); ?>
+                    {$meta_field_html}
                 </div>
                 <button class="quick_edit_icon button" type="button">
-                    <?= __('Edit') ?>
+                    {$edit_label}
                 </button>
             </div>
         </form>
-    <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function quick_edit_field_term_taxonomy($field_args, $term_id) {
         $args       = $this->parse_args($field_args);
-        $meta_key   = $field_args['meta_key'];
+        $meta_key   = esc_attr($field_args['meta_key']);
         $meta_value = get_term_meta($term_id, $meta_key, true);
-        ob_start();
-    ?>
+        $object_id  = esc_attr($term_id);
+        $args_json  = esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE));
+        $class_name = esc_attr($this->name) . "_quick_edit";
+
+        $quick_edit_value = $this->init_meta_value($field_args, $meta_value);
+        $quick_edit_field = $this->init_meta_field($args, $meta_value);
+
+        return <<<HTML
         <form action="">
-            <div data-action="wpmeta_edit_term_taxonomy__" data-meta_key="<?= esc_attr($args['meta_key']); ?>"
-                data-object_id="<?= esc_attr($term_id) ?>"
-                data-args="<?= esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE)) ?>"
-                class="<?= esc_attr($this->name) ?>_quick_edit">
+            <div data-action="wpmeta_edit_term_taxonomy__" data-meta_key="{$meta_key}" 
+                data-object_id="{$object_id}" data-args="{$args_json}" class="{$class_name}">
                 <div class="quick_edit_value">
-                    <?php echo $this->init_meta_value($field_args, $meta_value); ?>
+                    {$quick_edit_value}
                 </div>
                 <div class="quick_edit_field">
-                    <?php echo $this->init_meta_field($args, $meta_value); ?>
+                    {$quick_edit_field}
                 </div>
                 <button class="quick_edit_icon button" type="button">
-                    <?= __('Edit') ?>
+                    Edit
                 </button>
             </div>
         </form>
-        <?php
-        return ob_get_clean();
+        HTML;
     }
 
     function make_term_taxonomy_metabox() {
@@ -381,79 +395,74 @@ class WpMeta {
         $form = function ($term = false) {
             ob_start();
             wp_nonce_field($this->id, "{$this->id}_nonce");
-        ?>
-            <div class="<?= esc_attr($this->name) ?>-meta-box-container">
+
+            // Lấy dữ liệu meta fields
+            $meta_fields_html = '';
+            foreach ($this->taxonomy_meta_fields as $value) {
+                $args       = $this->parse_args($value);
+                $meta_key   = $value['meta_key'] ?? '_';
+                $meta_value = (is_object($term) && isset($term->term_id))
+                    ? get_term_meta($term->term_id, $meta_key, true)
+                    : '';
+
+                $meta_fields_html .= $this->init_meta_field($args, $meta_value);
+            }
+
+            $container_class = esc_attr($this->name) . '-meta-box-container';
+            $version = esc_attr($this->version);
+
+            echo <<<HTML
+            <div class="{$container_class}">
                 <div class="grid">
-                    <?php
-                    foreach ($this->taxonomy_meta_fields as $value) {
-                        $args       = $this->parse_args($value);
-                        $meta_key = $value['meta_key'] ?? '_';
-                        $value = '';
-                        if (is_object($term) && isset($term->term_id)) {
-                            $value = get_term_meta($term->term_id, $meta_key, true);
-                        }
-                        echo $this->init_meta_field(
-                            $args,
-                            $value
-                        );
-                    }
-                    ?>
+                    {$meta_fields_html}
                 </div>
                 <div class="footer">
-                    <small>
-                        Version: <?= esc_attr($this->version) ?>
-                    </small>
+                    <small>Version: {$version}</small>
                 </div>
             </div>
+            HTML;
 
-        <?php
             return ob_get_clean();
         };
 
-
         add_action($this->taxonomy . '_edit_form_fields', function ($term) use ($form) {
-            ob_start(); ?>
+            $label       = esc_attr($this->metabox_label);
+            $description = $this->metabox_description
+                ? '<p><small>' . esc_attr($this->metabox_description) . '</small></p>'
+                : '';
+            $form_html   = $form($term);
+
+            echo <<<HTML
             <tr class="form-field">
                 <th scope="row">
-                    <label for="parent">
-                        <?php echo esc_attr($this->metabox_label) ?>
-                        <?php
-                        // description
-                        if ($this->metabox_description) {
-                            echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
-                        }
-                        ?>
-                    </label>
+                    <label for="parent">{$label}{$description}</label>
                 </th>
                 <td>
-                    <!-- form here -->
-                    <?php echo $form($term) ?>
+                    {$form_html}
                 </td>
             </tr>
-
-        <?php
-            echo ob_get_clean();
+            HTML;
         });
 
         add_action($this->taxonomy . '_add_form_fields', function ($taxonomy) use ($form) {
-            ob_start(); ?>
-            <div class="form-field">
-                <label for="extra_info">
-                    <?php echo esc_attr($this->metabox_label) ?>
-                    <?php
-                    // description
-                    if ($this->metabox_description) {
-                        echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
-                    }
-                    ?>
-                </label>
-                <!-- form here -->
-                <?php echo $form(false) ?>
-            </div>
+            ob_start();
 
-            <?php
+            $label       = esc_attr($this->metabox_label);
+            $description = $this->metabox_description
+                ? '<p><small>' . esc_attr($this->metabox_description) . '</small></p>'
+                : '';
+            $form_html   = $form(false);
+
+            echo <<<HTML
+            <div class="form-field">
+                <label for="extra_info">{$label}{$description}</label>
+                {$form_html}
+            </div>
+            HTML;
+
             echo ob_get_clean();
         });
+
 
         $save_term_taxonomy_data_func = function ($term_id, $taxonomy, $args) {
             // verify nonce
@@ -504,52 +513,52 @@ class WpMeta {
     }
 
     function make_metabox() {
-        add_action(
-            'add_meta_boxes',
-            function () {
-                add_meta_box(
-                    sanitize_title($this->metabox_label), // ID of the meta box
-                    $this->metabox_label, // Title of the meta box
-                    function ($post) {
-                        // make sure correct post_id
-                        if ($_REQUEST['post'] ?? '') {
-                            $post = get_post($_REQUEST['post']);
-                        }
+        add_action('add_meta_boxes', function () {
+            add_meta_box(
+                sanitize_title($this->metabox_label), // ID of the meta box
+                $this->metabox_label, // Title of the meta box
+                function ($post) {
+                    // Ensure correct post_id
+                    if ($_REQUEST['post'] ?? '') {
+                        $post = get_post($_REQUEST['post']);
+                    }
 
-                        // description
-                        if ($this->metabox_description) {
-                            echo '<p><small>' . esc_attr($this->metabox_description) . '</small></p>';
-                        }
+                    // Description
+                    $description = $this->metabox_description ?
+                        '<p><small>' . esc_attr($this->metabox_description) . '</small></p>'
+                        : '';
 
-                        wp_nonce_field($this->id, "{$this->id}_nonce");
-            ?>
-                <div class="<?= esc_attr($this->name) ?>-meta-box-container">
-                    <div class="grid">
-                        <?php
-                        foreach ($this->meta_fields as $value) {
-                            $args       = $this->parse_args($value);
-                            $meta_key = $value['meta_key'] ?? '_';
-                            // echo "<pre>"; print_r($post->ID); echo "</pre>";
-                            // echo "<pre>"; print_r($meta_key); echo "</pre>";
-                            echo $this->init_meta_field(
-                                $args,
-                                get_post_meta($post->ID, $meta_key, true)
-                            );
-                        }
-                        ?>
-                    </div>
-                    <div class="footer">
-                        <small>
-                            Version: <?= esc_attr($this->version) ?>
-                        </small>
-                    </div>
-                </div>
-<?php
-                    },
-                    $this->post_type
-                );
-            }
-        );
+                    // Generate meta fields
+                    $meta_fields_html = '';
+                    foreach ($this->meta_fields as $value) {
+                        $args       = $this->parse_args($value);
+                        $meta_key   = $value['meta_key'] ?? '_';
+                        $meta_value = get_post_meta($post->ID, $meta_key, true);
+                        $meta_fields_html .= $this->init_meta_field($args, $meta_value);
+                    }
+
+                    $container_class = esc_attr($this->name) . '-meta-box-container';
+                    $version = esc_attr($this->version);
+                    $nonce_id = "{$this->id}_nonce";
+
+                    echo <<<HTML
+                    <form>
+                        {$description}
+                        <input type="hidden" name="{$nonce_id}" value="{wp_create_nonce($this->id)}">
+                        <div class="{$container_class}">
+                            <div class="grid">
+                                {$meta_fields_html}
+                            </div>
+                            <div class="footer">
+                                <small>Version: {$version}</small>
+                            </div>
+                        </div>
+                    </form>
+                    HTML;
+                },
+                $this->post_type
+            );
+        });
 
         add_action('save_post', function ($post_id) {
 

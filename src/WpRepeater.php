@@ -21,45 +21,7 @@ class WpRepeater {
 		}
 		return '0.0.0';
 	}
-
-	// static function repeater_default_value( $type = 1, $count_items = 1, $key = 'key', $value = 'value' ) {
-
-	// 	// ['','',''] with count = $count_items
-	// 	$default_values = [];
-	// 	for ( $i = 0; $i < $count_items; $i++ ) {
-	// 		$default_values[] = '';
-	// 	}
-
-	// 	$return = [];
-	// 	switch ( $type ) {
-	// 		case 1:
-	// 			$return = $default_values;
-	// 			break;
-
-	// 		case 2:
-	// 			$return = [ $default_values ];
-	// 			break;
-
-	// 		case 3:
-	// 			$return = [ 
-	// 				[ 
-	// 					$key   => '',
-	// 					$value => '',
-	// 				],
-	// 			];
-	// 			break;
-	// 		case 4:
-	// 			$return = [ 
-	// 				[ 
-	// 					$key   => '',
-	// 					$value => [ $default_values ],
-	// 				],
-	// 			];
-	// 			break;
-	// 	}
-	// 	return $return;
-	// }
-	
+    
 	static function repeater_default_value( $type = 1, $count_items = 1, ...$params ) {
 		if ( empty( $params ) ) {
 			$params = [ 'key', 'value' ];
