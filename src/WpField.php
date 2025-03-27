@@ -81,6 +81,7 @@ class WpField {
     }
 
     function setup_args($args) {
+        // echo "<pre>"; print_r($args); echo "</pre>";
         // parse args
         $this->args = wp_parse_args(
             $args,
@@ -106,12 +107,6 @@ class WpField {
                 'show_copy_key'  => false,
             ]
         );
-
-        // tabs
-        if (in_array($this->args['field'], ['tab', 'tab_end', 'tab_nav'])) {
-            $this->args['before'] = '';
-            $this->args['after'] = '';
-        }
 
         // parse args attribute for input
         $default_attribute = [
@@ -164,11 +159,9 @@ class WpField {
 
         // textarea
         if ($this->args['field'] == 'textarea') {
-
             if (!isset($this->args['attribute']['cols'])) {
                 $this->args['attribute']['cols'] = 65;
             }
-
             if (!isset($this->args['attribute']['rows'])) {
                 $this->args['attribute']['rows'] = 8;
             }
@@ -176,6 +169,10 @@ class WpField {
 
         // input
         if ($this->args['field'] == 'input') {
+            // echo "<pre>";
+            // print_r($this);
+            // echo "</pre>";
+            // die;
             if (!$this->args['attribute']['value']) {
                 $this->args['attribute']['value'] = $this->args['value'];
             }
@@ -198,6 +195,12 @@ class WpField {
                     $this->args['attribute']['name'] .= '[]';
                 }
             }
+        }
+
+        // tabs
+        if (in_array($this->args['field'], ['tab', 'tab_end', 'tab_nav'])) {
+            $this->args['before'] = '';
+            $this->args['after'] = '';
         }
 
         // show_copy_key
@@ -292,8 +295,10 @@ class WpField {
         {$this->args['before']}
         <div class="{$wrap_class}">
             {$label_before}
-            {$field_output}
-            {$this->get_copy()}
+            <div>
+                {$field_output}
+                {$this->get_copy()}
+            </div>
             {$label_after}
         </div>
         {$this->get_note()}
@@ -424,6 +429,13 @@ class WpField {
         HTML;
     }
 
+    function input_button() {
+        $attributes = $this->get_attribute();
+        return <<<HTML
+        <input {$attributes}>
+        HTML;
+    }
+
     function input_color() {
         // Đổi type thành text
         $this->args['attribute']['type'] = 'text';
@@ -453,9 +465,6 @@ class WpField {
     function input_radio() {
         $options = (array) $this->args['options'];
         $selected_value = $this->args['value'] ?? '';
-        // var_dump($this->args['value']);
-        // echo "<pre>"; var_dump($selected_value); echo "</pre>";
-        // echo "<pre>"; print_r($this); echo "</pre>"; die;
         $radio_buttons = '';
 
         foreach ($options as $key => $value) {
@@ -615,7 +624,7 @@ class WpField {
 
         $suggestions = (array) $this->args['suggest'];
         $class_name = esc_attr($this->name);
-        $suggest_label = _ex('Suggested', 'custom headers');
+        $suggest_label = __('Suggested', 'custom headers');
 
         $output = '';
 

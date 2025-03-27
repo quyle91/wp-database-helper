@@ -33,7 +33,7 @@ body {
                 }
 
                 .WpDatabaseHelper_field {
-                    &:not([type=checkbox]):not([type=radio]) {
+                    &:not([type=checkbox]):not([type=radio]):not([type=button]) {
                         width: 100%;
                     }
                 }

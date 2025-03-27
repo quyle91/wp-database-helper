@@ -140,56 +140,46 @@ class WpMeta {
 
         // echo "<pre>"; var_dump($_POST); echo "</pre>"; 
 
-        $meta_value = esc_attr($_POST['meta_value']);
+        $meta_value = esc_attr($_POST['meta_value'] ?? '');
         if ($_POST['meta_value_is_json'] == 'true') {
-            $meta_value = json_decode(stripslashes($_POST['meta_value']));
+            $meta_value = json_decode(stripslashes($_POST['meta_value'] ?? ''));
         }
 
-        $object_id = $_POST['object_id'];
-        $meta_key  = $_POST['meta_key'];
+        $object_id = $_POST['object_id'] ?? '';
+        $meta_key  = $_POST['meta_key'] ?? '';
 
         update_post_meta(
             esc_attr($object_id),
             esc_attr($meta_key),
             $meta_value,
         );
+
         error_log(__FUNCTION__ . ": $object_id | $meta_key | $meta_value");
-
-        wp_send_json_success(
-            $this->init_meta_value(
-                json_decode(stripslashes($_POST['args']), true),
-                $meta_value
-            )
-        );
-
+        $field_args = json_decode(stripslashes($_POST['args']), true);
+        wp_send_json_success($this->init_meta_value($field_args, $meta_key, $meta_value));
         wp_die();
     }
 
     function wpmeta_edit_term_taxonomy__() {
         if (!wp_verify_nonce($_POST['nonce'], 'wpdatabasehelper_meta_js')) exit;
 
-        $meta_value = esc_attr($_POST['meta_value']);
+        $meta_value = esc_attr($_POST['meta_value'] ?? '');
         if ($_POST['meta_value_is_json'] == 'true') {
-            $meta_value = json_decode(stripslashes($_POST['meta_value']));
+            $meta_value = json_decode(stripslashes($_POST['meta_value'] ?? ''));
         }
 
-        $object_id = $_POST['object_id'];
-        $meta_key  = $_POST['meta_key'];
+        $object_id = $_POST['object_id'] ?? '';
+        $meta_key  = $_POST['meta_key'] ?? '';
 
         update_term_meta(
             esc_attr($object_id),
             esc_attr($meta_key),
             $meta_value,
         );
+
         error_log(__FUNCTION__ . ": $object_id | $meta_key | $meta_value");
-
-        wp_send_json_success(
-            $this->init_meta_value(
-                json_decode(stripslashes($_POST['args']), true),
-                $meta_value
-            )
-        );
-
+        $field_args = json_decode(stripslashes($_POST['args']), true);
+        wp_send_json_success($this->init_meta_value($field_args, $meta_key, $meta_value));
         wp_die();
     }
 
@@ -296,7 +286,7 @@ class WpMeta {
     }
 
     function make_admin_term_taxonomy_columns() {
-        
+
         add_filter('manage_edit-' . $this->taxonomy . '_columns', function ($columns) {
             $insert = [];
 
@@ -340,13 +330,14 @@ class WpMeta {
             $args['attribute']['type'] = '';
         }
 
-        $meta_key   = esc_attr($field_args['meta_key']);
-        $meta_value = get_post_meta($post_id, $meta_key, true);
+        $meta_key   = esc_attr($field_args['meta_key'] ?? '');
+        $meta_value = $meta_key ? get_post_meta($post_id, $meta_key, true) : '';
         $object_id  = esc_attr($post_id);
         $args_json  = esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE));
         $class_name = esc_attr($this->name) . "_quick_edit";
-        $meta_value_html = $this->init_meta_value($field_args, $meta_value);
-        $meta_field_html = $this->init_meta_field($args, $meta_value);
+
+        $meta_value_html = $this->init_meta_value($field_args, $meta_key, $meta_value);
+        $meta_field_html = $this->init_meta_field($args, $meta_key, $meta_value);
         $edit_label = __('Edit');
 
         return <<<HTML
@@ -370,14 +361,14 @@ class WpMeta {
 
     function quick_edit_field_term_taxonomy($field_args, $term_id) {
         $args       = $this->parse_args($field_args);
-        $meta_key   = esc_attr($field_args['meta_key']);
-        $meta_value = get_term_meta($term_id, $meta_key, true);
+        $meta_key   = $field_args['meta_key'] ?? '';
+        $meta_value = $meta_key ? get_term_meta($term_id, $meta_key, true) : '';
         $object_id  = esc_attr($term_id);
         $args_json  = esc_attr(json_encode($args, JSON_UNESCAPED_UNICODE));
         $class_name = esc_attr($this->name) . "_quick_edit";
 
-        $quick_edit_value = $this->init_meta_value($field_args, $meta_value);
-        $quick_edit_field = $this->init_meta_field($args, $meta_value);
+        $quick_edit_value = $this->init_meta_value($field_args, $meta_key, $meta_value);
+        $quick_edit_field = $this->init_meta_field($args, $meta_key, $meta_value);
 
         return <<<HTML
         <form action="">
@@ -407,12 +398,12 @@ class WpMeta {
             $meta_fields_html = '';
             foreach ($this->taxonomy_meta_fields as $value) {
                 $args       = $this->parse_args($value);
-                $meta_key   = $value['meta_key'] ?? '_';
+                $meta_key   = $value['meta_key'] ?? '_'; // avoid meta_value return array
                 $meta_value = (is_object($term) && isset($term->term_id))
                     ? get_term_meta($term->term_id, $meta_key, true)
                     : '';
 
-                $meta_fields_html .= $this->init_meta_field($args, $meta_value);
+                $meta_fields_html .= $this->init_meta_field($args, $meta_key, $meta_value);
             }
 
             $container_class = esc_attr($this->name) . '-meta-box-container';
@@ -539,9 +530,10 @@ class WpMeta {
                     $meta_fields_html = '';
                     foreach ($this->meta_fields as $value) {
                         $args       = $this->parse_args($value);
-                        $meta_key   = $value['meta_key'] ?? '_';
-                        $meta_value = get_post_meta($post->ID, $meta_key, true);
-                        $meta_fields_html .= $this->init_meta_field($args, $meta_value);
+                        $meta_key = $value['meta_key'] ?? '';
+                        $meta_value = $meta_key ? get_post_meta($post->ID, $value['meta_key'], true) : '';
+
+                        $meta_fields_html .= $this->init_meta_field($args, $meta_key, $meta_value);
                     }
 
                     $container_class = esc_attr($this->name) . '-meta-box-container';
@@ -573,13 +565,13 @@ class WpMeta {
             if (!isset($_POST['originalaction'])) {
                 return;
             }
-            
+
             // verify nonce
-            if ( !isset($_POST["{$this->id}_nonce"]) ) {
+            if (!isset($_POST["{$this->id}_nonce"])) {
                 return;
             }
 
-            if ( !wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id) ) {
+            if (!wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id)) {
                 return;
             }
 
@@ -626,36 +618,54 @@ class WpMeta {
         });
     }
 
-    function init_args($args, $meta_value) {
+    function init_args($args, $meta_key, $meta_value) {
         // parse args
         $args = wp_parse_args($args, [
             'field' => 'input',
         ]);
 
-        // integration
-        $args['attribute']['name'] = $args['meta_key'];
-        $args['value']             = $meta_value;
+        // only fields has meta_key
+        if ($meta_key) {
 
-        if (str_contains($args['field'], 'input')) {
-            $args['attribute']['value'] = $meta_value;
+            // value in args
+            if (!isset($args['value'])) {
+                $args['value'] = $meta_value;
+            }
+
+            // value in attribute
+            if (!isset($args['attribute']['value']) and str_contains($args['field'], 'input')) {
+                if (!isset($args['attribute']['value'])) {
+                    $args['attribute']['value'] = $meta_value;
+                }
+            }
+
+            // name in attribute
+            if (!isset($args['attribute']['name'])) {
+                $args['attribute']['name'] = $args['meta_key'];
+            }
         }
 
         return $args;
     }
 
-    function init_meta_value($args, $meta_value) {
-        $args = $this->init_args($args, $meta_value);
+    function init_meta_value($args, $meta_key, $meta_value) {
+        $args = $this->init_args($args, $meta_key, $meta_value);
         $a    = \WpDatabaseHelper\Init::WpField();
         $a->setup_args($args);
         return $a->init_field_value();
     }
 
-    function init_meta_field($args, $meta_value) {
+    function init_meta_field($args, $meta_key, $meta_value) {
         $this->enqueue();
-        // echo "<pre>"; print_r($args); echo "</pre>";
+        // echo "<pre>";
+        // print_r($args);
+        // echo "</pre>";
         // echo "<pre>"; print_r($meta_value); echo "</pre>";
         // die;
-        $args = $this->init_args($args, $meta_value);
+        $args = $this->init_args($args, $meta_key, $meta_value);
+        // echo "<pre>";
+        // print_r($args);
+        // echo "</pre>";
         $a    = \WpDatabaseHelper\Init::WpField();
         $a->setup_args($args);
         return $a->init_field();
