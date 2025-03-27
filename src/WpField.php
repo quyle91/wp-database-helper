@@ -101,8 +101,9 @@ class WpField {
                     // 2 => 2,
                     // 3 => 3,
                 ],
-                'post_select'    => [], // see $default_post_select
-                'term_select'    => [], // see $default_term_select
+                'post_select'    => [],
+                'term_select'    => [],
+                'user_select'    => [],
                 'show_copy'      => true,
                 'show_copy_key'  => false,
             ]
@@ -154,6 +155,18 @@ class WpField {
             ];
             $this->args['post_select'] = wp_parse_args($args['post_select'], $default_post_select);
             $options                   = $this->get_options_post_select();
+            $this->args['options']     = $options;
+        }
+
+        // option user_select
+        if (!empty($this->args['user_select'])) {
+            $default_user_select       = [
+                'orderby'        => 'display_name',
+                'order'          => 'ASC',
+                'number'         => -1,
+            ];
+            $this->args['user_select'] = wp_parse_args($args['user_select'], $default_user_select);
+            $options                   = $this->get_options_user_select();
             $this->args['options']     = $options;
         }
 
@@ -727,6 +740,39 @@ class WpField {
                 $options[$_key] = $_value;
             }
         }
+        return $options;
+    }
+
+    function get_options_user_select() {
+        $options = ['' => __('Select')];
+        $__args  = wp_parse_args(
+            $this->args['user_select'] ?? [],
+            [
+                // 'role__in'       => ['subscriber', 'editor', 'administrator'],
+                'orderby'        => 'display_name',
+                'order'          => 'ASC',
+                'number'         => -1,
+            ]
+        );
+
+        // any
+        if(in_array('any', $__args['role__in'])){
+            unset($__args['role__in']);
+        }
+
+        $users = get_users($__args);
+
+        if (!empty($users) && is_array($users)) {
+            foreach ($users as $user) {
+                $_key_   = $this->args['user_select']['option_value'] ?? 'ID';
+                $_value_ = $this->args['user_select']['option_display'] ?? 'display_name';
+                $_key    = $user->{$_key_};
+                $_value  = $user->{$_value_};
+
+                $options[$_key] = $_value;
+            }
+        }
+
         return $options;
     }
 }
