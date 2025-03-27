@@ -68,8 +68,9 @@ class WpMeta {
 
     // term taxonomy
     public $taxonomy;
-    public $taxonomy_admin_post_columns;
+    public $taxonomy_admin_columns;
     public $taxonomy_meta_fields;
+    public $taxonomy_metabox;
     public $register_term_meta;
 
     function init($args) {
@@ -105,20 +106,32 @@ class WpMeta {
     }
 
     function init_admin_columns() {
+        if (!$this->admin_post_columns) {
+            return;
+        }
         add_action('wp_ajax_wpmeta_edit__', [$this, 'wpmeta_edit__']);
         add_action('admin_init', [$this, 'make_admin_columns']);
     }
 
     function init_admin_term_taxonomy_columns() {
+        if (!$this->taxonomy_admin_columns) {
+            return;
+        }
         add_action('wp_ajax_wpmeta_edit_term_taxonomy__', [$this, 'wpmeta_edit_term_taxonomy__']);
         add_action('admin_init', [$this, 'make_admin_term_taxonomy_columns']);
     }
 
     function init_metabox() {
+        if (!$this->admin_post_metabox) {
+            return;
+        }
         add_action('admin_init', [$this, 'make_metabox']);
     }
 
     function init_term_taxonomy_metabox() {
+        if (!$this->taxonomy_metabox) {
+            return;
+        }
         add_action('admin_init', [$this, 'make_term_taxonomy_metabox']);
     }
 
@@ -239,9 +252,6 @@ class WpMeta {
     }
 
     function make_admin_columns() {
-        if (!$this->admin_post_columns) {
-            return;
-        }
 
         add_filter('manage_' . $this->post_type . '_posts_columns', function ($columns) {
             $insert = [];
@@ -286,10 +296,7 @@ class WpMeta {
     }
 
     function make_admin_term_taxonomy_columns() {
-        if (!$this->taxonomy_admin_post_columns) {
-            return;
-        }
-
+        
         add_filter('manage_edit-' . $this->taxonomy . '_columns', function ($columns) {
             $insert = [];
 
@@ -540,11 +547,12 @@ class WpMeta {
                     $container_class = esc_attr($this->name) . '-meta-box-container';
                     $version = esc_attr($this->version);
                     $nonce_id = "{$this->id}_nonce";
+                    $nonce_value = wp_create_nonce($this->id);
 
                     echo <<<HTML
                     <form>
                         {$description}
-                        <input type="hidden" name="{$nonce_id}" value="{wp_create_nonce($this->id)}">
+                        <input type="hidden" name="{$nonce_id}" value="{$nonce_value}">
                         <div class="{$container_class}">
                             <div class="grid">
                                 {$meta_fields_html}
@@ -565,12 +573,13 @@ class WpMeta {
             if (!isset($_POST['originalaction'])) {
                 return;
             }
-
+            
             // verify nonce
-            if (
-                !isset($_POST["{$this->id}_nonce"]) ||
-                !wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id)
-            ) {
+            if ( !isset($_POST["{$this->id}_nonce"]) ) {
+                return;
+            }
+
+            if ( !wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id) ) {
                 return;
             }
 

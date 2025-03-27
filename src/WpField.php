@@ -453,6 +453,9 @@ class WpField {
     function input_radio() {
         $options = (array) $this->args['options'];
         $selected_value = $this->args['value'] ?? '';
+        // var_dump($this->args['value']);
+        // echo "<pre>"; var_dump($selected_value); echo "</pre>";
+        // echo "<pre>"; print_r($this); echo "</pre>"; die;
         $radio_buttons = '';
 
         foreach ($options as $key => $value) {
@@ -466,6 +469,8 @@ class WpField {
                 unset($attr_override['checked']);
             }
 
+            // echo "<pre>"; print_r($key); echo "</pre>";
+            // echo "<pre>"; print_r($attr_override); echo "</pre>";
             $radio_buttons .= <<<HTML
             <div class="item">
                 <input {$this->get_attribute($attr_override)}>
