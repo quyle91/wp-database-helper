@@ -63,14 +63,14 @@ class WpMeta {
     public $meta_fields;
     public $register_post_meta;
     public $admin_post_columns;
-    public $admin_post_metabox;
+    public $admin_post_metabox = true; // default true if forget set false
     public $quick_edit_post;
 
     // term taxonomy
     public $taxonomy;
     public $taxonomy_admin_columns;
     public $taxonomy_meta_fields;
-    public $taxonomy_metabox;
+    public $taxonomy_metabox = true; // default true if forget set false
     public $register_term_meta;
 
     function init($args) {
