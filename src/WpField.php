@@ -357,15 +357,13 @@ class WpField {
     }
 
     function repeater() {
-        ob_start();
         $a = \WpDatabaseHelper\Init::WpRepeater();
         $default = $this->args['default'] ?? [];
         $value = $this->args['value'] ?? [];
         $a->current = !empty($value) ? $value : $default;
         $a->prefix = $this->args['meta_key'] ?? '';
         $a->field_configs = $this->args['field_configs'] ?? [];
-        echo $a->init_repeater();
-        return ob_get_clean();
+        return $a->init_repeater();
     }
 
     function get_attribute($attr_override = false) {
@@ -384,8 +382,6 @@ class WpField {
     }
 
     function select() {
-        ob_start();
-
         $attributes = $this->get_attribute();
         $options    = $this->args['options'] ?? [];
         $selected_values = (array) ($this->args['value'] ?? []);
