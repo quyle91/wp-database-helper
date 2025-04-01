@@ -369,6 +369,7 @@ class WpMeta {
 
         $quick_edit_value = $this->init_meta_value($field_args, $meta_key, $meta_value);
         $quick_edit_field = $this->init_meta_field($args, $meta_key, $meta_value);
+        $edit_label = __('Edit');
 
         return <<<HTML
         <form action="">
@@ -381,7 +382,7 @@ class WpMeta {
                     {$quick_edit_field}
                 </div>
                 <button class="quick_edit_icon button" type="button">
-                    Edit
+                    {$edit_label}
                 </button>
             </div>
         </form>
@@ -408,6 +409,7 @@ class WpMeta {
 
             $container_class = esc_attr($this->name) . '-meta-box-container';
             $version = esc_attr($this->version);
+            $version_text = __('Version');
 
             echo <<<HTML
             <div class="{$container_class}">
@@ -415,7 +417,7 @@ class WpMeta {
                     {$meta_fields_html}
                 </div>
                 <div class="footer">
-                    <small>Version: {$version}</small>
+                    <small>{$version_text}: {$version}</small>
                 </div>
             </div>
             HTML;
