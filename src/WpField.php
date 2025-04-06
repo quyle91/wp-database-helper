@@ -630,25 +630,23 @@ class WpField {
         if (empty($this->args['suggest'])) {
             return;
         }
+        $output = '';
 
         $suggestions = (array) $this->args['suggest'];
         $class_name = esc_attr($this->name);
-        $suggest_label = __('Suggested', 'custom headers');
+        $suggest_label = _x('Suggested', 'custom headers');
+        $output .= '<small><strong>*' . $suggest_label . ': </strong></small>';
 
-        $output = '';
-
+        $array = [];
         foreach ($suggestions as $suggest) {
             $suggest_esc = esc_attr($suggest);
-            $output .= <<<HTML
+            $array[] = <<<HTML
             <span class="{$class_name}_suggest">
-                <small><strong>*{$suggest_label}: </strong></small>
-                <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">
-                    {$suggest_esc}
-                </span>
+                <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">{$suggest_esc}</span>
             </span>
             HTML;
         }
-        return $output;
+        return $output . implode(', ', $array);
     }
 
     function get_note() {
@@ -658,7 +656,7 @@ class WpField {
 
         $notes = (array) $this->args['note'];
         $class_name = esc_attr($this->name);
-        $note_label = __('Note');
+        $note_label = __('Notes');
 
         $output = '';
 
@@ -752,7 +750,7 @@ class WpField {
         );
 
         // any
-        if(in_array('any', $__args['role__in'])){
+        if (in_array('any', $__args['role__in'])) {
             unset($__args['role__in']);
         }
 

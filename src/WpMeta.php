@@ -256,21 +256,7 @@ class WpMeta {
                 }
             }
 
-            // position
-            $position = array_search('title', array_keys($columns), true);
-            if ($position === false) {
-                $position = array_search('price', array_keys($columns), true);
-            }
-
-            //
-            if ($position !== false) {
-                $columns = array_slice($columns, 0, $position + 1, true) +
-                    $insert +
-                    array_slice($columns, $position + 1, null, true);
-            } else {
-                $columns = $insert + $columns;
-            }
-
+            $columns = $columns + $insert;
             return $columns;
         }, 11, 1); // 11 for compatity with woocommerce
 
@@ -298,18 +284,7 @@ class WpMeta {
                 }
             }
 
-            // position
-            $position = array_search('name', array_keys($columns), true);
-
-            //
-            if ($position !== false) {
-                $columns = array_slice($columns, 0, $position + 1, true) +
-                    $insert +
-                    array_slice($columns, $position + 1, null, true);
-            } else {
-                $columns = $insert + $columns;
-            }
-
+            $columns = $columns + $insert;
             return $columns;
         }, 11, 1); // 11 for compatity with woocommerce
 
