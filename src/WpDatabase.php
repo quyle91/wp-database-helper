@@ -194,10 +194,12 @@ class WpDatabase {
 
             // add new
             if (isset($_POST['add_record_' . $this->table_name])) {
-                if (!wp_verify_nonce($_POST['nonce'], $this->table_name)) exit;
-                $_post = array_filter($_POST);
-                $this->insert($_post);
-                wp_redirect($this->get_page_url()); // reset link
+                if (wp_verify_nonce($_POST['nonce'], $this->table_name)){
+                    $_post = array_filter($_POST);
+                    $this->insert($_post);
+                    wp_redirect($this->get_page_url()); // reset link
+                    exit;
+                }
             }
 
             // search
@@ -206,10 +208,12 @@ class WpDatabase {
             }
 
             // delete
-            if (isset($_POST[$this->table_name])) {
-                if (($_POST['action'] ?? "") == 'delete') {
-                    if ($_POST['ids'] ?? "") {
-                        $this->delete($_POST['ids']);
+            if (($_POST['action'] ?? "") == 'delete') {
+                if (isset($_POST[$this->table_name])) {
+                    if (wp_verify_nonce($_POST['nonce'], $this->table_name)) {
+                        if ($_POST['ids'] ?? "") {
+                            $this->delete($_POST['ids']);
+                        }
                     }
                 }
             }
@@ -532,6 +536,7 @@ class WpDatabase {
         $class = $this->wrap_id;
         $menu_title = $this->menu_title;
         $table_name = $this->table_name;
+        $nonce = wp_create_nonce($this->table_name);
 
         echo <<<HTML
         <div class="wpdatabasehelper_wrap wrap $class">
@@ -556,7 +561,8 @@ class WpDatabase {
                 {$this->get_search_count()}
 
                 <form action="" method="post">
-                    <input type="hidden" name="<?= $this->table_name ?>">
+                    <input type="hidden" name="{$this->table_name}">
+                    <input type="hidden" name="nonce" value="{$nonce}">
                     {$this->get_table_items()}
                     <div class="section bot">
                         {$this->get_bulk_edit()}
