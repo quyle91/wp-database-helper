@@ -63,21 +63,23 @@ class WpField {
         );
 
         // select2
-        wp_enqueue_style(
-            'adminz_admin_select2_css',
-            $plugin_url . "/assets/vendor/select2/select2.min.css",
-            [],
-            $this->version,
-            'all'
-        );
+        if ($this->args['is_select2']) {
+            wp_enqueue_style(
+                'adminz_admin_select2_css',
+                $plugin_url . "/assets/vendor/select2/select2.min.css",
+                [],
+                $this->version,
+                'all'
+            );
 
-        wp_enqueue_script(
-            'adminz_admin_select2_js',
-            $plugin_url . "/assets/vendor/select2/select2.min.js",
-            [],
-            $this->version,
-            true,
-        );
+            wp_enqueue_script(
+                'adminz_admin_select2_js',
+                $plugin_url . "/assets/vendor/select2/select2.min.js",
+                [],
+                $this->version,
+                true,
+            );
+        }
     }
 
     function setup_args($args) {
@@ -104,6 +106,7 @@ class WpField {
                 'post_select'    => [],
                 'term_select'    => [],
                 'user_select'    => [],
+                'is_select2'      => true,
                 'show_copy'      => true,
                 'show_copy_key'  => false,
             ]
@@ -727,11 +730,12 @@ class WpField {
                 $_key_   = $this->args['post_select']['option_value'] ?? 'ID';
                 $_value_ = $this->args['post_select']['option_display'] ?? 'post_title';
                 $_key    = $__post->{$_key_};
-                $_value  = $__post->{$_value_};
+                $display  = $__post->{$_value_};
+                $display .= " (ID:" . $__post->ID . ")";
                 if ($__post->post_status != 'publish') {
-                    $_value .= " — " . get_post_statuses()[$__post->post_status];
+                    $display .= " — " . get_post_statuses()[$__post->post_status];
                 }
-                $options[$_key] = $_value;
+                $options[$_key] = $display;
             }
         }
         return $options;

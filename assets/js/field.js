@@ -25,7 +25,7 @@
             });
         },
 
-        init_field(fieldWrap, event){
+        init_field(fieldWrap, event) {
 
             // input slider
             fieldWrap.querySelectorAll('.form_field_range').forEach(element => {
@@ -48,8 +48,14 @@
             });
         },
 
-        form_field_select(element, event){
+        form_field_select(element, event) {
             let select = element.querySelector('select');
+
+            // stop if not a select2
+            if (select.classList.contains('no_select2')) {
+                return;
+            }
+
             select = jQuery(select);
 
             // remove old select2, .select2('destroy') not working then i have to do that.
@@ -62,7 +68,7 @@
             }, 100);
         },
 
-        form_field_color(element){
+        form_field_color(element) {
             const fieldInput = element.querySelector('input');
             const colorControl = element.querySelector('.colorControl');
             colorControl.addEventListener('change', function () {
@@ -71,7 +77,7 @@
             });
         },
 
-        form_field_media(element){
+        form_field_media(element) {
             var divPreview = element.querySelector('.form_field_preview');
             var imagePreview = element.querySelector('.image-preview');
 
@@ -89,7 +95,7 @@
                     var attachment = frame.state().get('selection').first().toJSON();
                     input.value = attachment.id;
                     imagePreview.src = attachment.url;
-                    console.log(":::Set image and url ", attachment); 
+                    console.log(":::Set image and url ", attachment);
                     imagePreview.srcset = "";
                     imagePreview.style.display = 'inline';
                     input.dispatchEvent(new Event('change'));
@@ -109,10 +115,10 @@
             });
         },
 
-        form_field_range(element){
+        form_field_range(element) {
             const input = element.querySelector('input');
             const input_range_value = element.querySelector('.input_range_value');
-            input.addEventListener('change', function(){
+            input.addEventListener('change', function () {
                 input_range_value.textContent = input.value;
             });
         },
