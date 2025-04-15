@@ -280,7 +280,9 @@ class WpMeta {
             foreach ((array) $this->taxonomy_meta_fields as $key => $value) {
                 $args = $this->parse_args($value);
                 if ($args['admin_column']) {
-                    $insert[$value['meta_key']] = esc_html($args['label'] ?? $value['meta_key']);
+                    if($value['meta_key'] ?? ''){
+                        $insert[$value['meta_key']] = esc_html($args['label'] ?? $value['meta_key']);
+                    }
                 }
             }
 
@@ -290,7 +292,7 @@ class WpMeta {
 
         add_action('manage_' . $this->taxonomy . '_custom_column', function ($content, $column, $term_id) {
             foreach ((array) $this->taxonomy_meta_fields as $key => $field_args) {
-                if ($field_args['meta_key'] == $column) {
+                if (($field_args['meta_key'] ?? '' ) and $field_args['meta_key'] == $column) {
                     echo $this->quick_edit_field_term_taxonomy($field_args, $term_id);
                 }
             }
