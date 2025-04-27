@@ -194,7 +194,7 @@ class WpDatabase {
 
             // add new
             if (isset($_POST['add_record_' . $this->table_name])) {
-                if (wp_verify_nonce($_POST['nonce'], $this->table_name)){
+                if (wp_verify_nonce($_POST['nonce'], $this->table_name)) {
                     $_post = array_filter($_POST);
                     $this->insert($_post);
                     wp_redirect($this->get_page_url()); // reset link
@@ -203,9 +203,9 @@ class WpDatabase {
             }
 
             // search
-            if (isset($_GET['search_' . $this->table_name])) {
-                $this->query_args['where_conditions'] = 'like';
-            }
+            // if (isset($_GET['search_' . $this->table_name])) {
+            //     $this->query_args['where_conditions'] = 'like';
+            // }
 
             // delete
             if (($_POST['action'] ?? "") == 'delete') {
@@ -230,6 +230,7 @@ class WpDatabase {
             'order_by'       => esc_attr($_GET['order_by'] ?? 'id'),
             'posts_per_page' => (int) ($_GET['posts_per_page'] ?? 100),
             'paged'          => (int) ($_GET['paged'] ?? 1),
+            'where_conditions' => $_GET['where_conditions'] ?? '='
         ];
 
         // add fields on params
@@ -250,6 +251,8 @@ class WpDatabase {
 
         // parse with $args
         $this->query_args = wp_parse_args($args, $defaults);
+        // echo "<pre>"; print_r($this->query_args); echo "</pre>";
+        // die;
         return $this->query_args;
     }
 
@@ -314,10 +317,15 @@ class WpDatabase {
                             $tmp = "$field like '%$value%'";
                             break;
 
+                        case '=':
+                            $tmp = "$field = '$value'";
+                            break;
+
                         default:
                             $tmp = "$field = '$value'";
                             break;
                     }
+                    // echo "<pre>"; print_r($tmp); echo "</pre>"; die;
                     $where[] = $tmp;
                 }
                 $where_sql = implode(" AND ", $where);
@@ -701,7 +709,7 @@ class WpDatabase {
         foreach ((array) $this->fields_array as $key => $value) {
             $id = wp_rand();
             $field_name = esc_attr($value['name']);
-            $field_value = esc_textarea($_GET[$field_name] ?? "");
+            $field_value = esc_textarea(stripslashes($_GET[$field_name] ?? ""));
             $fields_html .= <<<HTML
             <div class="per_page item">
                 <div>
@@ -730,6 +738,7 @@ class WpDatabase {
             <form action="{$action}" method="get">
                 <input type="hidden" name="page" value="{$menu_slug}">
                 <input type="hidden" name="{$search_key}">
+                <input type="hidden" name="where_conditions" value="like">
                 <div class="form_wrap">
                     {$fields_html}
                     {$posts_per_page_html}

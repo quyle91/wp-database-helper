@@ -3,7 +3,7 @@
 
     const WpDatabaseHelper_Field = {
         init() {
-            // this.script_debug = adminz_js.script_debug;
+            // this.script_debug = true;
             window.addEventListener('resize', () => this.onWindowResize());
             document.addEventListener('DOMContentLoaded', () => this.onDOMContentLoaded());
         },
@@ -78,11 +78,12 @@
         },
 
         form_field_media(element) {
-            var divPreview = element.querySelector('.form_field_preview');
-            var imagePreview = element.querySelector('.image-preview');
+            
 
             element.querySelector('.hepperMeta-media-upload').addEventListener('click', function (e) {
                 e.preventDefault();
+
+                var divPreview = element.querySelector('.form_field_preview');
                 var input = element.querySelector('input');
                 var frame = wp.media({
                     title: wpdatabasehelper_field_js.text.upload,
@@ -91,27 +92,56 @@
                     },
                     multiple: false
                 });
+
                 frame.on('select', function () {
                     var attachment = frame.state().get('selection').first().toJSON();
                     input.value = attachment.id;
-                    imagePreview.src = attachment.url;
-                    console.log(":::Set image and url ", attachment);
-                    imagePreview.srcset = "";
-                    imagePreview.style.display = 'inline';
-                    input.dispatchEvent(new Event('change'));
-                    divPreview.classList.add('has-value');
+                    console.log(":::Set image and url ", attachment, input);
+
+                    // 
+                    divPreview.innerHTML = '';
+                    
+                    // Tạo div .inner
+                    const innerDiv = document.createElement('div');
+                    innerDiv.className = 'inner';
+
+                    if (attachment.mime && attachment.mime.startsWith('image/')) {
+                        // Nếu là ảnh
+                        innerDiv.classList.add('has_value');
+
+                        const img = document.createElement('img');
+                        img.src = attachment.url;
+                        img.className = 'image-preview';
+
+                        innerDiv.appendChild(img);
+                    } else {
+                        // Nếu không phải ảnh
+                        innerDiv.classList.add('has_value');
+                        innerDiv.textContent = `(ID: ${attachment.id}) ${attachment.title}`;
+                    }
+
+                    divPreview.appendChild(innerDiv);
                 });
                 frame.open();
             });
 
             element.querySelector('.hepperMeta-media-remove').addEventListener('click', function (e) {
                 e.preventDefault();
+                var divPreview = element.querySelector('.form_field_preview');
                 var input = element.querySelector('input');
-                input.value = '';
-                imagePreview.src = '';
-                imagePreview.style.display = 'none';
-                input.dispatchEvent(new Event('change'));
+
+                // Cập nhật divPreview
+                divPreview.innerHTML = ''; // Xóa hết nội dung
+                const newInnerDiv = document.createElement('div');
+                newInnerDiv.className = 'inner no_value';
+                newInnerDiv.textContent = '--';
+                divPreview.appendChild(newInnerDiv);
+
+                // Xóa class "has-value" (nếu có)
                 divPreview.classList.remove('has-value');
+
+                // xoá input
+                input.value = '';
             });
         },
 

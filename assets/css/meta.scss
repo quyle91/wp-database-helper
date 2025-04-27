@@ -39,6 +39,12 @@ body {
                 }
             }
 
+            .___default_wrap {
+                &.full_width{
+                    grid-column: 1 / -1;
+                }
+            }
+
             .___tab_nav {
                 grid-column: 1 / -1;
                 background-color: #ededed;

@@ -288,8 +288,9 @@ class WpField {
         return '--';
     }
 
-    function init_field() {
+    public function init_field() {
         $this->enqueue();
+
         $field = $this->args['field'];
 
         // skip on logics
@@ -570,33 +571,40 @@ class WpField {
         return ob_get_clean();
     }
 
+    function input_wp_media_preview($post_id = false) {
+        if (!$post_id) {
+            return '<div class="inner no_value"> -- </div>';
+        }
+
+        $mime_type = get_post_mime_type($post_id);
+        if (strpos($mime_type, 'image') === false) {
+            $text = "(ID: $post_id) " . get_the_title($post_id);
+            return '<div class="inner has_value">' . $text . '</div>';
+        }
+
+        $image_preview = wp_get_attachment_image(
+            $post_id,
+            'full',
+            false,
+            ['class' => 'image-preview']
+        );
+
+        return '<div class="inner has_value">' . $image_preview . '</div>';
+    }
+
     function input_wp_media() {
         wp_enqueue_media();
 
         $this->args['attribute']['type'] = 'hidden';
         $value = $this->args['attribute']['value'] ?? '';
         $input_field = $this->get_attribute();
-
-        $image_preview = '';
-        $has_value_class = '';
-
-        if (wp_attachment_is_image($value)) {
-            $image_preview = wp_get_attachment_image(
-                $value,
-                'full',
-                false,
-                ['class' => 'image-preview']
-            );
-            $has_value_class = 'has-value';
-        } else {
-            $image_preview = '<img src="" class="image-preview" style="display: none;">';
-        }
+        $image_preview = $this->input_wp_media_preview($value);
 
         return <<<HTML
         <div class="form_field_media form_field_flex_nowrap">
             <input {$input_field} />
-            <div class="form_field_preview {$has_value_class}">
-                {$image_preview}
+            <div class="form_field_preview">
+                $image_preview
             </div>
             <button type="button" class="button hepperMeta-media-upload">Add</button>
             <button type="button" class="button hepperMeta-media-remove">Delete</button>
