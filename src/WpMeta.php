@@ -154,7 +154,7 @@ class WpMeta {
             $meta_value,
         );
 
-        error_log(__FUNCTION__ . ": $object_id | $meta_key | $meta_value");
+        error_log("update_post_meta: $object_id | $meta_key | $meta_value");
         $field_args = json_decode(stripslashes($_POST['args']), true);
         wp_send_json_success($this->init_meta_value($field_args, $meta_key, $meta_value));
         wp_die();
@@ -280,7 +280,7 @@ class WpMeta {
             foreach ((array) $this->taxonomy_meta_fields as $key => $value) {
                 $args = $this->parse_args($value);
                 if ($args['admin_column']) {
-                    if($value['meta_key'] ?? ''){
+                    if ($value['meta_key'] ?? '') {
                         $insert[$value['meta_key']] = esc_html($args['label'] ?? $value['meta_key']);
                     }
                 }
@@ -292,7 +292,7 @@ class WpMeta {
 
         add_action('manage_' . $this->taxonomy . '_custom_column', function ($content, $column, $term_id) {
             foreach ((array) $this->taxonomy_meta_fields as $key => $field_args) {
-                if (($field_args['meta_key'] ?? '' ) and $field_args['meta_key'] == $column) {
+                if (($field_args['meta_key'] ?? '') and $field_args['meta_key'] == $column) {
                     echo $this->quick_edit_field_term_taxonomy($field_args, $term_id);
                 }
             }
@@ -525,18 +525,16 @@ class WpMeta {
                     $nonce_value = wp_create_nonce($this->id);
 
                     echo <<<HTML
-                    <form>
-                        {$description}
-                        <input type="hidden" name="{$nonce_id}" value="{$nonce_value}">
-                        <div class="{$container_class}">
-                            <div class="grid">
-                                {$meta_fields_html}
-                            </div>
-                            <div class="footer">
-                                <small>Version: {$version}</small>
-                            </div>
+                    {$description}
+                    <input type="hidden" name="{$nonce_id}" value="{$nonce_value}">
+                    <div class="{$container_class}">
+                        <div class="grid">
+                            {$meta_fields_html}
                         </div>
-                    </form>
+                        <div class="footer">
+                            <small>Version: {$version}</small>
+                        </div>
+                    </div>
                     HTML;
                 },
                 $this->post_type
@@ -546,15 +544,13 @@ class WpMeta {
         add_action('save_post', function ($post_id) {
 
             if (!isset($_POST['originalaction'])) {
+                error_log("save error on originalaction");
                 return;
             }
 
             // verify nonce
-            if (!isset($_POST["{$this->id}_nonce"])) {
-                return;
-            }
-
-            if (!wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id)) {
+            if (!isset($_POST["{$this->id}_nonce"]) or !wp_verify_nonce($_POST["{$this->id}_nonce"], $this->id)) {
+                // error_log("save error on verify nonce");
                 return;
             }
 
@@ -570,14 +566,11 @@ class WpMeta {
                 return;
             }
 
-            // echo "<pre>"; print_r($_POST); echo "</pre>";
-            // echo "<pre>"; print_r($this->meta_fields); echo "</pre>"; die;
-
             foreach ($this->meta_fields as $value) {
                 $args       = $this->parse_args($value);
                 $meta_key   = $value['meta_key'] ?? '';
                 $meta_value = $_POST[$meta_key] ?? '';
-
+                
                 if ($meta_key) {
                     if (!is_array($meta_value)) {
                         // sanitize
