@@ -15,7 +15,7 @@
         onDOMContentLoaded() {
 
             // wrap
-            document.querySelectorAll(".WpDatabaseHelper_field_wrap").forEach(fieldWrap => {
+            document.querySelectorAll(".WpDatabaseHelper_field_wrap.single_field").forEach(fieldWrap => {
                 this.init_field(fieldWrap, 'field_init');
             });
 
@@ -78,7 +78,7 @@
         },
 
         form_field_media(element) {
-            
+
 
             element.querySelector('.hepperMeta-media-upload').addEventListener('click', function (e) {
                 e.preventDefault();
@@ -100,7 +100,7 @@
 
                     // 
                     divPreview.innerHTML = '';
-                    
+
                     // Tạo div .inner
                     const innerDiv = document.createElement('div');
                     innerDiv.className = 'inner';
@@ -117,7 +117,7 @@
                     } else {
                         // Nếu không phải ảnh
                         innerDiv.classList.add('has_value');
-                        innerDiv.textContent = `(ID: ${attachment.id}) ${attachment.title}`;
+                        innerDiv.textContent = `(ID:${attachment.id})-${attachment.title}`;
                     }
 
                     divPreview.appendChild(innerDiv);

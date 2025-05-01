@@ -1,19 +1,15 @@
 body{
-    .WpDatabaseHelper_repeater {
+    .WpDatabaseHelper_repeater_list_items {
         position: relative;
         background-color: #ededed;
 
-        &_list_items {
-            // background-color: lightgray;
-        }
-
-        &_is_empty {
+        .is_empty {
             position: absolute;
             right: 0;
             top: 0;
         }
 
-        &_control {
+        .controls {
             margin-bottom: 5px;
             display: flex;
             gap: 5px;

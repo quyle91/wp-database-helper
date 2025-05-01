@@ -68,8 +68,8 @@ class WpDatabase {
             'wpdatabasehelper-database-js',
             'const wpdatabasehelper_database = ' . json_encode(
                 array(
-                    'ajax_url'           => admin_url('admin-ajax.php'),
-                    'nonce'              => wp_create_nonce($this->table_name),
+                    'ajax_url' => admin_url('admin-ajax.php'),
+                    'nonce' => wp_create_nonce($this->table_name),
                     'update_action_name' => $this->table_name . "_update_data"
                 )
             ),
@@ -104,24 +104,24 @@ class WpDatabase {
         foreach ((array) $args as $key => $value) {
             $this->$key = $value;
         }
-        $this->table_name   = $wpdb->prefix . $this->table_name;
-        $this->fields_sql   = implode(" ", (array) $this->fields);
+        $this->table_name = $wpdb->prefix . $this->table_name;
+        $this->fields_sql = implode(" ", (array) $this->fields);
         $this->fields_array = $this->get_fields_array();
-        $this->menu_slug    = 'menu_' . $this->table_name;
-        $this->wrap_id      = $this->table_name . rand();
+        $this->menu_slug = 'menu_' . $this->table_name;
+        $this->wrap_id = $this->table_name . rand();
     }
 
     function create_table_sql() {
         global $wpdb;
 
-        $table_name       = esc_sql($this->table_name);
-        $query            = $wpdb->prepare("SHOW TABLES LIKE %s", $table_name);
+        $table_name = esc_sql($this->table_name);
+        $query = $wpdb->prepare("SHOW TABLES LIKE %s", $table_name);
         $found_table_name = $wpdb->get_var($query);
 
         if ($found_table_name != $table_name) {
             $charset_collate = $wpdb->get_charset_collate();
-            $fields_sql      = $this->fields_sql;
-            $sql             = "CREATE TABLE {$table_name} ({$fields_sql}) {$charset_collate};";
+            $fields_sql = $this->fields_sql;
+            $sql = "CREATE TABLE {$table_name} ({$fields_sql}) {$charset_collate};";
             require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
             dbDelta($sql);
         }
@@ -131,7 +131,7 @@ class WpDatabase {
         global $wpdb;
         require_once(ABSPATH . 'wp-includes/pluggable.php');
         $table_name_safe = esc_sql($this->table_name);
-        $sql             = "DROP TABLE IF EXISTS `{$table_name_safe}`";
+        $sql = "DROP TABLE IF EXISTS `{$table_name_safe}`";
         $wpdb->query($sql);
     }
 
@@ -162,8 +162,8 @@ class WpDatabase {
 
         // value
         if (isset($post['field_id']) and isset($post['field_value'])) {
-            $_value        = $post['field_value'];
-            $_key          = $post['field_name'];
+            $_value = $post['field_value'];
+            $_key = $post['field_name'];
             $data[$_key] = $_value;
 
             if ($this->update($data)) {
@@ -204,7 +204,7 @@ class WpDatabase {
 
             // search
             // if (isset($_GET['search_' . $this->table_name])) {
-            //     $this->query_args['where_conditions'] = 'like';
+            // $this->query_args['where_conditions'] = 'like';
             // }
 
             // delete
@@ -225,11 +225,11 @@ class WpDatabase {
 
         // default from get params
         $defaults = [
-            'where'          => [],
-            'order'          => esc_attr($_GET['order'] ?? 'DESC'),
-            'order_by'       => esc_attr($_GET['order_by'] ?? 'id'),
+            'where' => [],
+            'order' => esc_attr($_GET['order'] ?? 'DESC'),
+            'order_by' => esc_attr($_GET['order_by'] ?? 'id'),
             'posts_per_page' => (int) ($_GET['posts_per_page'] ?? 100),
-            'paged'          => (int) ($_GET['paged'] ?? 1),
+            'paged' => (int) ($_GET['paged'] ?? 1),
             'where_conditions' => $_GET['where_conditions'] ?? '='
         ];
 
@@ -268,9 +268,9 @@ class WpDatabase {
                 continue;
             }
 
-            $string   = trim($string);
-            $name     = explode(" ", $string)[0] ?? "";
-            $type     = explode(" ", $string)[1] ?? "";
+            $string = trim($string);
+            $name = explode(" ", $string)[0] ?? "";
+            $type = explode(" ", $string)[1] ?? "";
             $return[] = [
                 'name' => $name,
                 'type' => $type,
@@ -280,7 +280,7 @@ class WpDatabase {
     }
 
     function init_records() {
-        $this->records       = $this->read($this->query_args);
+        $this->records = $this->read($this->query_args);
         $this->records_count = $this->read_count($this->query_args);
     }
 
@@ -336,7 +336,7 @@ class WpDatabase {
             // $args = [ 'where' => [ 'relation' => 'AND', [ 'key' => 'xxx', 'value' => 'yyy', 'type' => 'CHAR', 'compare' => '=' ] ] ];
             if (isset($args['where'][0])) {
                 $relation = $args['where']['relation'] ?? '';
-                $where    = [];
+                $where = [];
                 foreach ($args['where'] as $key => $value) {
                     if ($key == 'relation') {
                         continue;
@@ -370,7 +370,7 @@ class WpDatabase {
         // fields in $args
         foreach ((array) $this->fields_array as $key => $value) {
             if (array_key_exists(($value['name'] ?? ''), $args)) {
-                $_name  = $value['name'];
+                $_name = $value['name'];
                 $_value = $args[$value['name']];
                 $sql .= " AND ($_name = '$_value')";
             }
@@ -522,7 +522,7 @@ class WpDatabase {
 
     function get_last_run() {
         global $wpdb;
-        $sql    = $wpdb->prepare(
+        $sql = $wpdb->prepare(
             "
 			SELECT DISTINCT(date)
 			FROM $this->table_name 
@@ -547,40 +547,40 @@ class WpDatabase {
         $nonce = wp_create_nonce($this->table_name);
 
         echo <<<HTML
-        <div class="wpdatabasehelper_wrap wrap $class">
-            <h2>
-                $menu_title
-                <small>$table_name</small>
-            </h2>
+<div class="wpdatabasehelper_wrap wrap $class">
+<h2>
+$menu_title
+<small>$table_name</small>
+</h2>
 
-            <!-- html -->
-            <div class="wrap_inner">
+<!-- html -->
+<div class="wrap_inner">
 
-                <!-- navigation -->
-                {$this->get_navigation()}
+<!-- navigation -->
+{$this->get_navigation()}
 
-                <!-- add -->
-                {$this->get_box_add_record()}
+<!-- add -->
+{$this->get_box_add_record()}
 
-                <!-- filter -->
-                {$this->get_search_form()}
+<!-- filter -->
+{$this->get_search_form()}
 
-                <!-- search results -->
-                {$this->get_search_count()}
+<!-- search results -->
+{$this->get_search_count()}
 
-                <form action="" method="post">
-                    <input type="hidden" name="{$this->table_name}">
-                    <input type="hidden" name="nonce" value="{$nonce}">
-                    {$this->get_table_items()}
-                    <div class="section bot">
-                        {$this->get_bulk_edit()}
-                        {$this->get_pagination()}
-                    </div>
-                    {$this->get_note()}
-                </form>
-            </div>
-        </div>
-        HTML;
+<form action="" method="post">
+<input type="hidden" name="{$this->table_name}">
+<input type="hidden" name="nonce" value="{$nonce}">
+{$this->get_table_items()}
+<div class="section bot">
+{$this->get_bulk_edit()}
+{$this->get_pagination()}
+</div>
+{$this->get_note()}
+</form>
+</div>
+</div>
+HTML;
         return;
     }
 
@@ -592,11 +592,11 @@ class WpDatabase {
             $field_name = esc_html($field['name']);
             $field_type = esc_html($field['type']);
             $thead .= <<<HTML
-            <th>
-                {$field_name}
-                <small>{$field_type}</small>
-            </th>
-            HTML;
+<th>
+{$field_name}
+<small>{$field_type}</small>
+</th>
+HTML;
         }
 
         $tbody = '';
@@ -607,81 +607,81 @@ class WpDatabase {
                 $textarea_value = esc_textarea($value ?? '');
                 $filtered_value = apply_filters("{$table_name}_{$key}", $escaped_value);
                 $row .= <<<HTML
-                <td>
-                    <span class="span">{$filtered_value}</span>
-                    <textarea class="textarea hidden" name="{$key}">{$textarea_value}</textarea>
-                </td>
-                HTML;
+<td>
+<span class="span">{$filtered_value}</span>
+<textarea class="textarea hidden" name="{$key}">{$textarea_value}</textarea>
+</td>
+HTML;
             }
             $tbody .= "<tr>{$row}</tr>";
         }
 
         return <<<HTML
-        <div class="section records">
-            <table class="widefat striped" data-table-name="{$table_name}">
-                <tr>
-                    <th></th>
-                    {$thead}
-                </tr>
-                {$tbody}
-            </table>
-        </div>
-        HTML;
+<div class="section records">
+<table class="widefat striped" data-table-name="{$table_name}">
+<tr>
+<th></th>
+{$thead}
+</tr>
+{$tbody}
+</table>
+</div>
+HTML;
     }
 
     function get_bulk_edit() {
         return <<<HTML
-        <div class="bulk">
-            <label for="ac">
-                <input id="ac" type="checkbox" class="check_all">
-                Check All
-            </label>
-            <select name="action">
-                <option value="">-- select --</option>
-                <option value="delete">Delete</option>
-            </select>
-            <button type="submit" class="button">Submit</button>
-        </div>
-        HTML;
+<div class="bulk">
+<label for="ac">
+<input id="ac" type="checkbox" class="check_all">
+Check All
+</label>
+<select name="action">
+<option value="">-- select --</option>
+<option value="delete">Delete</option>
+</select>
+<button type="submit" class="button">Submit</button>
+</div>
+HTML;
     }
 
     function get_pagination() {
-        $args       = $this->query_args;
+        $args = $this->query_args;
         $table_name = esc_attr($this->menu_slug);
-        $count      = esc_html($this->records_count);
+        $count = esc_html($this->records_count);
 
         $pagination_links = $this->get_pagination_links($count, $table_name, $args);
 
         return <<<HTML
-        <div class="pagination">
-            {$pagination_links}
-            <span class="button">{$count} record(s)</span>
-        </div>
-        HTML;
+<div class="pagination">
+{$pagination_links}
+<span class="button">{$count} record(s)</span>
+</div>
+HTML;
     }
 
     function get_pagination_links($count_all, $page, $args) {
-        $args           = $this->query_args;
+        $args = $this->query_args;
         $posts_per_page = $args['posts_per_page'];
-        $paged          = $args['paged'];
-        $total_pages    = ceil($count_all / $posts_per_page);
+        $paged = $args['paged'];
+        $total_pages = ceil($count_all / $posts_per_page);
 
         if ($total_pages <= 1) {
             return '';
         }
 
         $pagination_args = array(
-            'base'               => add_query_arg(array('paged' => '%#%', 'posts_per_page' => $posts_per_page)),
-            'format'             => '?paged=%#%',
-            'current'            => max(1, $paged),
-            'total'              => $total_pages,
-            'prev_text'          => '<span class="button item">' . __('Previous') . '</span>',
-            'next_text'          => '<span class="button item">' . __('Next') . '</span>',
-            'type'               => 'array',
-            'end_size'           => 2,
-            'mid_size'           => 3,
+            'base' => add_query_arg(array('paged' => '%#%', 'posts_per_page' => $posts_per_page)),
+            'format' => '?paged=%#%',
+            'current' => max(1, $paged),
+            'total' => $total_pages,
+            'prev_text' => '<span class="button item">' . __('Previous') . '</span>',
+            'next_text' => '<span class="button item">' . __('Next') . '</span>',
+            'type' => 'array',
+            'end_size' => 2,
+            'mid_size' => 3,
             'before_page_number' => '<span class="button item">',
-            'after_page_number'  => '</span>',
+            'after_page_number' => '</span>',
         );
 
         $pagination_links = paginate_links($pagination_args);
@@ -711,42 +711,42 @@ class WpDatabase {
             $field_name = esc_attr($value['name']);
             $field_value = esc_textarea(stripslashes($_GET[$field_name] ?? ""));
             $fields_html .= <<<HTML
-            <div class="per_page item">
-                <div>
-                    <label for="{$id}">{$field_name}</label>
-                </div>
-                <textarea id="{$id}" name="{$field_name}">{$field_value}</textarea>
-            </div>
-        HTML;
+<div class="per_page item">
+<div>
+<label for="{$id}">{$field_name}</label>
+</div>
+<textarea id="{$id}" name="{$field_name}">{$field_value}</textarea>
+</div>
+HTML;
         }
 
         // Posts per page field
         $id = wp_rand();
         $posts_per_page = esc_textarea($_GET['posts_per_page'] ?? "100");
         $posts_per_page_html = <<<HTML
-        <div class="per_page item">
-            <div>
-                <label for="{$id}">Posts per page</label>
-            </div>
-            <textarea id="{$id}" name="posts_per_page">{$posts_per_page}</textarea>
-        </div>
-        HTML;
+<div class="per_page item">
+<div>
+<label for="{$id}">Posts per page</label>
+</div>
+<textarea id="{$id}" name="posts_per_page">{$posts_per_page}</textarea>
+</div>
+HTML;
 
         return <<<HTML
-        <div class="{$class_attr}">
-            <h4>Filters</h4>
-            <form action="{$action}" method="get">
-                <input type="hidden" name="page" value="{$menu_slug}">
-                <input type="hidden" name="{$search_key}">
-                <input type="hidden" name="where_conditions" value="like">
-                <div class="form_wrap">
-                    {$fields_html}
-                    {$posts_per_page_html}
-                </div>
-                <button class="button">Submit</button>
-            </form>
-        </div>
-        HTML;
+<div class="{$class_attr}">
+<h4>Filters</h4>
+<form action="{$action}" method="get">
+<input type="hidden" name="page" value="{$menu_slug}">
+<input type="hidden" name="{$search_key}">
+<input type="hidden" name="where_conditions" value="like">
+<div class="form_wrap">
+{$fields_html}
+{$posts_per_page_html}
+</div>
+<button class="button">Submit</button>
+</form>
+</div>
+HTML;
     }
 
     function get_search_count() {
@@ -758,10 +758,10 @@ class WpDatabase {
         $found_text = sprintf(esc_html__("Found %d record(s)", "text-domain"), $records_count);
 
         return <<<HTML
-        <div class="section search_count">
-            {$found_text}
-        </div>
-        HTML;
+<div class="section search_count">
+{$found_text}
+</div>
+HTML;
     }
 
     function get_navigation() {
@@ -770,14 +770,14 @@ class WpDatabase {
         $add_text = esc_html__('Add', 'text-domain');
 
         return <<<HTML
-        <div class="section navigation">
-            <code>{$sql}</code>
-            <div class="actions">
-                <button class="button box_show_filter">{$search_text}</button>
-                <button class="button button-primary box_add_record_button">{$add_text}</button>
-            </div>
-        </div>
-        HTML;
+<div class="section navigation">
+<code>{$sql}</code>
+<div class="actions">
+<button class="button box_show_filter">{$search_text}</button>
+<button class="button button-primary box_add_record_button">{$add_text}</button>
+</div>
+</div>
+HTML;
     }
 
     function get_page_url($args = []) {
@@ -804,21 +804,21 @@ class WpDatabase {
         }
 
         $form_action = esc_url($this->get_page_url());
-        $menu_slug   = esc_attr($this->menu_slug);
-        $nonce       = esc_attr(wp_create_nonce($this->table_name));
-        $class_list  = esc_attr(implode(" ", $classes));
+        $menu_slug = esc_attr($this->menu_slug);
+        $nonce = esc_attr(wp_create_nonce($this->table_name));
+        $class_list = esc_attr(implode(" ", $classes));
 
         $return = '';
         $return .= <<<HTML
-        <div class="$class_list">
-            <h4>Add new xxxxx</h4>
-            <form action="$form_action" method="post">
-                <input type="hidden" name="page" value="$menu_slug">
-                <input type="hidden" name="add_record_{$this->table_name}">
-                <input type="hidden" name="nonce" value="$nonce">
+<div class="$class_list">
+<h4>Add new xxxxx</h4>
+<form action="$form_action" method="post">
+<input type="hidden" name="page" value="$menu_slug">
+<input type="hidden" name="add_record_{$this->table_name}">
+<input type="hidden" name="nonce" value="$nonce">
 
-                <div class="form_wrap">
-        HTML;
+<div class="form_wrap">
+HTML;
 
         foreach ((array) $this->fields_array as $field) {
             $field_name = esc_attr($field['name']);
@@ -827,21 +827,21 @@ class WpDatabase {
             $disabled = ($field['name'] === 'id') ? 'disabled' : '';
 
             $return .= <<<HTML
-                <div class="item">
-                    <div>
-                        <label for="$id">$field_name</label>
-                    </div>
-                    <textarea id="$id" name="$field_name" $disabled>$field_value</textarea>
-                </div>
-            HTML;
+<div class="item">
+<div>
+<label for="$id">$field_name</label>
+</div>
+<textarea id="$id" name="$field_name" $disabled>$field_value</textarea>
+</div>
+HTML;
         }
 
         $return .= <<<HTML
-            </div>
-            <button class="button">Submit</button>
-            </form>
-        </div>
-        HTML;
+</div>
+<button class="button">Submit</button>
+</form>
+</div>
+HTML;
 
         return $return;
     }
@@ -853,17 +853,17 @@ class WpDatabase {
         }
 
         $reset_link = esc_url($this->get_page_url(["reset_{$this->table_name}" => 1]));
-        $version    = esc_attr($this->version);
+        $version = esc_attr($this->version);
         return <<<HTML
-        <div class="note">
-            <small>
-                Link to reset table: <a href="$reset_link">Submit</a>
-            </small>
-            <small>
-                Version: $version
-            </small>
-        </div>
-        HTML;
+<div class="note">
+<small>
+Link to reset table: <a href="$reset_link">Submit</a>
+</small>
+<small>
+Version: $version
+</small>
+</div>
+HTML;
     }
 
     function is_current_table_page() {

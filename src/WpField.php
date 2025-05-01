@@ -230,7 +230,11 @@ class WpField {
     function init_field_value() {
         $html_items          = [];
         $this->args['value'] = (array) $this->args['value'];
-        // echo "<pre>"; print_r( $this->args ); echo "</pre>"; die;
+        
+        // repeater
+        if(($this->args['field'] ?? '') == 'repeater'){
+            return 'Repeater';
+        }
 
         // post select
         if (!empty($this->args['post_select']['post_type'])) {
@@ -302,7 +306,8 @@ class WpField {
         $wrap_class = esc_attr(implode(' ', array_filter(array_merge((array) $this->args['wrap_class'], [
             "{$this->name}_wrap",
             "type-$type",
-            "field_$field"
+            "field_$field",
+            $field != 'repeater' ? 'single_field' : '',
         ]))));
         $label_before = $this->args['label_position'] == 'before' ? $this->get_label() : '';
         $label_after  = $this->args['label_position'] == 'after' ? $this->get_label() : '';
@@ -578,7 +583,7 @@ class WpField {
 
         $mime_type = get_post_mime_type($post_id);
         if (strpos($mime_type, 'image') === false) {
-            $text = "(ID: $post_id) " . get_the_title($post_id);
+            $text = "(ID:$post_id)-" . get_the_title($post_id);
             return '<div class="inner has_value">' . $text . '</div>';
         }
 

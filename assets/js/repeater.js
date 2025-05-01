@@ -14,7 +14,7 @@
 
         onDOMContentLoaded() {
 
-            document.querySelectorAll('.WpDatabaseHelper_repeater').forEach(element => {
+            document.querySelectorAll('.WpDatabaseHelper_repeater_list_items').forEach(element => {
                 this.init_repeater(element);
             });
         },
