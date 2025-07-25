@@ -230,9 +230,9 @@ class WpField {
     function init_field_value() {
         $html_items          = [];
         $this->args['value'] = (array) $this->args['value'];
-        
+
         // repeater
-        if(($this->args['field'] ?? '') == 'repeater'){
+        if (($this->args['field'] ?? '') == 'repeater') {
             return 'Repeater';
         }
 
@@ -311,6 +311,16 @@ class WpField {
         ]))));
         $label_before = $this->args['label_position'] == 'before' ? $this->get_label() : '';
         $label_after  = $this->args['label_position'] == 'after' ? $this->get_label() : '';
+
+        // force santizie value for textarea
+        if (!is_string($this->args['value'] ?? '')) {
+            $this->args['value'] = serialize($this->args['value']);
+        }
+        // force santizie value for input
+        if (!is_string($this->args['attribute']['value'] ?? '')) {
+            $this->args['attribute']['value'] = serialize($this->args['attribute']['value']);
+        }
+
         $field_output = method_exists($this, $field) ? $this->{$field}() : "<mark>{$field} method does not exist</mark>";
 
         return <<<HTML
