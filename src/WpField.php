@@ -335,6 +335,7 @@ class WpField {
         </div>
         {$this->get_note()}
         {$this->get_suggest()}
+        {$this->get_relative()}
         {$this->args['after']}
         HTML;
     }
@@ -638,6 +639,7 @@ class WpField {
         }
 
         $classes = implode(" ", [
+            'get_copy',
             "{$this->name}_click_to_copy",
             "{$this->name}_name",
             !empty($this->args['show_copy_key']) ? 'show_copy_key' : ''
@@ -667,12 +669,67 @@ class WpField {
         foreach ($suggestions as $suggest) {
             $suggest_esc = esc_attr($suggest);
             $array[] = <<<HTML
-            <span class="{$class_name}_suggest">
+            <span class="get_suggest {$class_name}_suggest">
                 <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">{$suggest_esc}</span>
             </span>
             HTML;
         }
         return $output . implode(', ', $array);
+    }
+
+    function get_relative() {
+
+        // only for select post, term, user
+        if (empty($this->args['post_select']) and empty($this->args['term_select']) and empty($this->args['user_select'])) {
+            return;
+        }
+
+        $string = __('Link');
+        $object = '';
+
+        // post select
+        if (!empty($this->args['post_select']['post_type'])) {
+            $post_id = $this->args['value'] ?? '';
+            if ($post_id) {
+                $object = "<a target='_blank' href='" . get_edit_post_link($post_id) . "'>" . get_the_title($post_id) . "</a>";
+            }
+        }
+
+        // term select
+        if (!empty($this->args['term_select']['taxonomy'])) {
+            $term_id = $this->args['value'] ?? '';
+            $taxonomy = $this->args['term_select']['taxonomy'];
+            if ($term_id) {
+                $object = "<a target='_blank' href='" . get_edit_term_link($term_id, $taxonomy) . "'>" . get_term($term_id, $taxonomy)->name . "</a>";
+            }
+        }
+
+        // user select
+        if (!empty($this->args['user_select'])) {
+            $user_id = $this->args['value'] ?? '';
+            if ($user_id) {
+                $user_info = get_userdata($user_id);
+                if ($user_info) {
+                    $object = "<a target='_blank' href='" . get_edit_user_link($user_id) . "'>" . esc_html($user_info->display_name) . "</a>";
+                }
+            }
+        }
+
+        // stop if empty
+        if ($object === '') {
+            return;
+        }
+
+        return <<<HTML
+        <small>
+            <strong>
+                *$string:
+            </strong>
+            <span>
+                $object
+            </span>
+        </small>
+        HTML;
     }
 
     function get_note() {
@@ -713,7 +770,7 @@ class WpField {
     function get_options_term_select() {
         $options = ['' => __('Select')];
         $args    = wp_parse_args(
-            $this->args['term_select'],
+            (array) $this->args['term_select'],
             [
                 'taxonomy'   => 'category',
                 'hide_empty' => 'false',
@@ -737,7 +794,7 @@ class WpField {
     function get_options_post_select() {
         $options = ['' => __('Select')];
         $__args  = wp_parse_args(
-            $this->args['post_select'],
+            (array) $this->args['post_select'],
             [
                 'post_type'      => 'post',
                 'post_status'    => 'any',
@@ -767,7 +824,7 @@ class WpField {
     function get_options_user_select() {
         $options = ['' => __('Select')];
         $__args  = wp_parse_args(
-            $this->args['user_select'] ?? [],
+            (array) $this->args['user_select'] ?? [],
             [
                 // 'role__in'       => ['subscriber', 'editor', 'administrator'],
                 'orderby'        => 'display_name',
