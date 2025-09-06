@@ -313,12 +313,17 @@ class WpField {
         $label_after  = $this->args['label_position'] == 'after' ? $this->get_label() : '';
 
         // force santizie value for textarea
-        if (!is_string($this->args['value'] ?? '')) {
-            $this->args['value'] = serialize($this->args['value']);
+        if (($this->args['field'] ?? '') == 'textarea') {
+            if (!is_string($this->args['value'] ?? '')) {
+                $this->args['value'] = serialize($this->args['value']);
+            }
         }
+
         // force santizie value for input
-        if (!is_string($this->args['attribute']['value'] ?? '')) {
-            $this->args['attribute']['value'] = serialize($this->args['attribute']['value']);
+        if (($this->args['field'] ?? '') == 'input') {
+            if (!is_string($this->args['attribute']['value'] ?? '')) {
+                $this->args['attribute']['value'] = serialize($this->args['attribute']['value']);
+            }
         }
 
         $field_output = method_exists($this, $field) ? $this->{$field}() : "<mark>{$field} method does not exist</mark>";
