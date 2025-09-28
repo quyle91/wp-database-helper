@@ -1,7 +1,14 @@
-body{
+body {
     .WpDatabaseHelper_repeater_list_items {
         position: relative;
-        background-color: #ededed;
+
+        .WpDatabaseHelper_repeater_list_items {
+
+            >fieldset {
+                display: flex;
+                flex-wrap: nowrap;
+            }
+        }
 
         .is_empty {
             position: absolute;
@@ -13,7 +20,7 @@ body{
             margin-bottom: 5px;
             display: flex;
             gap: 5px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .WpDatabaseHelper_field {
@@ -30,30 +37,41 @@ body{
             position: relative;
         }
 
+        counter-reset: repeater-index;
+
         >fieldset {
+            border: 1px dashed #ccc;
+            padding: 10px;
+            background-color: #ededed;
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
             align-items: flex-start;
             margin-bottom: 5px;
 
-            &>.repeater_field {
-                +fieldset {
-                    padding-left: 22px;
-                    position: relative;
+            padding-left: 22px;
+            position: relative;
+            counter-increment: repeater-index;
 
-                    &:before {
-                        content: "\f344";
-                        content: "\f11c";
-                        // content: "\f460";
-                        color: #2271b1;
-                        font-family: dashicons;
-                        position: absolute;
-                        top: 10px;
-                        left: 2px;
-                    }
+            &:before {
+                content: counter(repeater-index) ".";
+                font-family: inherit;
+                position: absolute;
+                top: 10px;
+                left: 2px;
+            }
+        }
+
+        button {
+            .dashicons {
+                line-height: 30px;
+            }
+
+            &.button-small {
+                .dashicons {
+                    line-height: 26px;
                 }
-            }            
+            }
         }
     }
 }

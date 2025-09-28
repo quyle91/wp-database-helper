@@ -9,7 +9,7 @@ class WpField {
     public $args = [];
 
     function __construct() {
-        $this->id      = $this->name . "_" . wp_rand();
+        $this->id = $this->name . "_" . wp_rand();
         $this->version = $this->getVersion();
     }
 
@@ -26,9 +26,10 @@ class WpField {
         $plugin_url = plugins_url('', __DIR__);
 
         // Check if the script is already enqueued to avoid adding it multiple times
-        if (wp_script_is('wpdatabasehelper-field-js', 'enqueued')) {
-            return;
-        }
+        // if (wp_script_is('wpdatabasehelper-field-js', 'enqueued')) {
+        //     return;
+        // }
+
         wp_enqueue_style(
             'wpdatabasehelper-field-css',
             $plugin_url . "/assets/css/field.css",
@@ -45,22 +46,43 @@ class WpField {
             true
         );
 
-        // Add inline script only once
-        wp_add_inline_script(
-            'wpdatabasehelper-field-js',
-            'const wpdatabasehelper_field_js = ' . json_encode(
-                array(
-                    'ajax_url'     => admin_url('admin-ajax.php'),
-                    'nonce'        => wp_create_nonce('wpdatabasehelper_field_js'),
-                    'script_debug' => (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG),
-                    'text'         => [
-                        'upload'         => __('Upload'),
-                        'use_this_media' => __('Choose image'),
-                    ],
-                )
-            ),
-            'before'
+        wp_enqueue_style(
+            'wpdatabasehelper-tab-css',
+            $plugin_url . "/assets/css/tab.css",
+            [],
+            $this->version,
+            'all'
         );
+
+        wp_enqueue_script(
+            'wpdatabasehelper-tab-js',
+            $plugin_url . "/assets/js/tab.js",
+            [],
+            $this->version,
+            true
+        );
+
+        // Add inline script only once
+        static $inline_added = false;
+        if (!$inline_added) {
+            wp_add_inline_script(
+                'wpdatabasehelper-field-js',
+                'const wpdatabasehelper_field_js = ' . json_encode(
+                    array(
+                        'ajax_url' => admin_url('admin-ajax.php'),
+                        'nonce' => wp_create_nonce('wpdatabasehelper_field_js'),
+                        'script_debug' => (defined('SCRIPT_DEBUG') && SCRIPT_DEBUG),
+                        'text' => [
+                            'upload' => __('Upload'),
+                            'use_this_media' => __('Choose image'),
+                        ],
+                    )
+                ),
+                'before'
+            );
+            $inline_added = true;
+        }
+
 
         // select2
         if ($this->args['is_select2']) {
@@ -82,54 +104,64 @@ class WpField {
         }
     }
 
+    function default_args() {
+        return [
+            'field' => 'input',
+
+            //
+            'value' => '', // current field
+
+            //
+            'attribute' => [],
+            'suggest' => '',
+            'before' => '<div class=___default_wrap>',
+            'after' => '</div>',
+            'wrap_class' => [],
+            'note' => '',
+            'label' => '',
+            'label_position' => 'before',
+            'show_copy' => true,
+            'show_copy_key' => false,
+
+            // only for field = select
+            'options' => [],
+            'post_select' => [],
+            'term_select' => [],
+            'user_select' => [],
+            'is_select2' => true,
+
+            // only for field = tab_nav
+            'labels' => [], // 
+        ];
+    }
+
     function setup_args($args) {
-        // echo "<pre>"; print_r($args); echo "</pre>";
         // parse args
         $this->args = wp_parse_args(
             $args,
-            [
-                'field'          => 'input',
-                'value'          => '', // current field
-                'attribute'      => [], // see $default_attribute below ..
-                'suggest'        => '',
-                'before'         => '<div class=___default_wrap>',
-                'after'          => '</div>',
-                'wrap_class'     => [],
-                'note'           => '',
-                'label'          => '',
-                'label_position' => 'before',
-                'options'        => [
-                    // 1 => 1,
-                    // 2 => 2,
-                    // 3 => 3,
-                ],
-                'post_select'    => [],
-                'term_select'    => [],
-                'user_select'    => [],
-                'is_select2'      => true,
-                'show_copy'      => true,
-                'show_copy_key'  => false,
-            ]
+            $this->default_args()
         );
 
         // parse args attribute for input
         $default_attribute = [
-            'id'    => $this->name . "_" . wp_rand(),
+            'id' => $this->name . "_" . wp_rand(),
             'class' => [],
             'value' => '',
         ];
+
+        // input
         if ($this->args['field'] == 'input') {
             $default_attribute = [
-                'id'    => $this->name . "_" . wp_rand(),
+                'id' => $this->name . "_" . wp_rand(),
                 'class' => [],
-                'type'  => 'text',
+                'type' => 'text',
                 'value' => '',
             ];
         }
         $this->args['attribute'] = wp_parse_args($args['attribute'], $default_attribute);
 
         // classes
-        $this->args['attribute']['class']   = (array) $this->args['attribute']['class'];
+        $this->args['attribute']['class'] = (array) $this->args['attribute']['class'];
         $this->args['attribute']['class'][] = $this->name;
         if (($this->args['field'] ?? '') == 'input') {
             if ($this->args['attribute']['type'] != 'button') {
@@ -137,40 +169,47 @@ class WpField {
             }
         }
 
-        // options term_select
-        if (!empty($this->args['term_select'])) {
-            $default_term_select       = [
-                'taxonomy'       => 'category',
-                'option_value'   => 'term_id',
-                'option_display' => 'name',
-            ];
-            $this->args['term_select'] = wp_parse_args($args['term_select'], $default_term_select);
-            $options                   = $this->get_options_term_select();
-            $this->args['options']     = $options;
-        }
+
 
         // option post_select
-        if (!empty($this->args['post_select'])) {
-            $default_post_select       = [
-                'post_type'      => 'post',
-                'option_value'   => 'ID',
+        if (!empty(array_filter($this->args['post_select'] ?? []))) {
+            $default_post_select = [
+                'post_type' => 'post',
+                'option_value' => 'ID',
                 'option_display' => 'post_title',
             ];
             $this->args['post_select'] = wp_parse_args($args['post_select'], $default_post_select);
-            $options                   = $this->get_options_post_select();
-            $this->args['options']     = $options;
+            $options = $this->get_options_post_select();
+            $this->args['options'] = $options;
+        }
+
+        // options term_select
+        if (!empty(array_filter($this->args['term_select'] ?? []))) {
+            $default_term_select = [
+                'taxonomy' => 'category',
+                'option_value' => 'term_id',
+                'option_display' => 'name',
+            ];
+            $this->args['term_select'] = wp_parse_args($args['term_select'], $default_term_select);
+            $options = $this->get_options_term_select();
+            $this->args['options'] = $options;
         }
 
         // option user_select
-        if (!empty($this->args['user_select'])) {
-            $default_user_select       = [
-                'orderby'        => 'display_name',
-                'order'          => 'ASC',
-                'number'         => -1,
+        if (!empty(array_filter($this->args['user_select'] ?? []))) {
+            $default_user_select = [
+                'orderby' => 'display_name',
+                'order' => 'ASC',
+                'number' => -1,
             ];
             $this->args['user_select'] = wp_parse_args($args['user_select'], $default_user_select);
-            $options                   = $this->get_options_user_select();
-            $this->args['options']     = $options;
+            $options = $this->get_options_user_select();
+            $this->args['options'] = $options;
+        }
+
+        // is_select2
+        if ($this->args['is_select2'] ?? '') {
+            $this->args['attribute']['class'][] = 'is_select2';
         }
 
         // textarea
@@ -179,16 +218,12 @@ class WpField {
                 $this->args['attribute']['cols'] = 65;
             }
             if (!isset($this->args['attribute']['rows'])) {
-                $this->args['attribute']['rows'] = 8;
+                $this->args['attribute']['rows'] = 4;
             }
         }
 
         // input
         if ($this->args['field'] == 'input') {
-            // echo "<pre>";
-            // print_r($this);
-            // echo "</pre>";
-            // die;
             if (!$this->args['attribute']['value']) {
                 $this->args['attribute']['value'] = $this->args['value'];
             }
@@ -200,7 +235,7 @@ class WpField {
                 if (empty($this->args['options'])) {
                     $default = ['on' => 'on'];
                     // override default if has attribute[value]
-                    if ($this->args['attribute']['value']) {
+                    if ($this->args['attribute']['value'] ?? '') {
                         $default = ['on' => $this->args['attribute']['value']];
                     }
                     $this->args['options'] = $default;
@@ -214,21 +249,29 @@ class WpField {
         }
 
         // tabs
-        if (in_array($this->args['field'], ['tab', 'tab_end', 'tab_nav'])) {
+        if (
+            in_array(
+                $this->args['field'],
+                ['tab', 'tab_end', 'tab_nav']
+            )
+        ) {
             $this->args['before'] = '';
             $this->args['after'] = '';
         }
 
         // show_copy_key
         if (
-            in_array($this->args['attribute']['type'] ?? '', ['button', 'file', 'checkbox', 'radio', 'file', 'hidden', 'wp_media', 'color'])
+            in_array(
+                $this->args['attribute']['type'] ?? '',
+                ['button', 'file', 'checkbox', 'radio', 'file', 'hidden', 'wp_media', 'color']
+            )
         ) {
             $this->args['show_copy'] = false;
         }
     }
 
     function init_field_value() {
-        $html_items          = [];
+        $html_items = [];
         $this->args['value'] = (array) $this->args['value'];
 
         // repeater
@@ -269,7 +312,7 @@ class WpField {
                         'thumbnail',
                         false,
                         [
-                            'style' => 'max-width: 100%; width: 50px; height: auto;  border-radius: 4px; border: 1px solid lightgray;',
+                            'style' => 'max-width: 100%; width: 50px; height: auto;border-radius: 4px; border: 1px solid lightgray;',
                         ]
                     );
                 }
@@ -297,20 +340,20 @@ class WpField {
 
         $field = $this->args['field'];
 
-        // skip on logics
+        // skip wrap classes for tabs
         if (in_array($field, ['tab', 'tab_end', 'tab_nav'])) {
             return $this->$field();
         }
 
-        $type  = $this->args['attribute']['type'] ?? '';
+        $type = $this->args['attribute']['type'] ?? '';
         $wrap_class = esc_attr(implode(' ', array_filter(array_merge((array) $this->args['wrap_class'], [
             "{$this->name}_wrap",
-            "type-$type",
             "field_$field",
+            "type-$type",
             $field != 'repeater' ? 'single_field' : '',
         ]))));
         $label_before = $this->args['label_position'] == 'before' ? $this->get_label() : '';
-        $label_after  = $this->args['label_position'] == 'after' ? $this->get_label() : '';
+        $label_after = $this->args['label_position'] == 'after' ? $this->get_label() : '';
 
         // force santizie value for textarea
         if (($this->args['field'] ?? '') == 'textarea') {
@@ -321,7 +364,7 @@ class WpField {
 
         // force santizie value for input
         if (($this->args['field'] ?? '') == 'input') {
-            if (!is_string($this->args['attribute']['value'] ?? '')) {
+            if (is_array($this->args['attribute']['value'] ?? '')) {
                 $this->args['attribute']['value'] = serialize($this->args['attribute']['value']);
             }
         }
@@ -332,7 +375,7 @@ class WpField {
         {$this->args['before']}
         <div class="{$wrap_class}">
             {$label_before}
-            <div>
+            <div class="inner">
                 {$field_output}
                 {$this->get_copy()}
             </div>
@@ -343,6 +386,21 @@ class WpField {
         {$this->get_relative()}
         {$this->args['after']}
         HTML;
+    }
+
+    function get_attribute($attr_override = false) {
+        ob_start();
+
+        $args = $this->args['attribute'] ?? [];
+        if ($attr_override) {
+            $args = $attr_override;
+        }
+
+        foreach ($args as $key => $value) {
+            $value = implode(" ", (array) $value);
+            echo esc_attr($key) . '="' . esc_attr($value) . '" ';
+        }
+        return ob_get_clean();
     }
 
     function tab_nav() {
@@ -391,63 +449,6 @@ class WpField {
         return $a->init_repeater();
     }
 
-    function get_attribute($attr_override = false) {
-        ob_start();
-
-        $args = $this->args['attribute'] ?? [];
-        if ($attr_override) {
-            $args = $attr_override;
-        }
-
-        foreach ($args as $key => $value) {
-            $value = implode(" ", (array) $value);
-            echo esc_attr($key) . '="' . esc_attr($value) . '" ';
-        }
-        return ob_get_clean();
-    }
-
-    function select() {
-        $attributes = $this->get_attribute();
-        $options    = $this->args['options'] ?? [];
-        $selected_values = (array) ($this->args['value'] ?? []);
-
-        $options_html = '';
-        foreach ($options as $key => $value) {
-            $selected = in_array($key, $selected_values) ? 'selected' : '';
-            $escaped_key = esc_attr($key);
-            $escaped_value = esc_attr($value);
-
-            $options_html .= <<<HTML
-        <option value="{$escaped_key}" {$selected}>{$escaped_value}</option>
-        HTML;
-        }
-
-        return <<<HTML
-        <div class="form_field_select">
-            <select {$attributes}>
-                {$options_html}
-            </select>
-        </div>
-        HTML;
-    }
-
-    function textarea() {
-        $type = $this->args['attribute']['type'] ?? "text";
-
-        if (method_exists($this, "textarea_" . $type)) {
-            return $this->{"textarea_" . $type}();
-        }
-
-        $attributes = $this->get_attribute();
-        $value = esc_textarea($this->args['value'] ?? '');
-
-        return <<<HTML
-        <div class="form_field_textarea">
-            <textarea {$attributes}>{$value}</textarea>
-        </div>
-        HTML;
-    }
-
     function input() {
         $type = $this->args['attribute']['type'] ?? "text";
         if (method_exists($this, "input_" . $type)) {
@@ -478,8 +479,8 @@ class WpField {
 
         return <<<HTML
         <div class="form_field_color">
-            <input {$attributes}>
-            <input type="color" class="colorControl" value="{$color_value}">
+        <input {$attributes}>
+        <input type="color" class="colorControl" value="{$color_value}">
         </div>
         HTML;
     }
@@ -490,8 +491,8 @@ class WpField {
 
         return <<<HTML
         <div class="form_field_range">
-            <div class="input_range_field">{$input_text}</div>
-            <div class="input_range_value">{$range_value}</div>
+        <div class="input_range_field">{$input_text}</div>
+        <div class="input_range_value">{$range_value}</div>
         </div>
         HTML;
     }
@@ -499,49 +500,70 @@ class WpField {
     function input_radio() {
         $options = (array) $this->args['options'];
         $selected_value = $this->args['value'] ?? '';
-        $radio_buttons = '';
+        $html = '';
+
+        //
+        $attribute = $this->args['attribute'];
+
+        //
+        $html .= '<div class="item">';
+
+        // hidden
+        $hidden_attribute = $attribute;
+        $hidden_attribute['type'] = 'hidden';
+        $hidden_attribute['value'] = '';
+        $html .= "<input {$this->get_attribute($hidden_attribute)}>";
 
         foreach ($options as $key => $value) {
-            $attr_override = $this->args['attribute'];
-            $attr_override['value'] = $key;
-            $attr_override['id'] .= "_{$key}";
+            $attribute['value'] = $key;
+            $attribute['id'] .= "_{$key}";
 
             if ($selected_value == $key) {
-                $attr_override['checked'] = 'checked';
+                $attribute['checked'] = 'checked';
             } else {
-                unset($attr_override['checked']);
+                unset($attribute['checked']);
             }
 
-            // echo "<pre>"; print_r($key); echo "</pre>";
-            // echo "<pre>"; print_r($attr_override); echo "</pre>";
-            $radio_buttons .= <<<HTML
-            <div class="item">
-                <input {$this->get_attribute($attr_override)}>
-                <label class="form_field_label_item" for="{$attr_override['id']}" style="vertical-align: middle;">
-                    {$value}
-                </label>
-            </div>
+            $html .= <<<HTML
+            <input {$this->get_attribute($attribute)}>
+            <label class="form_field_label_item" for="{$attribute['id']}" style="vertical-align: middle;">
+            {$value}
+            </label>
             HTML;
         }
 
+        $html .= '</div>';
+
         return <<<HTML
         <div class="form_field_radio form_field_flex">
-            {$radio_buttons}
+        {$html}
         </div>
         HTML;
     }
 
     function input_checkbox() {
+        // echo "<pre>"; print_r($this); echo "</pre>";
         $options = (array) $this->args['options'];
         $selected_values = (array) $this->args['value'];
-        $checkbox_buttons = '';
+        $html = '';
+
+        //
+        $attribute = $this->args['attribute'];
+
+        //
+        $html .= '<div class="item">';
+
+        // hidden
+        $hidden_attribute = $attribute;
+        $hidden_attribute['type'] = 'hidden';
+        $hidden_attribute['value'] = '';
+        $html .= "<input {$this->get_attribute($hidden_attribute)}>";
 
         foreach ($options as $key => $value) {
             if (!$key) {
                 continue;
             }
 
-            $attribute = $this->args['attribute'];
             $attribute['value'] = $key;
             $attribute['id'] .= "_{$key}";
 
@@ -551,19 +573,81 @@ class WpField {
                 unset($attribute['checked']);
             }
 
-            $checkbox_buttons .= <<<HTML
-            <div class="item">
-                <input {$this->get_attribute($attribute)}>
-                <label class="form_field_label_item" for="{$attribute['id']}" style="vertical-align: middle;">
-                    {$value}
-                </label>
-            </div>
+            $html .= <<<HTML
+            <input {$this->get_attribute($attribute)}>
+            <label class="form_field_label_item" for="{$attribute['id']}" style="vertical-align: middle;">
+            {$value}
+            </label>
+            HTML;
+        }
+
+        $html .= '</div>';
+
+        return <<<HTML
+        <div class="form_field_checkbox form_field_flex">
+        {$html}
+        </div>
+        HTML;
+    }
+
+    function input_wp_media() {
+        wp_enqueue_media();
+
+        $this->args['attribute']['type'] = 'hidden';
+        $value = $this->args['attribute']['value'] ?? '';
+        $input_field = $this->get_attribute();
+        $image_preview = $this->__input_wp_media_preview($value);
+
+        return <<<HTML
+        <div class="form_field_media form_field_flex_nowrap">
+        <input {$input_field} />
+        <div class="form_field_preview">
+        $image_preview
+        </div>
+        <button type="button" class="button hepperMeta-media-upload">Add</button>
+        <button type="button" class="button hepperMeta-media-remove">Delete</button>
+        </div>
+        HTML;
+    }
+
+    function select() {
+        $attributes = $this->get_attribute();
+        $options = $this->args['options'] ?? [];
+        $selected_values = (array) ($this->args['value'] ?? []);
+
+        $options_html = '';
+        foreach ($options as $key => $value) {
+            $selected = in_array($key, $selected_values) ? 'selected' : '';
+            $escaped_key = esc_attr($key);
+            $escaped_value = esc_attr($value);
+
+            $options_html .= <<<HTML
+            <option value="{$escaped_key}" {$selected}>{$escaped_value}</option>
             HTML;
         }
 
         return <<<HTML
-        <div class="form_field_checkbox form_field_flex">
-            {$checkbox_buttons}
+        <div class="form_field_select">
+        <select {$attributes}>
+        {$options_html}
+        </select>
+        </div>
+        HTML;
+    }
+
+    function textarea() {
+        $type = $this->args['attribute']['type'] ?? "text";
+
+        if (method_exists($this, "textarea_" . $type)) {
+            return $this->{"textarea_" . $type}();
+        }
+
+        $attributes = $this->get_attribute();
+        $value = esc_textarea($this->args['value'] ?? '');
+
+        return <<<HTML
+        <div class="form_field_textarea">
+        <textarea {$attributes}>{$value}</textarea>
         </div>
         HTML;
     }
@@ -579,20 +663,20 @@ class WpField {
         $editor_settings = array(
             'textarea_name' => $name,
             'media_buttons' => false,
-            'quicktags'     => false,
-            'tinymce'       => array(
+            'quicktags' => false,
+            'tinymce' => array(
                 'toolbar1' => 'bold italic underline | alignleft aligncenter alignright | bullist numlist outdent indent | link unlink',
                 // 'toolbar2' => '',
             ),
             'editor_height' => 30,
-            'editor_class'  => 'WpDatabaseHelper_field'
+            'editor_class' => 'WpDatabaseHelper_field'
         );
 
         wp_editor($value, $id, $editor_settings);
         return ob_get_clean();
     }
 
-    function input_wp_media_preview($post_id = false) {
+    function __input_wp_media_preview($post_id = false) {
         if (!$post_id) {
             return '<div class="inner no_value"> -- </div>';
         }
@@ -611,26 +695,6 @@ class WpField {
         );
 
         return '<div class="inner has_value">' . $image_preview . '</div>';
-    }
-
-    function input_wp_media() {
-        wp_enqueue_media();
-
-        $this->args['attribute']['type'] = 'hidden';
-        $value = $this->args['attribute']['value'] ?? '';
-        $input_field = $this->get_attribute();
-        $image_preview = $this->input_wp_media_preview($value);
-
-        return <<<HTML
-        <div class="form_field_media form_field_flex_nowrap">
-            <input {$input_field} />
-            <div class="form_field_preview">
-                $image_preview
-            </div>
-            <button type="button" class="button hepperMeta-media-upload">Add</button>
-            <button type="button" class="button hepperMeta-media-remove">Delete</button>
-        </div>
-        HTML;
     }
 
     function get_copy() {
@@ -654,7 +718,7 @@ class WpField {
 
         return <<<HTML
         <span class="{$classes}" data-text="{$name}">
-            {$text}
+        {$text}
         </span>
         HTML;
     }
@@ -675,7 +739,7 @@ class WpField {
             $suggest_esc = esc_attr($suggest);
             $array[] = <<<HTML
             <span class="get_suggest {$class_name}_suggest">
-                <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">{$suggest_esc}</span>
+            <span class="{$class_name}_click_to_copy" data-text="{$suggest_esc}">{$suggest_esc}</span>
             </span>
             HTML;
         }
@@ -705,7 +769,10 @@ class WpField {
             $term_id = $this->args['value'] ?? '';
             $taxonomy = $this->args['term_select']['taxonomy'];
             if ($term_id) {
-                $object = "<a target='_blank' href='" . get_edit_term_link($term_id, $taxonomy) . "'>" . get_term($term_id, $taxonomy)->name . "</a>";
+                $term_object = get_term($term_id, $taxonomy);
+                $term_name = $term_object->name ?? '';
+                // echo "<pre>"; print_r($term_id); echo "</pre>";
+                $object = "<a target='_blank' href='" . get_edit_term_link($term_id, $taxonomy) . "'>" . $term_name . "</a>";
             }
         }
 
@@ -727,12 +794,12 @@ class WpField {
 
         return <<<HTML
         <small>
-            <strong>
-                *$string:
-            </strong>
-            <span>
-                $object
-            </span>
+        <strong>
+        *$string:
+        </strong>
+        <span>
+        $object
+        </span>
         </small>
         HTML;
     }
@@ -754,7 +821,7 @@ class WpField {
 
             $output .= <<<HTML
             <small class="{$class_name}_note">
-                <strong>*{$note_label} {$key_label}:</strong> {$note_text}.
+            <strong>*{$note_label} {$key_label}:</strong> {$note_text}.
             </small>
             HTML;
         }
@@ -774,23 +841,23 @@ class WpField {
 
     function get_options_term_select() {
         $options = ['' => __('Select')];
-        $args    = wp_parse_args(
+        $args = wp_parse_args(
             (array) $this->args['term_select'],
             [
-                'taxonomy'   => 'category',
+                'taxonomy' => 'category',
                 'hide_empty' => 'false',
             ]
         );
-        $terms   = get_terms($args);
+        $terms = get_terms($args);
 
         if (is_wp_error($terms)) {
             return $options;
         }
         foreach ($terms as $key => $term) {
-            $_key_            = $this->args['term_select']['option_value'] ?? 'term_id';
-            $_value_          = $this->args['term_select']['option_display'] ?? 'name';
-            $_key             = $term->{$_key_};
-            $_value           = $term->{$_value_};
+            $_key_ = $this->args['term_select']['option_value'] ?? 'term_id';
+            $_value_ = $this->args['term_select']['option_display'] ?? 'name';
+            $_key = $term->{$_key_};
+            $_value = $term->{$_value_};
             $options[$_key] = $_value;
         }
         return $options;
@@ -798,27 +865,27 @@ class WpField {
 
     function get_options_post_select() {
         $options = ['' => __('Select')];
-        $__args  = wp_parse_args(
+        $__args = wp_parse_args(
             (array) $this->args['post_select'],
             [
-                'post_type'      => 'post',
-                'post_status'    => 'any',
+                'post_type' => 'post',
+                'post_status' => 'any',
                 'posts_per_page' => -1,
-                'orderby'        => 'name',
-                'order'          => 'asc',
+                'orderby' => 'name',
+                'order' => 'asc',
             ]
         );
         $__posts = get_posts($__args);
 
         if (!empty($__posts) and is_array($__posts)) {
             foreach ((array) $__posts as $key => $__post) {
-                $_key_   = $this->args['post_select']['option_value'] ?? 'ID';
+                $_key_ = $this->args['post_select']['option_value'] ?? 'ID';
                 $_value_ = $this->args['post_select']['option_display'] ?? 'post_title';
-                $_key    = $__post->{$_key_};
-                $display  = $__post->{$_value_};
+                $_key = $__post->{$_key_};
+                $display = $__post->{$_value_};
                 $display .= " (ID:" . $__post->ID . ")";
                 if ($__post->post_status != 'publish') {
-                    $display .= " — " . get_post_statuses()[$__post->post_status];
+                    $display .= " — " . (get_post_statuses()[$__post->post_status] ?? '');
                 }
                 $options[$_key] = $display;
             }
@@ -828,18 +895,18 @@ class WpField {
 
     function get_options_user_select() {
         $options = ['' => __('Select')];
-        $__args  = wp_parse_args(
+        $__args = wp_parse_args(
             (array) $this->args['user_select'] ?? [],
             [
-                // 'role__in'       => ['subscriber', 'editor', 'administrator'],
-                'orderby'        => 'display_name',
-                'order'          => 'ASC',
-                'number'         => -1,
+                // 'role__in' => ['subscriber', 'editor', 'administrator'],
+                'orderby' => 'display_name',
+                'order' => 'ASC',
+                'number' => -1,
             ]
         );
 
         // any
-        if (in_array('any', $__args['role__in'])) {
+        if (in_array('any', (array)($__args['role__in'] ?? []))) {
             unset($__args['role__in']);
         }
 
@@ -847,15 +914,27 @@ class WpField {
 
         if (!empty($users) && is_array($users)) {
             foreach ($users as $user) {
-                $_key_   = $this->args['user_select']['option_value'] ?? 'ID';
+                $_key_ = $this->args['user_select']['option_value'] ?? 'ID';
                 $_value_ = $this->args['user_select']['option_display'] ?? 'display_name';
-                $_key    = $user->{$_key_};
-                $_value  = $user->{$_value_};
+                $_key = $user->{$_key_};
+                $_value = $user->{$_value_};
 
                 $options[$_key] = $_value;
             }
         }
 
         return $options;
+    }
+
+    function __get_all_roles() {
+        global $wp_roles;
+
+        if (! isset($wp_roles)) {
+            $wp_roles = new \WP_Roles(); // ensure it's initialized
+        }
+
+        // return array slug => name
+        $roles = $wp_roles->get_names();
+        return $roles;
     }
 }

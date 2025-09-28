@@ -147,7 +147,7 @@ body {
                 display: flex;
                 align-items: flex-start;
                 gap: 10px;
-                margin-top: 2px;
+                // margin-top: 2px;
                 flex-wrap: nowrap;
             }
 
@@ -189,6 +189,31 @@ body {
                         }
                     }
 
+                }
+            }
+
+            .form_field_settings {
+                position: relative;
+
+                .html_modal {
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    background-color: #fff;
+                    padding: 7px;
+                    border: 1px solid #2271b1;
+                    border-radius: 3px;
+                    z-index: 1;
+                    transform: translate(-50%, -50%);
+                    width: 1000px;
+                    height: 600px;
+                    overflow: auto;
+
+                    .close_settings {
+                        position: absolute;
+                        top: 5px;
+                        right: 5px;
+                    }
                 }
             }
         }

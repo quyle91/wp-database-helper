@@ -1,39 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-
-    document.querySelectorAll(".___tab_nav").forEach(tabNav => {
-        const buttons = tabNav.querySelectorAll(".button");
-        const tabGroup = tabNav.getAttribute('tab_group');
-        const container = tabNav.closest('.WpDatabaseHelper_meta-meta-box-container');
-        buttons.forEach(button => {
-            button.addEventListener('click', () => {
-
-                // hide all tab content
-                container.querySelectorAll('.___tab_content[tab_group="' + tabGroup + '"]').forEach(tabContent => {
-                    tabContent.classList.add('hidden');
-                });
-
-                // show focus tag group
-                const _id = button.getAttribute('data-id');
-                container.querySelectorAll('.___tab_content[tab_group="' + tabGroup + '"][data-id="' + _id + '"]').forEach(tabContent => {
-                    tabContent.classList.remove('hidden');
-                });
-                
-                // button class
-                const siblings = [...button.parentElement.children].filter(el => el !== button);
-                siblings.forEach(sibling => sibling.classList.add("button-primary"));
-                siblings.forEach(sibling => sibling.classList.remove("zactive"));
-                button.classList.remove('button-primary')
-                button.classList.add('zactive')
-            });
-        });
-
-        // Xoá class hidden cho item đầu tiên
-        if (buttons.length > 0) {
-            buttons[0].click();
-        }
-    });
-
-
+    
+    // quick edit 
     document.querySelectorAll(".WpDatabaseHelper_meta_quick_edit").forEach(wrap => {
         const quick_edit_icon = wrap.querySelector('.quick_edit_icon');
         const quick_edit_field = wrap.querySelector('.quick_edit_field');

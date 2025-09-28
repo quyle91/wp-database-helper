@@ -8,6 +8,7 @@ class WpRepeater {
     public $current; // current array values
     public $prefix; // name 
     public $field_configs; // 1 mảng khai báo kiểu của cac form field
+    public $label;
     public $current_field_name = [];
 
     function __construct() {
@@ -63,12 +64,12 @@ class WpRepeater {
     }
 
     function enqueue() {
-        $plugin_url     = plugins_url('', __DIR__) . "/assets";
+        $plugin_url = plugins_url('', __DIR__) . "/assets";
 
         // Return early if the script is already enqueued
-        if (wp_script_is('wpdatabasehelper-repeater-js', 'enqueued')) {
-            return;
-        }
+        // if (wp_script_is('wpdatabasehelper-repeater-js', 'enqueued')) {
+        //     return;
+        // }
 
         wp_enqueue_style(
             'wpdatabasehelper-repeater-css',
@@ -98,6 +99,11 @@ class WpRepeater {
                 echo '<code class="is_empty"><small>' . __('Empty') . '</small></code>';
             }
 
+            //
+            echo $this->repeater_label();
+
+            //
+            // echo "<pre>"; print_r($this->current); echo "</pre>";
             echo $this->repeater(
                 $this->current,
                 $this->prefix,
@@ -113,27 +119,39 @@ class WpRepeater {
 
     function repeater($current, $prefix, $field_config, $level, $parent_key) {
         ob_start();
-        foreach ($current as $key => $value) {
+        foreach ((array)$current as $key => $value) {
 
             // check level 0 and init key -> wrong format
             if ($level == 0 and !is_int($key)) {
                 continue;
             }
 
+            // đối với metavalue là 1 mảng, luôn được trình bày dưới dạng repeater.
+            // default là tạo ra 1 field từ wp field
+
             if (is_array($value)) {
         ?>
-                <fieldset class="<?php if (is_int($parent_key)) echo $this->name . '_list_items'; ?>"
-                    prefix="<?= esc_attr($prefix . "[$key]"); ?>">
+                <fieldset
+                    class="<?php if (is_int($parent_key)) echo $this->name . '_list_items'; ?>"
+                    prefix="<?= esc_attr($prefix . "[$key]"); ?>"
+                    level="<?= esc_attr($level); ?>">
                     <?php
-                    echo $this->repeater($value, $prefix . "[$key]", $field_config, $level + 1, $key);
+                    // trường hợp đặc biệt: 'field_settings' thì ko cần repeater
+                    if ($key == 'field_settings') {
+                        echo $this->repeater_init_field($prefix . "[$key]", $value);
+                    } else {
+                        echo $this->repeater($value, $prefix . "[$key]", $field_config, $level + 1, $key);
+                    }
                     echo $this->repeater_button_controls($level, $key);
                     ?>
                 </fieldset>
             <?php
             } else {
-                // echo $key;
             ?>
-                <div suffix="<?= esc_attr($key); ?>" class="repeater_field">
+                <div
+                    class="repeater_field"
+                    suffix="<?= esc_attr($key); ?>"
+                    level="<?= esc_attr($level); ?>">
                     <?php
                     echo $this->repeater_init_field($prefix . "[$key]", $value);
                     echo $this->repeater_button_controls($level, $key);
@@ -148,7 +166,7 @@ class WpRepeater {
 
     function repeater_init_field($field_name, $value) {
         $field_config = [
-            'field'     => 'input',
+            'field' => 'input',
             'attribute' => [
                 'type' => 'text',
                 'value' => '',
@@ -167,9 +185,9 @@ class WpRepeater {
         }
 
         // remove label if exist
-        if (isset($field_config['label'])) {
-            unset($field_config['label']);
-        }
+        // if (isset($field_config['label'])) {
+        // unset($field_config['label']);
+        // }
 
         // intergration 
         $field_config['attribute']['name'] = $field_name;
@@ -184,53 +202,13 @@ class WpRepeater {
         return $a->init_field();
     }
 
-    function repeater_button_addnew($prefix, $current, $level) {
-
-        // check array with int key
-        if (!$this->repeater_array_with_int_keys($current)) {
-            return;
-        }
-
-        // don't allow for level > 0 or is not last level
-        if ($level > 0 and $level == $this->repeater_array_last_level($this->current)) {
-            return;
-        }
-
-        $text = __('Add');
-        return <<<HTML
-        <button type="button" class="button addnew"> $text </button>
-        HTML;
-    }
-
-    function repeater_button_controls($level, $key) {
-
-        if (!is_int($key)) {
-            return;
-        }
-
-        if ($level > 0 and $level == $this->repeater_array_last_level($this->current)) {
-            return;
-        }
-
-        ob_start();
-
-        echo '<div class="controls">';
-        echo $this->repeater_button_move($level, $key);
-        echo $this->repeater_button_delete($level, $key);
-        echo '</div>';
-
-        return ob_get_clean();
-    }
-
     function repeater_is_empty($value) {
         return !$this->repeater_sum_value($value);
     }
 
     function repeater_sum_value($value) {
-        $value = (array) $value;
-
         $sum = 0;
-        foreach ($value as $sub_value) {
+        foreach ((array)$value as $sub_value) {
             if (is_array($sub_value)) {
                 $sum += $this->repeater_sum_value($sub_value);
             } else if (is_string($sub_value) && trim($sub_value) != '') {
@@ -240,23 +218,64 @@ class WpRepeater {
         return $sum;
     }
 
-    function repeater_button_move($level, $key) {
-        $text = __('Move up');
+    function repeater_button_addnew($prefix, $current, $level) {
+
+        // là 1 mảng với key là int
+        // bởi vì nếu key là string thì ko thể repeater được.
+        // [0 => ['type' => 'text', 'value' => 'xx']] => work 
+        // ['type' => 'text', 'value' => 'yy'] => not work
+        if (!$this->repeater_array_with_int_keys($current)) {
+            return;
+        }
+
+        // don't allow for level > 0 or is not last level
+        if ($level > 0 and $level == $this->repeater_array_last_level($this->current)) {
+            return;
+        }
+
+        $text = '<span class="dashicons dashicons-plus"></span>';
         return <<<HTML
-        <button type="button" class="button move_up_one">$text</button>
+        <button type="button" class="button addnew button-small"> $text </button>
         HTML;
     }
 
-    function repeater_button_delete($level, $key) {
-        $text = __('Delete');
+    function repeater_button_controls($level, $key) {
+
+        if (!is_int($key)) {
+            return;
+        }
+
+        // don't allow for level > 0 or is not last level
+        if ($level > 0 and $level == $this->repeater_array_last_level($this->current)) {
+            return;
+        }
+
+        ob_start();
+
+        echo '<div class="controls">';
+        echo $this->repeater_button_control_move($level, $key);
+        echo $this->repeater_button_control_delete($level, $key);
+        echo '</div>';
+
+        return ob_get_clean();
+    }
+
+    function repeater_button_control_move($level, $key) {
+        $text = '<span class="dashicons dashicons-arrow-up-alt"></span>';
         return <<<HTML
-        <button type="button" class="button delete">$text</button>
+        <button type="button" class="button move_up_one button-small">$text</button>
+        HTML;
+    }
+
+    function repeater_button_control_delete($level, $key) {
+        $text = '<span class="dashicons dashicons-trash"></span>';
+        return <<<HTML
+        <button type="button" class="button delete button-small">$text</button>
         HTML;
     }
 
     function repeater_array_with_int_keys($current) {
         $return = true;
-
         foreach ((array) $current as $key => $value) {
             if (!is_int($key)) {
                 $return = false;
@@ -270,7 +289,7 @@ class WpRepeater {
     function repeater_array_last_level($current, $level = 0) {
         if (is_array($current) && !empty($current)) {
             $maxLevel = $level;
-            foreach ($current as $value) {
+            foreach ((array)$current as $value) {
                 if (is_array($value)) {
                     $maxLevel = max($maxLevel, $this->repeater_array_last_level($value, $level + 1));
                 }
@@ -279,5 +298,15 @@ class WpRepeater {
         } else {
             return $level;
         }
+    }
+
+    function repeater_label() {
+        if (empty($this->label)) {
+            return '';
+        }
+
+        $label = esc_html($this->label);
+
+        return "<label class='form_field_label'>{$label}</label>";
     }
 }

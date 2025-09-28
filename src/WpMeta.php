@@ -21,16 +21,16 @@ class WpMeta {
     }
 
     function enqueue() {
-        $plugin_url = plugins_url('', __DIR__) . "/assets";
+        $plugin_url = plugins_url('', __DIR__);
 
         // Return early if the script is already enqueued
-        if (wp_script_is('wpdatabasehelper-meta-js', 'enqueued')) {
-            return;
-        }
+        // if (wp_script_is('wpdatabasehelper-meta-js', 'enqueued')) {
+            // return;
+        // }
 
         wp_enqueue_style(
             'wpdatabasehelper-meta-css',
-            $plugin_url . "/css/meta.css",
+            $plugin_url . "/assets/css/meta.css",
             [],
             $this->version,
             'all'
@@ -38,22 +38,26 @@ class WpMeta {
 
         wp_enqueue_script(
             'wpdatabasehelper-meta-js',
-            $plugin_url . "/js/meta.js",
+            $plugin_url . "/assets/js/meta.js",
             [],
             $this->version,
             true
         );
 
-        wp_add_inline_script(
-            'wpdatabasehelper-meta-js',
-            'const wpdatabasehelper_meta_js = ' . json_encode(
-                array(
-                    'ajax_url' => admin_url('admin-ajax.php'),
-                    'nonce' => wp_create_nonce('wpdatabasehelper_meta_js'),
-                )
-            ),
-            'before'
-        );
+        static $inline_added = false;
+        if (!$inline_added) {
+            wp_add_inline_script(
+                'wpdatabasehelper-meta-js',
+                'const wpdatabasehelper_meta_js = ' . json_encode(
+                    array(
+                        'ajax_url' => admin_url('admin-ajax.php'),
+                        'nonce' => wp_create_nonce('wpdatabasehelper_meta_js'),
+                    )
+                ),
+                'before'
+            );
+            $inline_added = true;
+        }
     }
 
     // post_type
@@ -83,14 +87,12 @@ class WpMeta {
         $this->id = $this->name . "_" . sanitize_title($this->metabox_label ?? '');
     }
 
-    // init all options
     function init_meta() {
         $this->init_register_post_meta();
         $this->init_admin_columns();
         $this->init_metabox();
     }
 
-    // init all options
     function init_meta_term_taxonomy() {
         $this->init_register_term_meta();
         $this->init_admin_term_taxonomy_columns();
@@ -318,22 +320,22 @@ class WpMeta {
         $edit_label = __('Edit');
 
         return <<<HTML
-<form action="">
-<div data-action="wpmeta_edit__" data-meta_key="{$meta_key}"
-data-object_id="{$object_id}" data-args="{$args_json}"
-class="{$class_name}">
-<div class="quick_edit_value">
-{$meta_value_html}
-</div>
-<div class="quick_edit_field">
-{$meta_field_html}
-</div>
-<button class="quick_edit_icon button" type="button">
-{$edit_label}
-</button>
-</div>
-</form>
-HTML;
+        <form action="">
+        <div data-action="wpmeta_edit__" data-meta_key="{$meta_key}"
+        data-object_id="{$object_id}" data-args="{$args_json}"
+        class="{$class_name}">
+        <div class="quick_edit_value">
+        {$meta_value_html}
+        </div>
+        <div class="quick_edit_field">
+        {$meta_field_html}
+        </div>
+        <button class="quick_edit_icon button" type="button">
+        {$edit_label}
+        </button>
+        </div>
+        </form>
+        HTML;
     }
 
     function quick_edit_field_term_taxonomy($field_args, $term_id) {
@@ -349,21 +351,21 @@ HTML;
         $edit_label = __('Edit');
 
         return <<<HTML
-<form action="">
-<div data-action="wpmeta_edit_term_taxonomy__" data-meta_key="{$meta_key}" 
-data-object_id="{$object_id}" data-args="{$args_json}" class="{$class_name}">
-<div class="quick_edit_value">
-{$quick_edit_value}
-</div>
-<div class="quick_edit_field">
-{$quick_edit_field}
-</div>
-<button class="quick_edit_icon button" type="button">
-{$edit_label}
-</button>
-</div>
-</form>
-HTML;
+        <form action="">
+        <div data-action="wpmeta_edit_term_taxonomy__" data-meta_key="{$meta_key}" 
+        data-object_id="{$object_id}" data-args="{$args_json}" class="{$class_name}">
+        <div class="quick_edit_value">
+        {$quick_edit_value}
+        </div>
+        <div class="quick_edit_field">
+        {$quick_edit_field}
+        </div>
+        <button class="quick_edit_icon button" type="button">
+        {$edit_label}
+        </button>
+        </div>
+        </form>
+        HTML;
     }
 
     function make_term_taxonomy_metabox() {
@@ -389,15 +391,15 @@ HTML;
             $version_text = __('Version');
 
             echo <<<HTML
-<div class="{$container_class}">
-<div class="grid">
-{$meta_fields_html}
-</div>
-<div class="footer">
-<small>{$version_text}: {$version}</small>
-</div>
-</div>
-HTML;
+        <div class="{$container_class}">
+        <div class="grid">
+        {$meta_fields_html}
+        </div>
+        <div class="footer">
+        <small>{$version_text}: {$version}</small>
+        </div>
+        </div>
+        HTML;
 
             return ob_get_clean();
         };
@@ -410,15 +412,15 @@ HTML;
             $form_html = $form($term);
 
             echo <<<HTML
-<tr class="form-field">
-<th scope="row">
-<label for="parent">{$label}{$description}</label>
-</th>
-<td>
-{$form_html}
-</td>
-</tr>
-HTML;
+            <tr class="form-field">
+            <th scope="row">
+            <label for="parent">{$label}{$description}</label>
+            </th>
+            <td>
+            {$form_html}
+            </td>
+            </tr>
+            HTML;
         });
 
         add_action($this->taxonomy . '_add_form_fields', function ($taxonomy) use ($form) {
@@ -431,11 +433,11 @@ HTML;
             $form_html = $form(false);
 
             echo <<<HTML
-<div class="form-field">
-<label for="extra_info">{$label}{$description}</label>
-{$form_html}
-</div>
-HTML;
+            <div class="form-field">
+            <label for="extra_info">{$label}{$description}</label>
+            {$form_html}
+            </div>
+            HTML;
 
             echo ob_get_clean();
         });
@@ -499,6 +501,7 @@ HTML;
                 sanitize_title($this->metabox_label), // ID of the meta box
                 $this->metabox_label, // Title of the meta box
                 function ($post) {
+                    // echo "<pre>"; print_r($this); echo "</pre>";
                     // Ensure correct post_id
                     if ($_REQUEST['post'] ?? '') {
                         $post = get_post($_REQUEST['post']);
@@ -524,17 +527,17 @@ HTML;
                     $nonce_value = wp_create_nonce($this->id);
 
                     echo <<<HTML
-{$description}
-<input type="hidden" name="{$nonce_id}" value="{$nonce_value}">
-<div class="{$container_class}">
-<div class="grid">
-{$meta_fields_html}
-</div>
-<div class="footer">
-<small>Version: {$version}</small>
-</div>
-</div>
-HTML;
+                    {$description}
+                    <input type="hidden" name="{$nonce_id}" value="{$nonce_value}">
+                    <div class="{$container_class}">
+                    <div class="grid">
+                    {$meta_fields_html}
+                    </div>
+                    <div class="footer">
+                    <small>Version: {$version}</small>
+                    </div>
+                    </div>
+                    HTML;
                 },
                 $this->post_type
             );
@@ -602,16 +605,10 @@ HTML;
         // only fields has meta_key
         if ($meta_key) {
 
-            // value in args
-            if (!isset($args['value'])) {
+            // override meta_value
+            if($meta_value){
                 $args['value'] = $meta_value;
-            }
-
-            // value in attribute
-            if (!isset($args['attribute']['value']) and str_contains($args['field'], 'input')) {
-                if (!isset($args['attribute']['value'])) {
-                    $args['attribute']['value'] = $meta_value;
-                }
+                $args['attribute']['value'] = $meta_value;
             }
 
             // name in attribute
@@ -620,6 +617,7 @@ HTML;
             }
         }
 
+        // echo "<pre>"; print_r($args); echo "</pre>";
         return $args;
     }
 
@@ -635,6 +633,7 @@ HTML;
         $args = $this->init_args($args, $meta_key, $meta_value);
         $a = \WpDatabaseHelper\Init::WpField();
         $a->setup_args($args);
+        // echo "<pre>"; print_r($args); echo "</pre>";
         return $a->init_field();
     }
 }
