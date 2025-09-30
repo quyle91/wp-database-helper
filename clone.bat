@@ -1,6 +1,6 @@
 @echo off
 @REM clone source từ folder gốc
-set SOURCE_FOLDER=D:\Laragon\www\flatsome\wp-content\plugins\administrator-z\vendor\quyle91\wp-database-helper
+set SOURCE_FOLDER=D:\Laragon\www\flatsome\wp-content\plugins\administrator-z\vendor\quyle91\wp-database-helper-v2
 
 :: Lưu tên file script để tránh bị xóa
 set SCRIPT_NAME=%~nx0
